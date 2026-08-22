@@ -28,6 +28,14 @@ export default function AssetsPage() {
     load();
   }
 
+  async function removeAsset(id: string) {
+    if (!confirm("Delete this asset? This can't be undone.")) return;
+    const res = await fetch(`/api/assets/${id}`, { method: "DELETE" });
+    if (!res.ok) { setError((await res.json()).error); return; }
+    setError("");
+    load();
+  }
+
   return (
     <div className="container">
       <h1>Assets</h1>
@@ -43,10 +51,13 @@ export default function AssetsPage() {
       {error && <p style={{ color: "var(--danger)", fontSize: 13 }}>{error}</p>}
       <div className="table-scroll">
       <table>
-        <thead><tr><th>Name</th><th>Tag</th><th>Location</th><th>Category</th><th>Status</th></tr></thead>
+        <thead><tr><th>Name</th><th>Tag</th><th>Location</th><th>Category</th><th>Status</th>{canAdd && <th></th>}</tr></thead>
         <tbody>
           {assets.map((a) => (
-            <tr key={a.id}><td>{a.name}</td><td>{a.tag}</td><td>{a.location || "—"}</td><td>{a.category || "—"}</td><td>{a.status}</td></tr>
+            <tr key={a.id}>
+              <td>{a.name}</td><td>{a.tag}</td><td>{a.location || "—"}</td><td>{a.category || "—"}</td><td>{a.status}</td>
+              {canAdd && <td><button className="danger" onClick={() => removeAsset(a.id)}>Delete</button></td>}
+            </tr>
           ))}
         </tbody>
       </table>

@@ -30,6 +30,14 @@ export default function PMSchedulesPage() {
     load();
   }
 
+  async function removeSchedule(id: string) {
+    if (!confirm("Delete this PM schedule? This can't be undone.")) return;
+    const res = await fetch(`/api/pm-schedules/${id}`, { method: "DELETE" });
+    if (!res.ok) { setError((await res.json()).error); return; }
+    setError("");
+    load();
+  }
+
   return (
     <div className="container">
       <h1>PM schedules</h1>
@@ -53,12 +61,13 @@ export default function PMSchedulesPage() {
       {error && <p style={{ color: "var(--danger)", fontSize: 13 }}>{error}</p>}
       <div className="table-scroll">
       <table>
-        <thead><tr><th>Name</th><th>Asset</th><th>Every</th><th>Next due</th><th>Active</th></tr></thead>
+        <thead><tr><th>Name</th><th>Asset</th><th>Every</th><th>Next due</th><th>Active</th><th></th></tr></thead>
         <tbody>
           {schedules.map((s) => (
             <tr key={s.id}>
               <td>{s.name}</td><td>{s.asset.name}</td><td>{s.frequencyDays} days</td>
               <td>{new Date(s.nextDueAt).toLocaleDateString()}</td><td>{s.active ? "Yes" : "No"}</td>
+              <td><button className="danger" onClick={() => removeSchedule(s.id)}>Delete</button></td>
             </tr>
           ))}
         </tbody>

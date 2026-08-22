@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { sendEmail, workOrderAssignedEmail, statusChangedEmail, newCommentEmail } from "@/lib/email";
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
@@ -38,12 +39,19 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const body = await req.json();
 
+  const body = await req.json();
   const tryingToEditFields = body.status || body.assignedToId !== undefined || body.priority || body.dueDate !== undefined;
   if (session.user.role === "REQUESTER" && tryingToEditFields) {
     return NextResponse.json({ error: "Requesters can't change status, priority, or assignment." }, { status: 403 });
   }
+
+  const before = await prisma.workOrder.findUnique({
+    where: { id: params.id },
+    include: { assignedTo: true, requestedBy: true },
+  });
+  if (!before) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
   const data: any = {};
   if (body.status) {
     data.status = body.status;
@@ -55,11 +63,24 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 
   const workOrder = await prisma.workOrder.update({ where: { id: params.id }, data });
 
+  let newComment: { body: string } | null = null;
   if (body.comment) {
-    await prisma.comment.create({
+    newComment = await prisma.comment.create({
       data: { workOrderId: params.id, authorId: session.user.id, body: body.comment },
     });
   }
 
-  return NextResponse.json(workOrder);
-}
+  // Email notifications — never let a failure here affect the response
+  try {
+    const emails: Promise<any>[] = [];
+
+    if (data.assignedToId && data.assignedToId !== before.assignedToId) {
+      const newAssignee = await prisma.user.findUnique({ where: { id: data.assignedToId } });
+      if (newAssignee) {
+        const { subject, html } = workOrderAssignedEmail(before.title, params.id);
+        emails.push(sendEmail(newAssignee.email, subject, html));
+      }
+    }
+
+    if (data.status && data.status !== before.status) {
+      const { subject,

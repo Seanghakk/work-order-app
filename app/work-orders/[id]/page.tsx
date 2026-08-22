@@ -16,7 +16,10 @@ export default function WorkOrderDetail() {
     setWo(await res.json());
   }
 
-  useEffect(() => { load(); }, [id]);
+   useEffect(() => { load(); }, [id]);
+  useEffect(() => {
+    fetch("/api/users/assignable").then((r) => r.json()).then((data) => Array.isArray(data) && setTechnicians(data));
+  }, []);
 
   const role = session?.user?.role;
   const canEdit = role === "MANAGER" || role === "ADMIN" || role === "TECHNICIAN";
@@ -69,10 +72,17 @@ export default function WorkOrderDetail() {
               ))}
             </select>
           </div>
-          <div>
+                    <div>
             <label>Priority</label>
             <select value={wo.priority} onChange={(e) => updateField({ priority: e.target.value })}>
               {["LOW", "MEDIUM", "HIGH", "URGENT"].map((p) => <option key={p} value={p}>{p}</option>)}
+            </select>
+          </div>
+          <div>
+            <label>Assigned to</label>
+            <select value={wo.assignedToId || ""} onChange={(e) => updateField({ assignedToId: e.target.value || null })}>
+              <option value="">Unassigned</option>
+              {technicians.map((t) => <option key={t.id} value={t.id}>{t.name} ({t.role})</option>)}
             </select>
           </div>
         </div>
