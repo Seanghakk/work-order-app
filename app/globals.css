@@ -71,7 +71,7 @@ tr:hover td { background: var(--surface-hover); }
 .nav a { color: #33465e; font-size: 14px; font-weight: 500; }
 .nav a:hover { color: var(--accent); text-decoration: none; }
 .nav-top { display: none; justify-content: space-between; align-items: center; padding: 12px 16px; }
-.nav-toggle { border: none; background: none; font-size: 14px; padding: 4px 8px; }
+.nav-toggle { border: none; background: none; font-size: 14px; padding: 4px 8px; color: #33465e; font-weight: 600; }
 .nav-links { display: flex; gap: 20px; align-items: center; padding: 12px 24px; }
 .nav-logo-inline { margin-right: 8px; }
 .nav-user { margin-left: auto; font-size: 13px; color: #33465e; display: flex; align-items: center; gap: 12px; white-space: nowrap; }
