@@ -54,6 +54,15 @@ export default function UsersPage() {
     setError("");
   }
 
+  async function toggleActive(id: string, active: boolean) {
+    await fetch(`/api/users/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ active }),
+    });
+    load();
+  }
+
   async function removeUser(id: string) {
     if (!confirm("Remove this user? This can't be undone.")) return;
     const res = await fetch(`/api/users/${id}`, { method: "DELETE" });
@@ -81,7 +90,7 @@ export default function UsersPage() {
 
       <div className="table-scroll">
       <table>
-        <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Reset password</th><th></th></tr></thead>
+                <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Reset password</th><th></th></tr></thead>
         <tbody>
           {users.map((u) => (
             <tr key={u.id}>
@@ -91,6 +100,11 @@ export default function UsersPage() {
                 <select value={u.role} onChange={(e) => updateRole(u.id, e.target.value)}>
                   {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
                 </select>
+              </td>
+              <td>
+                <button onClick={() => toggleActive(u.id, !u.active)}>
+                  {u.active ? "Active — deactivate" : "Inactive — reactivate"}
+                </button>
               </td>
               <td>
                 {editingId === u.id ? (

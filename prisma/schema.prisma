@@ -9,26 +9,26 @@ datasource db {
 }
 
 enum Role {
-  ADMIN
-  MANAGER
-  TECHNICIAN
-  REQUESTER
+  Admin
+  Manager
+  Technician
+  Requester
 }
 
 enum WorkOrderStatus {
-  OPEN
-  ASSIGNED
-  IN_PROGRESS
-  ON_HOLD
-  COMPLETED
-  CANCELED
+  Open
+  Assigned
+  In_progress
+  On_hold
+  Completed
+  Canceled
 }
 
 enum Priority {
-  LOW
-  MEDIUM
-  HIGH
-  URGENT
+  Low
+  Medium
+  High
+  Urgent
 }
 
 model User {
@@ -36,10 +36,11 @@ model User {
   name          String
   email         String       @unique
   passwordHash  String
-  role          Role         @default(REQUESTER)
+  role          Role         @default(Requester)
+  active        Boolean      @default(true)
   createdAt     DateTime     @default(now())
   requested     WorkOrder[]  @relation("requestedBy")
-  assigned      WorkOrder[]  @relation("assignedTo")
+  Assigned      WorkOrder[]  @relation("AssignedTo")
   comments      Comment[]
 }
 
@@ -61,20 +62,20 @@ model WorkOrder {
   id            String          @id @default(cuid())
   title         String
   description   String
-  status        WorkOrderStatus @default(OPEN)
-  priority      Priority        @default(MEDIUM)
+  status        WorkOrderStatus @default(Open)
+  priority      Priority        @default(Medium)
   source        String          @default("MANUAL")
   asset         Asset?          @relation(fields: [assetId], references: [id])
   assetId       String?
   requestedBy   User            @relation("requestedBy", fields: [requestedById], references: [id])
   requestedById String
-  assignedTo    User?           @relation("assignedTo", fields: [assignedToId], references: [id])
-  assignedToId  String?
+  AssignedTo    User?           @relation("AssignedTo", fields: [AssignedToId], references: [id])
+  AssignedToId  String?
   pmSchedule    PMSchedule?     @relation(fields: [pmScheduleId], references: [id])
   pmScheduleId  String?
   createdAt     DateTime        @default(now())
   dueDate       DateTime?
-  completedAt   DateTime?
+  CompletedAt   DateTime?
   comments      Comment[]
 }
 

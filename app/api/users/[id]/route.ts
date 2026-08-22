@@ -23,6 +23,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     data.email = body.email;
   }
   if (body.role) data.role = body.role;
+  if (typeof body.active === "boolean") data.active = body.active;
   if (body.password) {
     if (body.password.length < 8) {
       return NextResponse.json({ error: "Password must be at least 8 characters." }, { status: 400 });
@@ -33,7 +34,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   const user = await prisma.user.update({
     where: { id: params.id },
     data,
-    select: { id: true, name: true, email: true, role: true, createdAt: true },
+    select: { id: true, name: true, email: true, role: true, active: true, createdAt: true },
   });
   return NextResponse.json(user);
 }
