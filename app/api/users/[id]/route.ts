@@ -46,6 +46,10 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
   if (session.user.id === params.id) {
     return NextResponse.json({ error: "You can't delete your own account." }, { status: 400 });
   }
+  const target = await prisma.user.findUnique({ where: { id: params.id } });
+  if (target?.email === "adtechbms@gmail.com") {
+    return NextResponse.json({ error: "This account is protected and can't be deleted." }, { status: 403 });
+  }
   try {
     await prisma.user.delete({ where: { id: params.id } });
     return NextResponse.json({ ok: true });
