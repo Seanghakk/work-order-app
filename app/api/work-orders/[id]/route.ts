@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendEmail, workOrderAssignedEmail, statusChangedEmail, newCommentEmail } from "@/lib/email";
+import { notifyUser } from "@/lib/notifications";
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
@@ -76,26 +77,33 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 
     if (data.assignedToId && data.assignedToId !== before.assignedToId) {
       const newAssignee = await prisma.user.findUnique({ where: { id: data.assignedToId } });
-      if (newAssignee) {
+            if (newAssignee) {
         const { subject, html } = workOrderAssignedEmail(before.title, params.id);
         emails.push(sendEmail(newAssignee.email, subject, html));
+        emails.push(notifyUser(newAssignee.id, `You've been assigned to "${before.title}"`, params.id));
       }
     }
 
-    if (data.status && data.status !== before.status) {
+        if (data.status && data.status !== before.status) {
       const { subject, html } = statusChangedEmail(before.title, data.status, params.id);
-      const recipients = new Set<string>();
-      if (before.requestedBy && before.requestedBy.id !== session.user.id) recipients.add(before.requestedBy.email);
-      if (before.assignedTo && before.assignedTo.id !== session.user.id) recipients.add(before.assignedTo.email);
-      recipients.forEach((email) => emails.push(sendEmail(email, subject, html)));
+      const recipients = new Map<string, string>();
+      if (before.requestedBy && before.requestedBy.id !== session.user.id) recipients.set(before.requestedBy.id, before.requestedBy.email);
+      if (before.assignedTo && before.assignedTo.id !== session.user.id) recipients.set(before.assignedTo.id, before.assignedTo.email);
+      recipients.forEach((email, userId) => {
+        emails.push(sendEmail(email, subject, html));
+        emails.push(notifyUser(userId, `"${before.title}" status changed to ${data.status.replace("_", " ")}`, params.id));
+      });
     }
 
     if (newComment) {
       const { subject, html } = newCommentEmail(before.title, session.user.name, newComment.body, params.id);
-      const recipients = new Set<string>();
-      if (before.requestedBy && before.requestedBy.id !== session.user.id) recipients.add(before.requestedBy.email);
-      if (before.assignedTo && before.assignedTo.id !== session.user.id) recipients.add(before.assignedTo.email);
-      recipients.forEach((email) => emails.push(sendEmail(email, subject, html)));
+      const recipients = new Map<string, string>();
+      if (before.requestedBy && before.requestedBy.id !== session.user.id) recipients.set(before.requestedBy.id, before.requestedBy.email);
+      if (before.assignedTo && before.assignedTo.id !== session.user.id) recipients.set(before.assignedTo.id, before.assignedTo.email);
+      recipients.forEach((email, userId) => {
+        emails.push(sendEmail(email, subject, html));
+        emails.push(notifyUser(userId, `${session.user.name} commented on "${before.title}"`, params.id));
+      });
     }
 
     await Promise.all(emails);

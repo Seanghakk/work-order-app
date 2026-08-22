@@ -92,6 +92,13 @@ tr:hover td { background: var(--surface-hover); }
 .badge-high { background: rgba(245, 166, 35, 0.12); color: var(--warning); border-color: rgba(245, 166, 35, 0.3); }
 .badge-medium { background: rgba(51, 194, 255, 0.12); color: var(--blue); border-color: rgba(51, 194, 255, 0.3); }
 .badge-low { background: rgba(142, 160, 189, 0.12); color: var(--text-muted); border-color: var(--border); }
+.notif-bell { position: relative; background: none; border: none; padding: 6px; }
+.notif-dot { position: absolute; top: 2px; right: 2px; background: var(--accent); color: white; font-size: 10px; font-weight: 700; border-radius: 999px; min-width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; padding: 0 3px; }
+.notif-panel { position: absolute; right: 24px; top: 56px; width: 320px; max-height: 400px; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 12px 32px rgba(0,0,0,0.5); z-index: 20; }
+.notif-item { display: block; width: 100%; text-align: left; padding: 12px 14px; border: none; border-bottom: 1px solid var(--border); background: none; font-size: 13px; }
+.notif-item:last-child { border-bottom: none; }
+.notif-item.unread { background: rgba(51, 194, 255, 0.06); }
+.notif-empty { padding: 20px; text-align: center; color: var(--text-muted); font-size: 13px; }
 
 label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 4px; }
 .field { margin-bottom: 14px; }
