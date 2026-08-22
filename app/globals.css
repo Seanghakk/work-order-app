@@ -67,14 +67,14 @@ tr:hover td { background: var(--surface-hover); }
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
 }
 
-.nav { background: rgba(10, 22, 40, 0.9); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
-.nav a { color: var(--text-muted); font-size: 14px; font-weight: 500; }
-.nav a:hover { color: var(--text); text-decoration: none; }
+.nav { background: #ffffff; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
+.nav a { color: #33465e; font-size: 14px; font-weight: 500; }
+.nav a:hover { color: var(--accent); text-decoration: none; }
 .nav-top { display: none; justify-content: space-between; align-items: center; padding: 12px 16px; }
 .nav-toggle { border: none; background: none; font-size: 14px; padding: 4px 8px; }
 .nav-links { display: flex; gap: 20px; align-items: center; padding: 12px 24px; }
 .nav-logo-inline { margin-right: 8px; }
-.nav-user { margin-left: auto; font-size: 13px; color: var(--text-muted); display: flex; align-items: center; gap: 12px; white-space: nowrap; }
+.nav-user { margin-left: auto; font-size: 13px; color: #33465e; display: flex; align-items: center; gap: 12px; white-space: nowrap; }
 .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
 .table-scroll { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
 .table-scroll table { border: none; }
