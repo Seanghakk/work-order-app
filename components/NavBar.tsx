@@ -1,22 +1,38 @@
 "use client";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
+import { useState } from "react";
 
 export default function NavBar() {
   const { data: session } = useSession();
   const role = session?.user?.role;
+  const [open, setOpen] = useState(false);
+
+  const links = (
+    <>
+      <Link href="/dashboard" onClick={() => setOpen(false)}>Dashboard</Link>
+      <Link href="/work-orders" onClick={() => setOpen(false)}>Work orders</Link>
+      <Link href="/assets" onClick={() => setOpen(false)}>Assets</Link>
+      {(role === "MANAGER" || role === "ADMIN") && <Link href="/pm-schedules" onClick={() => setOpen(false)}>PM schedules</Link>}
+      {(role === "MANAGER" || role === "ADMIN") && <Link href="/reports" onClick={() => setOpen(false)}>Reports</Link>}
+      {(role === "MANAGER" || role === "ADMIN") && <Link href="/users" onClick={() => setOpen(false)}>Users</Link>}
+    </>
+  );
+
   return (
     <div className="nav">
-      <strong>Work orders</strong>
-      <Link href="/dashboard">Dashboard</Link>
-      <Link href="/work-orders">Work orders</Link>
-      <Link href="/assets">Assets</Link>
-      {(role === "MANAGER" || role === "ADMIN") && <Link href="/pm-schedules">PM schedules</Link>}
-      {(role === "MANAGER" || role === "ADMIN") && <Link href="/reports">Reports</Link>}
-      {(role === "MANAGER" || role === "ADMIN") && <Link href="/users">Users</Link>}
-      <div style={{ marginLeft: "auto", fontSize: 13, color: "var(--text-muted)" }}>
-        {session?.user?.name} ({role})
-        <button style={{ marginLeft: 12 }} onClick={() => signOut({ callbackUrl: "/login" })}>Sign out</button>
+      <div className="nav-top">
+        <strong>Work orders</strong>
+        <button className="nav-toggle" onClick={() => setOpen(!open)} aria-label="Toggle menu">
+          {open ? "Close" : "Menu"}
+        </button>
+      </div>
+      <div className={`nav-links ${open ? "nav-links-open" : ""}`}>
+        {links}
+        <div className="nav-user">
+          {session?.user?.name} ({role})
+          <button onClick={() => signOut({ callbackUrl: "/login" })}>Sign out</button>
+        </div>
       </div>
     </div>
   );

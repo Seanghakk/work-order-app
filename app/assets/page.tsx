@@ -41,6 +41,7 @@ export default function AssetsPage() {
         </form>
       )}
       {error && <p style={{ color: "var(--danger)", fontSize: 13 }}>{error}</p>}
+      <div className="table-scroll">
       <table>
         <thead><tr><th>Name</th><th>Tag</th><th>Location</th><th>Category</th><th>Status</th></tr></thead>
         <tbody>
@@ -49,6 +50,7 @@ export default function AssetsPage() {
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

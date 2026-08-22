@@ -20,7 +20,8 @@ export default function WorkOrdersPage() {
         <p>Loading…</p>
       ) : orders.length === 0 ? (
         <p style={{ color: "var(--text-muted)" }}>No work orders yet.</p>
-      ) : (
+       ) : (
+        <div className="table-scroll">
         <table>
           <thead>
             <tr><th>Title</th><th>Asset</th><th>Priority</th><th>Status</th><th>Assigned to</th><th>Created</th></tr>
@@ -38,6 +39,7 @@ export default function WorkOrdersPage() {
             ))}
           </tbody>
         </table>
+        </div>
       )}
     </div>
   );

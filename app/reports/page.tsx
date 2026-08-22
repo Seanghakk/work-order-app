@@ -15,7 +15,7 @@ export default async function ReportsPage() {
   return (
     <div className="container">
       <h1>Reports</h1>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+       <div className="report-grid">
         <div className="card">
           <h3>By status</h3>
           {byStatus.map((s) => (

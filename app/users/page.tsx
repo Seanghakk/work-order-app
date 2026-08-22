@@ -79,6 +79,7 @@ export default function UsersPage() {
       </form>
       {error && <p style={{ color: "var(--danger)", fontSize: 13 }}>{error}</p>}
 
+      <div className="table-scroll">
       <table>
         <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Reset password</th><th></th></tr></thead>
         <tbody>
@@ -107,6 +108,7 @@ export default function UsersPage() {
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

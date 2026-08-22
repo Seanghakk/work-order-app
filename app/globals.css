@@ -33,9 +33,31 @@ table { width: 100%; border-collapse: collapse; background: var(--surface); }
 th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 14px; }
 th { color: var(--text-muted); font-weight: 500; }
 .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
-.nav { display: flex; gap: 16px; align-items: center; padding: 12px 24px; background: var(--surface); border-bottom: 1px solid var(--border); }
+.nav { background: var(--surface); border-bottom: 1px solid var(--border); }
 .nav a { color: var(--text); font-size: 14px; }
+.nav-top { display: none; justify-content: space-between; align-items: center; padding: 12px 16px; }
+.nav-toggle { border: none; background: none; font-size: 14px; padding: 4px 8px; }
+.nav-links { display: flex; gap: 16px; align-items: center; padding: 12px 24px; }
+.nav-user { margin-left: auto; font-size: 13px; color: var(--text-muted); display: flex; align-items: center; gap: 12px; white-space: nowrap; }
 .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+.table-scroll { overflow-x: auto; }
+.stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+.report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+@media (max-width: 720px) {
+  .nav-top { display: flex; }
+  .nav-links { display: none; flex-direction: column; align-items: flex-start; gap: 12px; padding: 0 16px 16px; }
+  .nav-links-open { display: flex; }
+  .nav-user { margin-left: 0; flex-direction: column; align-items: flex-start; gap: 6px; }
+  .container { padding: 16px; }
+  .stat-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .report-grid { grid-template-columns: 1fr; }
+  table { min-width: 640px; }
+  .card form { flex-direction: column; align-items: stretch !important; }
+  .card form > div { width: 100%; }
+  .card form input, .card form select, .card form textarea { width: 100%; }
+  .card form button { width: 100%; }
+}
 .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 500; }
 .badge-open { background: #e6f1fb; color: #0c447c; }
 .badge-assigned { background: #faeeda; color: #854f0b; }

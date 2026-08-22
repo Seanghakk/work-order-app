@@ -28,7 +28,7 @@ export default async function Dashboard() {
   return (
     <div className="container">
       <h1>Dashboard</h1>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 24 }}>
+       <div className="stat-grid">
         {stats.map((s) => (
           <div className="card" key={s.label}>
             <div style={{ fontSize: 13, color: "var(--text-muted)" }}>{s.label}</div>

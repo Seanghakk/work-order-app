@@ -51,6 +51,7 @@ export default function PMSchedulesPage() {
         <button className="primary" type="submit">Add schedule</button>
       </form>
       {error && <p style={{ color: "var(--danger)", fontSize: 13 }}>{error}</p>}
+      <div className="table-scroll">
       <table>
         <thead><tr><th>Name</th><th>Asset</th><th>Every</th><th>Next due</th><th>Active</th></tr></thead>
         <tbody>
@@ -62,6 +63,7 @@ export default function PMSchedulesPage() {
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }
