@@ -1,7 +1,7 @@
 "use client";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
-import { useState } from "react";
+import Logo from "./Logo";
 
 export default function NavBar() {
   const { data: session } = useSession();
@@ -21,13 +21,14 @@ export default function NavBar() {
 
   return (
     <div className="nav">
-      <div className="nav-top">
-        <strong>Work orders</strong>
+            <div className="nav-top">
+        <Logo size={20} />
         <button className="nav-toggle" onClick={() => setOpen(!open)} aria-label="Toggle menu">
           {open ? "Close" : "Menu"}
         </button>
       </div>
       <div className={`nav-links ${open ? "nav-links-open" : ""}`}>
+        <span className="nav-logo-inline"><Logo size={18} /></span>
         {links}
         <div className="nav-user">
           {session?.user?.name} ({role})
