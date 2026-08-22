@@ -41,10 +41,19 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
   if (!requireManager(session)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (session.user.id === params.id) {
     return NextResponse.json({ error: "You can't delete your own account." }, { status: 400 });
   }
-  await prisma.user.delete({ where: { id: params.id } });
-  return NextResponse.json({ ok: true });
+  try {
+    await prisma.user.delete({ where: { id: params.id } });
+    return NextResponse.json({ ok: true });
+  } catch (err: any) {
+    if (err.code === "P2003") {
+      return NextResponse.json(
+        { error: "This user has existing work orders or comments and can't be deleted. Change their role instead, or reassign their work orders first." },
+        { status: 409 }
+      );
+    }
+    return NextResponse.json({ error: "Something went wrong removing this user." }, { status: 500 });
+  }
 }
