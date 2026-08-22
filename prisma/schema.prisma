@@ -40,7 +40,7 @@ model User {
   active        Boolean      @default(true)
   createdAt     DateTime     @default(now())
   requested     WorkOrder[]  @relation("requestedBy")
-  ASSIGNED      WorkOrder[]  @relation("ASSIGNEDTo")
+  assigned      WorkOrder[]  @relation("assignedTo")
   comments      Comment[]
 }
 
@@ -69,13 +69,13 @@ model WorkOrder {
   assetId       String?
   requestedBy   User            @relation("requestedBy", fields: [requestedById], references: [id])
   requestedById String
-  ASSIGNEDTo    User?           @relation("ASSIGNEDTo", fields: [ASSIGNEDToId], references: [id])
-  ASSIGNEDToId  String?
+  assignedTo    User?           @relation("assignedTo", fields: [assignedToId], references: [id])
+  assignedToId  String?
   pmSchedule    PMSchedule?     @relation(fields: [pmScheduleId], references: [id])
   pmScheduleId  String?
   createdAt     DateTime        @default(now())
   dueDate       DateTime?
-  COMPLETEDAt   DateTime?
+  completedAt   DateTime?
   comments      Comment[]
 }
 
