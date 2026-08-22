@@ -8,8 +8,8 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const role = session.user.role;
-  const where =
-    role === "TECHNICIAN" ? { assignedToId: session.user.id } :
+    const where =
+    role === "TECHNICIAN" ? { OR: [{ assignedToId: session.user.id }, { requestedById: session.user.id }] } :
     role === "REQUESTER" ? { requestedById: session.user.id } :
     {};
 
