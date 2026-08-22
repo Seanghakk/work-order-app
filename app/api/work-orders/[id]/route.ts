@@ -34,9 +34,10 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
   await prisma.workOrder.delete({ where: { id: params.id } });
   return NextResponse.json({ ok: true });
 }
+
+export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
   const body = await req.json();
 
   const tryingToEditFields = body.status || body.assignedToId !== undefined || body.priority || body.dueDate !== undefined;
