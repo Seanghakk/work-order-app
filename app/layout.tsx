@@ -16,7 +16,6 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <Providers session={session}>
           {session && <NavBar />}
           {children}
-          <Footer />
         </Providers>
       </body>
     </html>

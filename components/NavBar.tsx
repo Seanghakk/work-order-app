@@ -66,6 +66,7 @@ export default function NavBar() {
       {(role === "MANAGER" || role === "ADMIN") && <Link href="/pm-schedules" onClick={() => setOpen(false)}>PM schedules</Link>}
       {(role === "MANAGER" || role === "ADMIN") && <Link href="/reports" onClick={() => setOpen(false)}>Reports</Link>}
       {(role === "MANAGER" || role === "ADMIN") && <Link href="/users" onClick={() => setOpen(false)}>Users</Link>}
+      <Link href="/about" onClick={() => setOpen(false)}>About</Link>
     </>
   );
 
