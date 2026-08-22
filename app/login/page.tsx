@@ -35,8 +35,6 @@ export default function LoginPage() {
           <p style={{ color: "var(--text-muted)", fontSize: 13, marginTop: 0, marginBottom: 20 }}>
             ADTECH Maintenance Work Order System
           </p>
-            Maintenance work order system
-          </p>
           <form onSubmit={handleSubmit}>
             <div className="field">
               <label>Email</label>
