@@ -1,0 +1,5 @@
+{
+  "crons": [
+    { "path": "/api/pm-schedules/generate", "schedule": "0 6 * * *" }
+  ]
+}

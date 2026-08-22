@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  TECHNICIAN
+  REQUESTER
+}
+
+enum WorkOrderStatus {
+  OPEN
+  ASSIGNED
+  IN_PROGRESS
+  ON_HOLD
+  COMPLETED
+  CANCELED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model User {
+  id            String       @id @default(cuid())
+  name          String
+  email         String       @unique
+  passwordHash  String
+  role          Role         @default(REQUESTER)
+  createdAt     DateTime     @default(now())
+  requested     WorkOrder[]  @relation("requestedBy")
+  assigned      WorkOrder[]  @relation("assignedTo")
+  comments      Comment[]
+}
+
+model Asset {
+  id           String       @id @default(cuid())
+  name         String
+  tag          String       @unique
+  location     String?
+  category     String?
+  status       String       @default("ACTIVE")
+  installDate  DateTime?
+  notes        String?
+  createdAt    DateTime     @default(now())
+  workOrders   WorkOrder[]
+  pmSchedules  PMSchedule[]
+}
+
+model WorkOrder {
+  id            String          @id @default(cuid())
+  title         String
+  description   String
+  status        WorkOrderStatus @default(OPEN)
+  priority      Priority        @default(MEDIUM)
+  source        String          @default("MANUAL")
+  asset         Asset?          @relation(fields: [assetId], references: [id])
+  assetId       String?
+  requestedBy   User            @relation("requestedBy", fields: [requestedById], references: [id])
+  requestedById String
+  assignedTo    User?           @relation("assignedTo", fields: [assignedToId], references: [id])
+  assignedToId  String?
+  pmSchedule    PMSchedule?     @relation(fields: [pmScheduleId], references: [id])
+  pmScheduleId  String?
+  createdAt     DateTime        @default(now())
+  dueDate       DateTime?
+  completedAt   DateTime?
+  comments      Comment[]
+}
+
+model Comment {
+  id          String    @id @default(cuid())
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id])
+  workOrderId String
+  author      User      @relation(fields: [authorId], references: [id])
+  authorId    String
+  body        String
+  createdAt   DateTime  @default(now())
+}
+
+model PMSchedule {
+  id             String      @id @default(cuid())
+  name           String
+  asset          Asset       @relation(fields: [assetId], references: [id])
+  assetId        String
+  frequencyDays  Int
+  taskTemplate   String
+  active         Boolean     @default(true)
+  lastGeneratedAt DateTime?
+  nextDueAt      DateTime
+  createdAt      DateTime    @default(now())
+  workOrders     WorkOrder[]
+}

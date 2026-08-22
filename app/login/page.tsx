@@ -1,0 +1,45 @@
+"use client";
+import { useState } from "react";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
+
+export default function LoginPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const router = useRouter();
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!email || !password) {
+      setError("Enter your email and password.");
+      return;
+    }
+    const res = await signIn("credentials", { email, password, redirect: false });
+    if (res?.error) {
+      setError("That email or password isn't right.");
+      return;
+    }
+    window.location.href = "/dashboard";
+  }
+
+  return (
+    <div className="container" style={{ maxWidth: 380, marginTop: 80 }}>
+      <div className="card">
+        <h2 style={{ marginTop: 0 }}>Sign in</h2>
+        <form onSubmit={handleSubmit}>
+          <div className="field">
+            <label>Email</label>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} style={{ width: "100%" }} />
+          </div>
+          <div className="field">
+            <label>Password</label>
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} style={{ width: "100%" }} />
+          </div>
+          {error && <p style={{ color: "var(--danger)", fontSize: 13 }}>{error}</p>}
+          <button className="primary" type="submit" style={{ width: "100%" }}>Sign in</button>
+        </form>
+      </div>
+    </div>
+  );
+}
