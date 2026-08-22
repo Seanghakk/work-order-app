@@ -72,8 +72,12 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   }
 
   // Email notifications — never let a failure here affect the response
-  try {
+    try {
     const emails: Promise<any>[] = [];
+    const managers = await prisma.user.findMany({
+      where: { role: { in: ["MANAGER", "ADMIN"] }, active: true, id: { not: session.user.id } },
+      select: { id: true, email: true },
+    });
 
     if (data.assignedToId && data.assignedToId !== before.assignedToId) {
       const newAssignee = await prisma.user.findUnique({ where: { id: data.assignedToId } });
@@ -84,22 +88,24 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       }
     }
 
-        if (data.status && data.status !== before.status) {
+    if (data.status && data.status !== before.status) {
       const { subject, html } = statusChangedEmail(before.title, data.status, params.id);
       const recipients = new Map<string, string>();
       if (before.requestedBy && before.requestedBy.id !== session.user.id) recipients.set(before.requestedBy.id, before.requestedBy.email);
       if (before.assignedTo && before.assignedTo.id !== session.user.id) recipients.set(before.assignedTo.id, before.assignedTo.email);
+      managers.forEach((m) => recipients.set(m.id, m.email));
       recipients.forEach((email, userId) => {
         emails.push(sendEmail(email, subject, html));
         emails.push(notifyUser(userId, `"${before.title}" status changed to ${data.status.replace("_", " ")}`, params.id));
       });
     }
 
-    if (newComment) {
+        if (newComment) {
       const { subject, html } = newCommentEmail(before.title, session.user.name, newComment.body, params.id);
       const recipients = new Map<string, string>();
       if (before.requestedBy && before.requestedBy.id !== session.user.id) recipients.set(before.requestedBy.id, before.requestedBy.email);
       if (before.assignedTo && before.assignedTo.id !== session.user.id) recipients.set(before.assignedTo.id, before.assignedTo.email);
+      managers.forEach((m) => recipients.set(m.id, m.email));
       recipients.forEach((email, userId) => {
         emails.push(sendEmail(email, subject, html));
         emails.push(notifyUser(userId, `${session.user.name} commented on "${before.title}"`, params.id));
