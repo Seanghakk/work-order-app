@@ -78,12 +78,16 @@ export default function WorkOrderDetail() {
               {["LOW", "MEDIUM", "HIGH", "URGENT"].map((p) => <option key={p} value={p}>{p}</option>)}
             </select>
           </div>
-          <div>
+                    <div>
             <label>Assigned to</label>
             <select value={wo.assignedToId || ""} onChange={(e) => updateField({ assignedToId: e.target.value || null })}>
               <option value="">Unassigned</option>
               {technicians.map((t) => <option key={t.id} value={t.id}>{t.name} ({t.role})</option>)}
             </select>
+          </div>
+          <div>
+            <label>Due date</label>
+            <input type="date" value={wo.dueDate ? wo.dueDate.slice(0, 10) : ""} onChange={(e) => updateField({ dueDate: e.target.value || null })} />
           </div>
         </div>
       )}

@@ -39,7 +39,7 @@ export default function WorkOrdersPage() {
         <div className="table-scroll">
         <table>
           <thead>
-            <tr><th>Title</th><th>Asset</th><th>Priority</th><th>Status</th><th>Assigned to</th><th>Created</th>{canManage && <th></th>}</tr>
+            <tr><th>Title</th><th>Asset</th><th>Priority</th><th>Status</th><th>Assigned to</th><th>Due</th><th>Created</th>{canManage && <th></th>}</tr>
           </thead>
           <tbody>
             {orders.map((o) => (
@@ -49,6 +49,13 @@ export default function WorkOrdersPage() {
                 <td><span className={`badge badge-${o.priority.toLowerCase()}`}>{o.priority}</span></td>
                 <td><span className={`badge badge-${o.status.toLowerCase()}`}>{o.status.replace("_", " ")}</span></td>
                 <td>{o.assignedTo?.name || "Unassigned"}</td>
+                <td>
+                  {o.dueDate ? (
+                    <span style={{ color: new Date(o.dueDate) < new Date() && o.status !== "COMPLETED" && o.status !== "CANCELED" ? "var(--danger)" : "inherit" }}>
+                      {new Date(o.dueDate).toLocaleDateString()}
+                    </span>
+                  ) : "—"}
+                </td>
                 <td>{new Date(o.createdAt).toLocaleDateString()}</td>
                 {canManage && (
                   <td>

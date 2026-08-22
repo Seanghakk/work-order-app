@@ -2,7 +2,7 @@
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Logo from "./Logo";
 
 export default function NavBar() {
@@ -13,6 +13,7 @@ export default function NavBar() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [panelOpen, setPanelOpen] = useState(false);
+  const navRef = useRef<HTMLDivElement>(null);
 
   function loadNotifications() {
     fetch("/api/notifications").then((r) => r.json()).then((data) => {
@@ -23,9 +24,19 @@ export default function NavBar() {
     });
   }
 
-  useEffect(() => {
+    useEffect(() => {
     if (session) loadNotifications();
   }, [session]);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (navRef.current && !navRef.current.contains(e.target as Node)) {
+        setPanelOpen(false);
+      }
+    }
+    if (panelOpen) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [panelOpen]);
 
   async function handleBellClick() {
     const next = !panelOpen;
@@ -59,7 +70,7 @@ export default function NavBar() {
   );
 
   return (
-    <div className="nav" style={{ position: "relative" }}>
+     <div className="nav" style={{ position: "relative" }} ref={navRef}>
       <div className="nav-top">
         <Logo size={20} />
         <button className="nav-toggle" onClick={() => setOpen(!open)} aria-label="Toggle menu">
