@@ -83,4 +83,25 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     }
 
     if (data.status && data.status !== before.status) {
-      const { subject,
+      const { subject, html } = statusChangedEmail(before.title, data.status, params.id);
+      const recipients = new Set<string>();
+      if (before.requestedBy && before.requestedBy.id !== session.user.id) recipients.add(before.requestedBy.email);
+      if (before.assignedTo && before.assignedTo.id !== session.user.id) recipients.add(before.assignedTo.email);
+      recipients.forEach((email) => emails.push(sendEmail(email, subject, html)));
+    }
+
+    if (newComment) {
+      const { subject, html } = newCommentEmail(before.title, session.user.name, newComment.body, params.id);
+      const recipients = new Set<string>();
+      if (before.requestedBy && before.requestedBy.id !== session.user.id) recipients.add(before.requestedBy.email);
+      if (before.assignedTo && before.assignedTo.id !== session.user.id) recipients.add(before.assignedTo.email);
+      recipients.forEach((email) => emails.push(sendEmail(email, subject, html)));
+    }
+
+    await Promise.all(emails);
+  } catch (err) {
+    console.error("Notification error:", err);
+  }
+
+  return NextResponse.json(workOrder);
+}
