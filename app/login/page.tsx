@@ -27,9 +27,6 @@ export default function LoginPage() {
   return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
       <div style={{ width: "100%", maxWidth: 380 }}>
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 28 }}>
-          <Logo size={30} showTagline />
-        </div>
         <div className="card">
           <h2 style={{ marginTop: 0, marginBottom: 4 }}>Sign in</h2>
           <p style={{ color: "var(--text-muted)", fontSize: 13, marginTop: 0, marginBottom: 20 }}>
