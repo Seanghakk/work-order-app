@@ -41,6 +41,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
   if (!requireManager(session)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (session.user.id === params.id) {
     return NextResponse.json({ error: "You can't delete your own account." }, { status: 400 });
   }
