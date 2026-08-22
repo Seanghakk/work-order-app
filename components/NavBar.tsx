@@ -86,7 +86,7 @@ export default function NavBar() {
             🔔
             {unreadCount > 0 && <span className="notif-dot">{unreadCount > 9 ? "9+" : unreadCount}</span>}
           </button>
-          {session?.user?.name} ({role})
+          <Link href="/account" onClick={() => setOpen(false)}>{session?.user?.name} ({role})</Link>
           <button onClick={() => signOut({ callbackUrl: "/login" })}>Sign out</button>
         </div>
       </div>
