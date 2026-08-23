@@ -12,6 +12,11 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   const session = await getServerSession(authOptions);
   return (
     <html lang="en">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Almarai:wght@400;500;700;800&display=swap" rel="stylesheet" />
+      </head>
       <body>
         <Providers session={session}>
           {session && <NavBar />}
