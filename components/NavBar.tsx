@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import Logo from "./Logo";
+import { canAccessSaleOrders } from "@/lib/permissions";
 
 export default function NavBar() {
   const { data: session } = useSession();
@@ -13,7 +14,20 @@ export default function NavBar() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [panelOpen, setPanelOpen] = useState(false);
+  const [workOpen, setWorkOpen] = useState(false);
+  const [saleOpen, setSaleOpen] = useState(false);
   const navRef = useRef<HTMLDivElement>(null);
+
+  function closeAllPanels() {
+    setPanelOpen(false);
+    setWorkOpen(false);
+    setSaleOpen(false);
+  }
+
+  function closeMenuAndPanels() {
+    setOpen(false);
+    closeAllPanels();
+  }
 
   function loadNotifications() {
     fetch("/api/notifications").then((r) => r.json()).then((data) => {
@@ -24,24 +38,38 @@ export default function NavBar() {
     });
   }
 
-    useEffect(() => {
+  useEffect(() => {
     if (session) loadNotifications();
   }, [session]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (navRef.current && !navRef.current.contains(e.target as Node)) {
-        setPanelOpen(false);
+        closeAllPanels();
       }
     }
-    if (panelOpen) document.addEventListener("mousedown", handleClickOutside);
+    if (panelOpen || workOpen || saleOpen) document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [panelOpen]);
+  }, [panelOpen, workOpen, saleOpen]);
 
   async function handleBellClick() {
     const next = !panelOpen;
+    setWorkOpen(false);
+    setSaleOpen(false);
     setPanelOpen(next);
     if (next) loadNotifications();
+  }
+
+  function toggleWork() {
+    setPanelOpen(false);
+    setSaleOpen(false);
+    setWorkOpen((v) => !v);
+  }
+
+  function toggleSale() {
+    setPanelOpen(false);
+    setWorkOpen(false);
+    setSaleOpen((v) => !v);
   }
 
   async function handleNotificationClick(n: any) {
@@ -60,18 +88,44 @@ export default function NavBar() {
 
   const links = (
     <>
-      <Link href="/dashboard" onClick={() => setOpen(false)}>Dashboard</Link>
-      <Link href="/work-orders" onClick={() => setOpen(false)}>Work orders</Link>
-      <Link href="/assets" onClick={() => setOpen(false)}>Assets</Link>
-      {(role === "MANAGER" || role === "ADMIN") && <Link href="/pm-schedules" onClick={() => setOpen(false)}>PM schedules</Link>}
-      {(role === "MANAGER" || role === "ADMIN") && <Link href="/reports" onClick={() => setOpen(false)}>Reports</Link>}
-      {(role === "MANAGER" || role === "ADMIN") && <Link href="/users" onClick={() => setOpen(false)}>Users</Link>}
-      <Link href="/about" onClick={() => setOpen(false)}>About</Link>
+      <Link href="/dashboard" onClick={closeMenuAndPanels}>Dashboard</Link>
+
+      <span className="nav-dropdown-wrap">
+        <button className={`nav-dropdown-trigger ${workOpen ? "active" : ""}`} onClick={toggleWork}>
+          Work Orders ▾
+        </button>
+        {workOpen && (
+          <div className="nav-dropdown-panel">
+            <Link href="/work-orders" onClick={closeMenuAndPanels}>Work Orders</Link>
+            <Link href="/assets" onClick={closeMenuAndPanels}>Assets</Link>
+            {(role === "MANAGER" || role === "ADMIN") && (
+              <Link href="/pm-schedules" onClick={closeMenuAndPanels}>PM Schedules</Link>
+            )}
+          </div>
+        )}
+      </span>
+
+      {canAccessSaleOrders(role) && (
+        <span className="nav-dropdown-wrap">
+          <button className={`nav-dropdown-trigger ${saleOpen ? "active" : ""}`} onClick={toggleSale}>
+            Sale Orders ▾
+          </button>
+          {saleOpen && (
+            <div className="nav-dropdown-panel">
+              <Link href="/sale-orders" onClick={closeMenuAndPanels}>Sale Orders</Link>
+            </div>
+          )}
+        </span>
+      )}
+
+      {(role === "MANAGER" || role === "ADMIN") && <Link href="/reports" onClick={closeMenuAndPanels}>Reports</Link>}
+      {(role === "MANAGER" || role === "ADMIN") && <Link href="/users" onClick={closeMenuAndPanels}>Users</Link>}
+      <Link href="/about" onClick={closeMenuAndPanels}>About</Link>
     </>
   );
 
   return (
-     <div className="nav" style={{ position: "relative" }} ref={navRef}>
+    <div className="nav" style={{ position: "relative" }} ref={navRef}>
       <div className="nav-top">
         <Logo size={20} />
         <button className="nav-toggle" onClick={() => setOpen(!open)} aria-label="Toggle menu">
@@ -86,7 +140,7 @@ export default function NavBar() {
             🔔
             {unreadCount > 0 && <span className="notif-dot">{unreadCount > 9 ? "9+" : unreadCount}</span>}
           </button>
-          <Link href="/account" onClick={() => setOpen(false)}>{session?.user?.name} ({role})</Link>
+          <Link href="/account" onClick={closeMenuAndPanels}>{session?.user?.name} ({role})</Link>
           <button onClick={() => signOut({ callbackUrl: "/login" })}>Sign out</button>
         </div>
       </div>

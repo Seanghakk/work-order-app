@@ -99,8 +99,12 @@ tr:hover td { background: var(--surface-hover); }
 .badge-medium { background: rgba(14, 92, 134, 0.10); color: var(--navy); border-color: rgba(14, 92, 134, 0.25); }
 .badge-low { background: rgba(91, 107, 122, 0.10); color: var(--text-muted); border-color: var(--border); }
 
-label { display: block; font-size: 13px; font-weight: 500; color: var(--text-muted); margin-bottom: 4px; }
-.field { margin-bottom: 14px; }
+.nav-dropdown-wrap { position: relative; display: inline-block; }
+.nav-dropdown-trigger { background: none; border: none; font-size: 17px; font-weight: 600; color: var(--text-muted); cursor: pointer; padding: 0; font-family: inherit; }
+.nav-dropdown-trigger:hover, .nav-dropdown-trigger.active { color: var(--navy); }
+.nav-dropdown-panel { position: absolute; top: 28px; left: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 8px 24px rgba(16, 40, 60, 0.12); min-width: 180px; z-index: 20; padding: 6px; }
+.nav-dropdown-panel a { display: block; padding: 8px 10px; border-radius: 6px; font-size: 14px; font-weight: 500; color: var(--text); }
+.nav-dropdown-panel a:hover { background: var(--surface-hover); text-decoration: none; }
 
 @media (max-width: 720px) {
   .nav-top { display: flex; }

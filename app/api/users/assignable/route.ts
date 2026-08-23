@@ -9,7 +9,7 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const users = await prisma.user.findMany({
-    where: { role: { in: ["TECHNICIAN", "MANAGER", "ADMIN"] }, active: true },
+    where: { role: { in: ["TECHNICIAN", "MANAGER", "ADMIN", "SALES", "ENGINEERING", "AA"] }, active: true },
     select: { id: true, name: true, role: true },
     orderBy: { name: "asc" },
   });
