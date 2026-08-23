@@ -9,6 +9,9 @@ export default function UsersPage() {
   const [error, setError] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState("");
+  const [editingInfoId, setEditingInfoId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
 
   function load() {
     fetch("/api/users").then((r) => r.json()).then((data) => Array.isArray(data) ? setUsers(data) : setError(data.error));
@@ -54,6 +57,25 @@ export default function UsersPage() {
     setError("");
   }
 
+  function startEditInfo(u: any) {
+    setEditingInfoId(u.id);
+    setEditName(u.name);
+    setEditEmail(u.email);
+  }
+
+  async function saveInfo(id: string) {
+    if (!editName.trim() || !editEmail.trim()) { setError("Name and email can't be empty."); return; }
+    const res = await fetch(`/api/users/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: editName, email: editEmail }),
+    });
+    if (!res.ok) { setError((await res.json()).error); return; }
+    setEditingInfoId(null);
+    setError("");
+    load();
+  }
+
   async function toggleActive(id: string, active: boolean) {
     await fetch(`/api/users/${id}`, {
       method: "PATCH",
@@ -90,12 +112,21 @@ export default function UsersPage() {
 
       <div className="table-scroll">
       <table>
-                <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Reset password</th><th></th></tr></thead>
+        <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Reset password</th><th></th><th></th></tr></thead>
         <tbody>
           {users.map((u) => (
             <tr key={u.id}>
-              <td>{u.name}</td>
-              <td>{u.email}</td>
+              {editingInfoId === u.id ? (
+                <>
+                  <td><input value={editName} onChange={(e) => setEditName(e.target.value)} style={{ width: 130 }} /></td>
+                  <td><input type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} style={{ width: 170 }} /></td>
+                </>
+              ) : (
+                <>
+                  <td>{u.name}</td>
+                  <td>{u.email}</td>
+                </>
+              )}
               <td>
                 <select value={u.role} onChange={(e) => updateRole(u.id, e.target.value)}>
                   {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
@@ -115,6 +146,16 @@ export default function UsersPage() {
                   </div>
                 ) : (
                   <button onClick={() => setEditingId(u.id)}>Reset password</button>
+                )}
+              </td>
+              <td>
+                {editingInfoId === u.id ? (
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button onClick={() => saveInfo(u.id)}>Save</button>
+                    <button onClick={() => setEditingInfoId(null)}>Cancel</button>
+                  </div>
+                ) : (
+                  <button onClick={() => startEditInfo(u)}>Edit info</button>
                 )}
               </td>
               <td><button className="danger" onClick={() => removeUser(u.id)}>Remove</button></td>

@@ -31,6 +31,7 @@ export async function POST(req: Request) {
       customerName: body.customerName,
       description: body.description || null,
       value: body.value ? Number(body.value) : null,
+      dueDate: body.dueDate ? new Date(body.dueDate) : null,
       createdById: session.user.id,
       assignedToId: body.assignedToId || null,
     },

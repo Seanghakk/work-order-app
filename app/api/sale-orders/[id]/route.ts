@@ -33,6 +33,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (body.value !== undefined) data.value = body.value ? Number(body.value) : null;
   if (body.description !== undefined) data.description = body.description || null;
   if (body.title?.trim()) data.title = body.title;
+  if (body.dueDate !== undefined) data.dueDate = body.dueDate ? new Date(body.dueDate) : null;
 
   const saleOrder = await prisma.saleOrder.update({ where: { id: params.id }, data });
 

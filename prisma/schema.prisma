@@ -136,6 +136,7 @@ model SaleOrder {
   description   String?
   status        SaleOrderStatus   @default(INQUIRY)
   value         Float?
+  dueDate       DateTime?
   createdBy     User              @relation("saleOrderCreatedBy", fields: [createdById], references: [id])
   createdById   String
   assignedTo    User?             @relation("saleOrderAssignedTo", fields: [assignedToId], references: [id])

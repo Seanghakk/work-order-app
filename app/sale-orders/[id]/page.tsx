@@ -9,6 +9,8 @@ const STATUS_LABEL: Record<string, string> = {
   PROCUREMENT: "Procurement", DELIVERED: "Delivered", INVOICED: "Invoiced",
   CLOSED: "Closed", CANCELLED: "Cancelled",
 };
+// The stepper only shows the forward-moving stages — Cancelled is a separate outcome, not a step in the sequence
+const STEP_STAGES = ["INQUIRY", "QUOTATION", "CONFIRMED", "PROCUREMENT", "DELIVERED", "INVOICED", "CLOSED"];
 
 export default function SaleOrderDetail() {
   const { id } = useParams<{ id: string }>();
@@ -61,13 +63,48 @@ export default function SaleOrderDetail() {
 
   const canManage = session && ["MANAGER", "ADMIN"].includes(session.user.role);
   const canClose = canManage && (order.status === "CLOSED" || order.status === "CANCELLED");
+  const currentStepIndex = STEP_STAGES.indexOf(order.status);
 
   return (
     <div className="container" style={{ maxWidth: 720 }}>
       <h1>{order.title}</h1>
       <div style={{ marginBottom: 16 }}>
         <span className="badge badge-medium">{STATUS_LABEL[order.status]}</span>
+        {order.dueDate && (
+          <span style={{ marginLeft: 10, fontSize: 13, color: new Date(order.dueDate) < new Date() && order.status !== "CLOSED" && order.status !== "CANCELLED" ? "var(--danger)" : "var(--text-muted)" }}>
+            Due {new Date(order.dueDate).toLocaleDateString()}
+          </span>
+        )}
       </div>
+
+      {order.status !== "CANCELLED" && (
+        <div className="card" style={{ marginBottom: 16, overflowX: "auto" }}>
+          <div style={{ display: "flex", alignItems: "center", minWidth: 600 }}>
+            {STEP_STAGES.map((stage, i) => (
+              <div key={stage} style={{ display: "flex", alignItems: "center", flex: i < STEP_STAGES.length - 1 ? 1 : "none" }}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, minWidth: 70 }}>
+                  <div style={{
+                    width: 26, height: 26, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 12, fontWeight: 700,
+                    background: i <= currentStepIndex ? "var(--navy)" : "var(--surface-hover)",
+                    color: i <= currentStepIndex ? "white" : "var(--text-muted)",
+                    border: i === currentStepIndex ? "2px solid var(--navy-deep)" : "none",
+                  }}>
+                    {i < currentStepIndex ? "✓" : i + 1}
+                  </div>
+                  <span style={{ fontSize: 11, textAlign: "center", color: i <= currentStepIndex ? "var(--text)" : "var(--text-muted)" }}>
+                    {STATUS_LABEL[stage]}
+                  </span>
+                </div>
+                {i < STEP_STAGES.length - 1 && (
+                  <div style={{ flex: 1, height: 2, background: i < currentStepIndex ? "var(--navy)" : "var(--border)", marginBottom: 20 }} />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="card" style={{ marginBottom: 16 }}>
         <p><strong>Customer:</strong> {order.customerName}</p>
         {order.description && <p>{order.description}</p>}
@@ -89,6 +126,10 @@ export default function SaleOrderDetail() {
             <option value="">Unassigned</option>
             {people.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.role})</option>)}
           </select>
+        </div>
+        <div>
+          <label>Due date</label>
+          <input type="date" value={order.dueDate ? order.dueDate.slice(0, 10) : ""} onChange={(e) => updateField({ dueDate: e.target.value || null })} />
         </div>
       </div>
 

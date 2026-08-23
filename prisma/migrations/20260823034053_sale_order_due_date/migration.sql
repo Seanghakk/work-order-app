@@ -1,0 +1,1 @@
+ALTER TABLE "SaleOrder" ADD COLUMN "dueDate" TIMESTAMP(3);

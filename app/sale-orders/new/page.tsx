@@ -8,6 +8,7 @@ export default function NewSaleOrder() {
   const [description, setDescription] = useState("");
   const [value, setValue] = useState("");
   const [assignedToId, setAssignedToId] = useState("");
+  const [dueDate, setDueDate] = useState("");
   const [people, setPeople] = useState<any[]>([]);
   const [error, setError] = useState("");
   const router = useRouter();
@@ -25,7 +26,7 @@ export default function NewSaleOrder() {
     const res = await fetch("/api/sale-orders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, customerName, description, value: value || null, assignedToId: assignedToId || null }),
+      body: JSON.stringify({ title, customerName, description, value: value || null, assignedToId: assignedToId || null, dueDate: dueDate || null }),
     });
     if (!res.ok) {
       const data = await res.json();
@@ -54,6 +55,10 @@ export default function NewSaleOrder() {
         <div className="field">
           <label>Estimated value (optional)</label>
           <input type="number" value={value} onChange={(e) => setValue(e.target.value)} style={{ width: "100%" }} placeholder="0.00" />
+        </div>
+        <div className="field">
+          <label>Due date (optional)</label>
+          <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} style={{ width: "100%" }} />
         </div>
         <div className="field">
           <label>Assign to (optional)</label>
