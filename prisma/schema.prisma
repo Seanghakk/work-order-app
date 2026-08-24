@@ -134,6 +134,7 @@ model WorkOrder {
   createdAt     DateTime        @default(now())
   dueDate       DateTime?
   completedAt   DateTime?
+  archived      Boolean         @default(false)
   comments      Comment[]
 }
 
@@ -179,6 +180,7 @@ model SaleOrder {
   value         Float?
   dueDate       DateTime?
   isCorporatePartner Boolean      @default(false)
+  archived      Boolean           @default(false)
   createdBy     User              @relation("saleOrderCreatedBy", fields: [createdById], references: [id])
   createdById   String
   assignedTo    User?             @relation("saleOrderAssignedTo", fields: [assignedToId], references: [id])

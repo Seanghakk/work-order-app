@@ -24,6 +24,19 @@ export default function WorkOrderDetail() {
 
   const role = session?.user?.role;
   const canEdit = role === "MANAGER" || role === "ADMIN" || role === "TECHNICIAN";
+  const canManage = role === "MANAGER" || role === "ADMIN";
+
+  async function toggleArchived() {
+    if (wo.archived) {
+      await updateField({ archived: false });
+    } else if (wo.status === "COMPLETED" || wo.status === "CANCELED") {
+      if (!confirm("Archive this work order?")) return;
+      await fetch(`/api/work-orders/${id}`, { method: "DELETE" });
+      load();
+    } else {
+      alert("Only completed or canceled work orders can be archived.");
+    }
+  }
 
   async function updateField(data: any) {
     const res = await fetch(`/api/work-orders/${id}`, {
@@ -52,9 +65,11 @@ export default function WorkOrderDetail() {
   return (
     <div className="container" style={{ maxWidth: 720 }}>
       <h1>{wo.title}</h1>
-      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+      <div style={{ display: "flex", gap: 8, marginBottom: 16, alignItems: "center" }}>
         <span className={`badge badge-${wo.status.toLowerCase()}`}>{wo.status.replace("_", " ")}</span>
         <span className={`badge badge-${wo.priority.toLowerCase()}`}>{wo.priority}</span>
+        {wo.archived && <span className="badge badge-on_hold">Archived</span>}
+        {canManage && <button onClick={toggleArchived}>{wo.archived ? "Unarchive" : "Archive"}</button>}
       </div>
       <div className="card" style={{ marginBottom: 16 }}>
         <p>{wo.description}</p>

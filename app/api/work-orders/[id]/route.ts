@@ -44,10 +44,9 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
     return NextResponse.json({ error: "You don't have access to that site." }, { status: 403 });
   }
   if (workOrder.status !== "COMPLETED" && workOrder.status !== "CANCELED") {
-    return NextResponse.json({ error: "Only completed or canceled work orders can be cleared." }, { status: 400 });
+    return NextResponse.json({ error: "Only completed or canceled work orders can be archived." }, { status: 400 });
   }
-  await prisma.comment.deleteMany({ where: { workOrderId: params.id } });
-  await prisma.workOrder.delete({ where: { id: params.id } });
+  await prisma.workOrder.update({ where: { id: params.id }, data: { archived: true } });
   return NextResponse.json({ ok: true });
 }
 
@@ -78,6 +77,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (body.assignedToId !== undefined) data.assignedToId = body.assignedToId || null;
   if (body.priority) data.priority = body.priority;
   if (body.dueDate !== undefined) data.dueDate = body.dueDate ? new Date(body.dueDate) : null;
+  if (typeof body.archived === "boolean" && (session.user.role === "MANAGER" || session.user.role === "ADMIN")) data.archived = body.archived;
 
   const workOrder = await prisma.workOrder.update({ where: { id: params.id }, data });
 

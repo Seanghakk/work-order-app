@@ -4,18 +4,17 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getUserSiteIds, siteWhere, canAccessWorkOrders } from "@/lib/permissions";
 
-export async function GET() {
+export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session || !canAccessWorkOrders(session.user.role)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
   const role = session.user.role;
+  const showArchived = new URL(req.url).searchParams.get("showArchived") === "1";
   const roleWhere =
     role === "TECHNICIAN" ? { OR: [{ assignedToId: session.user.id }, { requestedById: session.user.id }] } :
     role === "REQUESTER" ? { requestedById: session.user.id } :
     {};
-
   const siteIds = await getUserSiteIds(session.user.id, role);
-  const where = { ...roleWhere, ...siteWhere(siteIds) };
+  const where = { ...roleWhere, ...siteWhere(siteIds), archived: showArchived };
 
   const workOrders = await prisma.workOrder.findMany({
     where,

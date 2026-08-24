@@ -4,12 +4,14 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { canAccessServiceRequests } from "@/lib/permissions";
 
-export async function GET() {
+export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session || !canAccessServiceRequests(session.user.role)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const showArchived = new URL(req.url).searchParams.get("showArchived") === "1";
   const serviceRequests = await prisma.serviceRequest.findMany({
+    where: { archived: showArchived },
     include: { createdBy: true, assignedTo: true },
     orderBy: { createdAt: "desc" },
   });

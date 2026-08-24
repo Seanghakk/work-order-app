@@ -39,6 +39,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (body.dueDate !== undefined) data.dueDate = body.dueDate ? new Date(body.dueDate) : null;
   if (body.customerName?.trim()) data.customerName = body.customerName;
   if (body.isCorporatePartner !== undefined) data.isCorporatePartner = !!body.isCorporatePartner;
+  if (typeof body.archived === "boolean" && (session.user.role === "MANAGER" || session.user.role === "ADMIN")) data.archived = body.archived;
 
   const saleOrder = await prisma.saleOrder.update({ where: { id: params.id }, data });
 
@@ -58,9 +59,8 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
   const saleOrder = await prisma.saleOrder.findUnique({ where: { id: params.id } });
   if (!saleOrder) return NextResponse.json({ error: "Not found" }, { status: 404 });
   if (saleOrder.status !== "CONFIRM_PO" && saleOrder.status !== "CANCELLED") {
-    return NextResponse.json({ error: "Only sale orders at Confirm PO or Cancelled can be removed." }, { status: 400 });
+    return NextResponse.json({ error: "Only sale orders at Confirm PO or Cancelled can be archived." }, { status: 400 });
   }
-  await prisma.saleOrderComment.deleteMany({ where: { saleOrderId: params.id } });
-  await prisma.saleOrder.delete({ where: { id: params.id } });
+  await prisma.saleOrder.update({ where: { id: params.id }, data: { archived: true } });
   return NextResponse.json({ ok: true });
 }

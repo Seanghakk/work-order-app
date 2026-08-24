@@ -43,6 +43,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (body.title?.trim()) data.title = body.title;
   if (body.dueDate !== undefined) data.dueDate = body.dueDate ? new Date(body.dueDate) : null;
   if (body.customerName?.trim()) data.customerName = body.customerName;
+  if (typeof body.archived === "boolean" && (session.user.role === "MANAGER" || session.user.role === "ADMIN")) data.archived = body.archived;
 
   const serviceRequest = await prisma.serviceRequest.update({ where: { id: params.id }, data });
 
@@ -120,9 +121,8 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
   const serviceRequest = await prisma.serviceRequest.findUnique({ where: { id: params.id } });
   if (!serviceRequest) return NextResponse.json({ error: "Not found" }, { status: 404 });
   if (serviceRequest.status !== "CLOSE") {
-    return NextResponse.json({ error: "Only closed service requests can be removed." }, { status: 400 });
+    return NextResponse.json({ error: "Only closed service requests can be archived." }, { status: 400 });
   }
-  await prisma.serviceRequestComment.deleteMany({ where: { serviceRequestId: params.id } });
-  await prisma.serviceRequest.delete({ where: { id: params.id } });
+  await prisma.serviceRequest.update({ where: { id: params.id }, data: { archived: true } });
   return NextResponse.json({ ok: true });
 }

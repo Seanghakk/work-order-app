@@ -51,11 +51,15 @@ export default function SaleOrderDetail() {
     setComment("");
   }
 
-  async function handleDelete() {
-    if (!confirm("Remove this sale order? This can't be undone.")) return;
+  async function handleArchive() {
+    if (!confirm("Archive this sale order? It'll be hidden from the main list but still findable under \"Show archived.\"")) return;
     const res = await fetch(`/api/sale-orders/${id}`, { method: "DELETE" });
     if (!res.ok) { setError((await res.json()).error); return; }
     router.push("/sale-orders");
+  }
+
+  async function handleUnarchive() {
+    await updateField({ archived: false });
   }
 
   if (!order || order.error) return <div className="container"><p>{order?.error || "Loading…"}</p></div>;
@@ -69,6 +73,7 @@ export default function SaleOrderDetail() {
       <h1>{order.title}</h1>
       <div style={{ marginBottom: 16 }}>
         <span className="badge badge-medium">{STATUS_LABEL[order.status]}</span>
+        {order.archived && <span className="badge badge-on_hold" style={{ marginLeft: 8 }}>Archived</span>}
         {order.dueDate && (
           <span style={{ marginLeft: 10, fontSize: 13, color: new Date(order.dueDate) < new Date() && order.status !== "CONFIRM_PO" && order.status !== "CANCELLED" ? "var(--danger)" : "var(--text-muted)" }}>
             Due {new Date(order.dueDate).toLocaleDateString()}
@@ -149,9 +154,14 @@ export default function SaleOrderDetail() {
         <button className="primary" type="submit">Post</button>
       </form>
 
-      {canClose && (
+      {canManage && order.archived && (
         <div style={{ paddingTop: 16, borderTop: "1px solid var(--border)" }}>
-          <button className="danger" onClick={handleDelete}>Remove this sale order</button>
+          <button onClick={handleUnarchive}>Unarchive this sale order</button>
+        </div>
+      )}
+      {canClose && !order.archived && (
+        <div style={{ paddingTop: 16, borderTop: "1px solid var(--border)" }}>
+          <button className="danger" onClick={handleArchive}>Archive this sale order</button>
         </div>
       )}
     </div>

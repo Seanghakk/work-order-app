@@ -48,11 +48,15 @@ export default function ServiceRequestDetail() {
     setComment("");
   }
 
-  async function handleDelete() {
-    if (!confirm("Remove this service request? This can't be undone.")) return;
+  async function handleArchive() {
+    if (!confirm("Archive this service request? It'll be hidden from the main list but still findable under \"Show archived.\"")) return;
     const res = await fetch(`/api/service-requests/${id}`, { method: "DELETE" });
     if (!res.ok) { setError((await res.json()).error); return; }
     router.push("/service-requests");
+  }
+
+  async function handleUnarchive() {
+    await updateField({ archived: false });
   }
 
   if (!item || item.error) return <div className="container"><p>{item?.error || "Loading…"}</p></div>;
@@ -66,6 +70,7 @@ export default function ServiceRequestDetail() {
       <h1>{item.title}</h1>
       <div style={{ marginBottom: 16 }}>
         <span className="badge badge-medium">{STATUS_LABEL[item.status]}</span>
+        {item.archived && <span className="badge badge-on_hold" style={{ marginLeft: 8 }}>Archived</span>}
         {item.dueDate && (
           <span style={{ marginLeft: 10, fontSize: 13, color: new Date(item.dueDate) < new Date() && item.status !== "CLOSE" ? "var(--danger)" : "var(--text-muted)" }}>
             Due {new Date(item.dueDate).toLocaleDateString()}
@@ -144,9 +149,14 @@ export default function ServiceRequestDetail() {
         <button className="primary" type="submit">Post</button>
       </form>
 
-      {canClose && (
+      {canManage && item.archived && (
         <div style={{ paddingTop: 16, borderTop: "1px solid var(--border)" }}>
-          <button className="danger" onClick={handleDelete}>Remove this service request</button>
+          <button onClick={handleUnarchive}>Unarchive this service request</button>
+        </div>
+      )}
+      {canClose && !item.archived && (
+        <div style={{ paddingTop: 16, borderTop: "1px solid var(--border)" }}>
+          <button className="danger" onClick={handleArchive}>Archive this service request</button>
         </div>
       )}
     </div>
