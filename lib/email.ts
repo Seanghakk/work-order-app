@@ -58,6 +58,13 @@ export function newRegistrationEmail(name: string, email: string) {
 }
 
 
+export function registrationApprovedEmail(name: string) {
+  return {
+    subject: `Your account is ready`,
+    html: `<p>Hi ${name},</p><p>Your account has been approved and is ready to use.</p><p><a href="${APP_URL}/login">Sign in</a></p>`,
+  };
+}
+
 export function serviceRequestAssignedEmail(title: string, serviceRequestId: string) {
   return {
     subject: `You've been assigned: ${title}`,
