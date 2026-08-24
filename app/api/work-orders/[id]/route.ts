@@ -123,6 +123,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       if (before.assignedTo && before.assignedTo.id !== session.user.id) recipients.set(before.assignedTo.id, { email: before.assignedTo.email, telegramChatId: before.assignedTo.telegramChatId });
       managers.forEach((m) => recipients.set(m.id, { email: m.email, telegramChatId: m.telegramChatId }));
       recipients.forEach((info, userId) => {
+        console.log("Notifying:", userId, "email:", info.email, "telegramChatId:", info.telegramChatId);
         emails.push(sendEmail(info.email, subject, html));
         emails.push(notifyUser(userId, `"${before.title}" status changed to ${data.status.replace("_", " ")}`, params.id));
         if (info.telegramChatId) {
