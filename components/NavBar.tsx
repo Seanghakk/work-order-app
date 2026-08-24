@@ -78,6 +78,7 @@ export default function NavBar() {
     }
     setPanelOpen(false);
     if (n.workOrderId) router.push(`/work-orders/${n.workOrderId}`);
+    else if (n.message?.includes("waiting for approval")) router.push("/users");
     loadNotifications();
   }
 
