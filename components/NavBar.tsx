@@ -140,32 +140,34 @@ export default function NavBar() {
         <span className="nav-logo-inline"><Logo size={18} /></span>
         {links}
         <div className="nav-user">
-          <button className="notif-bell" onClick={handleBellClick} aria-label="Notifications">
-            🔔
-            {unreadCount > 0 && <span className="notif-dot">{unreadCount > 9 ? "9+" : unreadCount}</span>}
-          </button>
+          <span style={{ position: "relative" }}>
+            <button className="notif-bell" onClick={handleBellClick} aria-label="Notifications">
+              🔔
+              {unreadCount > 0 && <span className="notif-dot">{unreadCount > 9 ? "9+" : unreadCount}</span>}
+            </button>
+            {panelOpen && (
+              <div className="notif-panel">
+                {notifications.length > 0 && (
+                  <button className="notif-item" onClick={markAllRead} style={{ color: "var(--blue)", textAlign: "center" }}>
+                    Mark all as read
+                  </button>
+                )}
+                {notifications.length === 0 && <div className="notif-empty">No notifications yet.</div>}
+                {notifications.map((n) => (
+                  <button key={n.id} className={`notif-item ${!n.readAt ? "unread" : ""}`} onClick={() => handleNotificationClick(n)}>
+                    <div>{n.message}</div>
+                    <div style={{ color: "var(--text-muted)", fontSize: 11, marginTop: 4 }}>
+                      {new Date(n.createdAt).toLocaleString()}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </span>
           <Link href="/account" onClick={closeMenuAndPanels}>{session?.user?.name} ({role})</Link>
           <button onClick={() => signOut({ callbackUrl: "/login" })}>Sign out</button>
         </div>
       </div>
-      {panelOpen && (
-        <div className="notif-panel">
-          {notifications.length > 0 && (
-            <button className="notif-item" onClick={markAllRead} style={{ color: "var(--blue)", textAlign: "center" }}>
-              Mark all as read
-            </button>
-          )}
-          {notifications.length === 0 && <div className="notif-empty">No notifications yet.</div>}
-          {notifications.map((n) => (
-            <button key={n.id} className={`notif-item ${!n.readAt ? "unread" : ""}`} onClick={() => handleNotificationClick(n)}>
-              <div>{n.message}</div>
-              <div style={{ color: "var(--text-muted)", fontSize: 11, marginTop: 4 }}>
-                {new Date(n.createdAt).toLocaleString()}
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
