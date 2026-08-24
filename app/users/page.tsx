@@ -6,7 +6,7 @@ const ROLES = ["REQUESTER", "TECHNICIAN", "MANAGER", "ADMIN", "SALES", "ENGINEER
 export default function UsersPage() {
   const [users, setUsers] = useState<any[]>([]);
   const [sites, setSites] = useState<any[]>([]);
-  const [form, setForm] = useState({ name: "", email: "", password: "", role: "REQUESTER" });
+  const [form, setForm] = useState({ name: "", email: "", username: "", password: "", role: "REQUESTER" });
   const [formSiteIds, setFormSiteIds] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -14,6 +14,7 @@ export default function UsersPage() {
   const [editingInfoId, setEditingInfoId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editEmail, setEditEmail] = useState("");
+  const [editUsername, setEditUsername] = useState("");
   const [editingSitesId, setEditingSitesId] = useState<string | null>(null);
   const [editSiteIds, setEditSiteIds] = useState<string[]>([]);
 
@@ -39,7 +40,7 @@ export default function UsersPage() {
       body: JSON.stringify({ ...form, siteIds: formSiteIds }),
     });
     if (!res.ok) { setError((await res.json()).error); return; }
-    setForm({ name: "", email: "", password: "", role: "REQUESTER" });
+    setForm({ name: "", email: "", username: "", password: "", role: "REQUESTER" });
     setFormSiteIds([]);
     setError("");
     load();
@@ -71,6 +72,7 @@ export default function UsersPage() {
     setEditingInfoId(u.id);
     setEditName(u.name);
     setEditEmail(u.email);
+    setEditUsername(u.username || "");
   }
 
   async function saveInfo(id: string) {
@@ -78,7 +80,7 @@ export default function UsersPage() {
     const res = await fetch(`/api/users/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: editName, email: editEmail }),
+      body: JSON.stringify({ name: editName, email: editEmail, username: editUsername }),
     });
     if (!res.ok) { setError((await res.json()).error); return; }
     setEditingInfoId(null);
@@ -131,6 +133,7 @@ export default function UsersPage() {
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end", marginBottom: 12 }}>
           <div><label>Name</label><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
           <div><label>Email</label><input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
+          <div><label>Username (optional)</label><input value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} placeholder="e.g. jdoe" /></div>
           <div><label>Password</label><input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="8+ characters" /></div>
           <div>
             <label>Role</label>
@@ -157,7 +160,7 @@ export default function UsersPage() {
 
       <div className="table-scroll">
       <table>
-        <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Sites</th><th>Status</th><th>Reset password</th><th></th><th></th></tr></thead>
+        <thead><tr><th>Name</th><th>Email</th><th>Username</th><th>Role</th><th>Sites</th><th>Status</th><th>Reset password</th><th></th><th></th></tr></thead>
         <tbody>
           {users.map((u) => (
             <tr key={u.id}>
@@ -165,11 +168,13 @@ export default function UsersPage() {
                 <>
                   <td><input value={editName} onChange={(e) => setEditName(e.target.value)} style={{ width: 130 }} /></td>
                   <td><input type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} style={{ width: 170 }} /></td>
+                  <td><input value={editUsername} onChange={(e) => setEditUsername(e.target.value)} placeholder="Username" style={{ width: 120 }} /></td>
                 </>
               ) : (
                 <>
                   <td>{u.name}</td>
                   <td>{u.email}</td>
+                  <td>{u.username || "—"}</td>
                 </>
               )}
               <td>
