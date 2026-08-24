@@ -22,6 +22,16 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     }
     data.email = body.email;
   }
+  if (body.username !== undefined) {
+    const trimmed = body.username?.trim() || null;
+    if (trimmed) {
+      const existingUsername = await prisma.user.findUnique({ where: { username: trimmed } });
+      if (existingUsername && existingUsername.id !== params.id) {
+        return NextResponse.json({ error: "That username is already taken." }, { status: 400 });
+      }
+    }
+    data.username = trimmed;
+  }
   if (body.role) data.role = body.role;
   if (typeof body.active === "boolean") data.active = body.active;
   if (body.password) {

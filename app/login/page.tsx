@@ -5,20 +5,20 @@ import { useRouter } from "next/navigation";
 import Logo from "@/components/Logo";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!email || !password) {
-      setError("Enter your email and password.");
+    if (!identifier || !password) {
+      setError("Enter your email or username, and password.");
       return;
     }
-    const res = await signIn("credentials", { email, password, redirect: false });
+    const res = await signIn("credentials", { identifier, password, redirect: false });
     if (res?.error) {
-      setError("That email or password isn't right.");
+      setError("That email/username or password isn't right.");
       return;
     }
     window.location.href = "/dashboard";
@@ -34,8 +34,8 @@ export default function LoginPage() {
           </p>
           <form onSubmit={handleSubmit}>
             <div className="field">
-              <label>Email</label>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} style={{ width: "100%" }} />
+              <label>Email or Username</label>
+              <input type="text" value={identifier} onChange={(e) => setIdentifier(e.target.value)} style={{ width: "100%" }} />
             </div>
             <div className="field">
               <label>Password</label>

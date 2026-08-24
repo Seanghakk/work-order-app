@@ -13,7 +13,7 @@ export async function GET() {
   if (!requireManager(session)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const users = await prisma.user.findMany({
     select: {
-      id: true, name: true, email: true, role: true, active: true, createdAt: true,
+      id: true, name: true, email: true, username: true, role: true, active: true, createdAt: true,
       sites: { select: { site: { select: { id: true, name: true } } } },
     },
     orderBy: { createdAt: "asc" },
@@ -33,12 +33,19 @@ export async function POST(req: Request) {
   if (existing) {
     return NextResponse.json({ error: "A user with that email already exists." }, { status: 400 });
   }
+  if (body.username?.trim()) {
+    const existingUsername = await prisma.user.findUnique({ where: { username: body.username } });
+    if (existingUsername) {
+      return NextResponse.json({ error: "That username is already taken." }, { status: 400 });
+    }
+  }
   const passwordHash = await bcrypt.hash(body.password, 10);
   const siteIds: string[] = Array.isArray(body.siteIds) ? body.siteIds : [];
   const user = await prisma.user.create({
     data: {
       name: body.name,
       email: body.email,
+      username: body.username?.trim() || null,
       passwordHash,
       role: body.role || "REQUESTER",
       sites: siteIds.length > 0 ? { create: siteIds.map((siteId) => ({ siteId })) } : undefined,
