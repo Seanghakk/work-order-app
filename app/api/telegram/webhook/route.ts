@@ -8,6 +8,7 @@ import { sendTelegramMessage } from "@/lib/telegram";
 // and save this chat as theirs, so future notifications reach them.
 export async function POST(req: Request) {
   const body = await req.json();
+  console.log("Telegram webhook received:", JSON.stringify(body));
   const message = body.message;
   if (!message || !message.text) return NextResponse.json({ ok: true });
 
