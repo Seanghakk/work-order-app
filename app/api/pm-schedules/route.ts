@@ -2,11 +2,17 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getUserSiteIds } from "@/lib/permissions";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const schedules = await prisma.pMSchedule.findMany({ include: { asset: true }, orderBy: { nextDueAt: "asc" } });
+  const siteIds = await getUserSiteIds(session.user.id, session.user.role);
+  const schedules = await prisma.pMSchedule.findMany({
+    where: siteIds === "ALL" ? {} : { asset: { siteId: { in: siteIds } } },
+    include: { asset: { include: { site: true } } },
+    orderBy: { nextDueAt: "asc" },
+  });
   return NextResponse.json(schedules);
 }
 
@@ -18,6 +24,12 @@ export async function POST(req: Request) {
   const body = await req.json();
   if (!body.name || !body.assetId || !body.frequencyDays || !body.taskTemplate) {
     return NextResponse.json({ error: "Name, asset, frequency, and task are required." }, { status: 400 });
+  }
+  const asset = await prisma.asset.findUnique({ where: { id: body.assetId } });
+  if (!asset) return NextResponse.json({ error: "Asset not found." }, { status: 404 });
+  const siteIds = await getUserSiteIds(session.user.id, session.user.role);
+  if (siteIds !== "ALL" && !siteIds.includes(asset.siteId)) {
+    return NextResponse.json({ error: "You don't have access to that asset's site." }, { status: 403 });
   }
   const schedule = await prisma.pMSchedule.create({
     data: {

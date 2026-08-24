@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getUserSiteIds, siteWhere } from "@/lib/permissions";
 import * as XLSX from "xlsx";
 
 export async function GET() {
@@ -9,12 +10,15 @@ export async function GET() {
   if (!session || (session.user.role !== "MANAGER" && session.user.role !== "ADMIN")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const siteIds = await getUserSiteIds(session.user.id, session.user.role);
+  const where = siteWhere(siteIds);
 
   const [byStatus, byPriority, workOrders] = await Promise.all([
-    prisma.workOrder.groupBy({ by: ["status"], _count: true }),
-    prisma.workOrder.groupBy({ by: ["priority"], _count: true }),
+    prisma.workOrder.groupBy({ by: ["status"], where, _count: true }),
+    prisma.workOrder.groupBy({ by: ["priority"], where, _count: true }),
     prisma.workOrder.findMany({
-      include: { asset: true, assignedTo: true, requestedBy: true },
+      where,
+      include: { asset: true, assignedTo: true, requestedBy: true, site: true },
       orderBy: { createdAt: "desc" },
     }),
   ]);
@@ -39,6 +43,7 @@ export async function GET() {
   ]);
 
   const workOrderRows = workOrders.map((w) => ({
+    Site: w.site.name,
     Title: w.title,
     Status: w.status,
     Priority: w.priority,

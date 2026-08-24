@@ -5,18 +5,27 @@ const ROLES = ["REQUESTER", "TECHNICIAN", "MANAGER", "ADMIN", "SALES", "ENGINEER
 
 export default function UsersPage() {
   const [users, setUsers] = useState<any[]>([]);
+  const [sites, setSites] = useState<any[]>([]);
   const [form, setForm] = useState({ name: "", email: "", password: "", role: "REQUESTER" });
+  const [formSiteIds, setFormSiteIds] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState("");
   const [editingInfoId, setEditingInfoId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editEmail, setEditEmail] = useState("");
+  const [editingSitesId, setEditingSitesId] = useState<string | null>(null);
+  const [editSiteIds, setEditSiteIds] = useState<string[]>([]);
 
   function load() {
     fetch("/api/users").then((r) => r.json()).then((data) => Array.isArray(data) ? setUsers(data) : setError(data.error));
+    fetch("/api/sites").then((r) => r.json()).then((data) => Array.isArray(data) && setSites(data));
   }
   useEffect(load, []);
+
+  function toggleFormSite(id: string) {
+    setFormSiteIds((prev) => (prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]));
+  }
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -27,10 +36,11 @@ export default function UsersPage() {
     const res = await fetch("/api/users", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ ...form, siteIds: formSiteIds }),
     });
     if (!res.ok) { setError((await res.json()).error); return; }
     setForm({ name: "", email: "", password: "", role: "REQUESTER" });
+    setFormSiteIds([]);
     setError("");
     load();
   }
@@ -76,6 +86,27 @@ export default function UsersPage() {
     load();
   }
 
+  function startEditSites(u: any) {
+    setEditingSitesId(u.id);
+    setEditSiteIds((u.sites || []).map((s: any) => s.site.id));
+  }
+
+  function toggleEditSite(id: string) {
+    setEditSiteIds((prev) => (prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]));
+  }
+
+  async function saveSites(id: string) {
+    const res = await fetch(`/api/users/${id}/sites`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ siteIds: editSiteIds }),
+    });
+    if (!res.ok) { setError((await res.json()).error || "Couldn't update site assignments."); return; }
+    setEditingSitesId(null);
+    setError("");
+    load();
+  }
+
   async function toggleActive(id: string, active: boolean) {
     await fetch(`/api/users/${id}`, {
       method: "PATCH",
@@ -93,18 +124,32 @@ export default function UsersPage() {
   }
 
   return (
-    <div className="container">
+    <div className="container" style={{ maxWidth: 1400 }}>
       <h1>Users</h1>
 
-      <form onSubmit={handleCreate} className="card" style={{ marginBottom: 16, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" }}>
-        <div><label>Name</label><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
-        <div><label>Email</label><input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
-        <div><label>Password</label><input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="8+ characters" /></div>
-        <div>
-          <label>Role</label>
-          <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
-            {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
-          </select>
+      <form onSubmit={handleCreate} className="card" style={{ marginBottom: 16 }}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end", marginBottom: 12 }}>
+          <div><label>Name</label><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
+          <div><label>Email</label><input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
+          <div><label>Password</label><input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="8+ characters" /></div>
+          <div>
+            <label>Role</label>
+            <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
+              {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+            </select>
+          </div>
+        </div>
+        <div style={{ marginBottom: 12 }}>
+          <label>Sites (leave empty for Admins — they see everything regardless)</label>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+            {sites.map((s) => (
+              <label key={s.id} style={{ display: "flex", alignItems: "center", gap: 5, fontWeight: "normal", fontSize: 13 }}>
+                <input type="checkbox" checked={formSiteIds.includes(s.id)} onChange={() => toggleFormSite(s.id)} />
+                {s.name}
+              </label>
+            ))}
+            {sites.length === 0 && <span style={{ fontSize: 13, color: "var(--text-muted)" }}>No sites created yet — add one from the Sites page first.</span>}
+          </div>
         </div>
         <button className="primary" type="submit">Add user</button>
       </form>
@@ -112,7 +157,7 @@ export default function UsersPage() {
 
       <div className="table-scroll">
       <table>
-        <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Reset password</th><th></th><th></th></tr></thead>
+        <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Sites</th><th>Status</th><th>Reset password</th><th></th><th></th></tr></thead>
         <tbody>
           {users.map((u) => (
             <tr key={u.id}>
@@ -131,6 +176,31 @@ export default function UsersPage() {
                 <select value={u.role} onChange={(e) => updateRole(u.id, e.target.value)}>
                   {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
                 </select>
+              </td>
+              <td style={{ minWidth: 160 }}>
+                {editingSitesId === u.id ? (
+                  <div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 6 }}>
+                      {sites.map((s) => (
+                        <label key={s.id} style={{ display: "flex", alignItems: "center", gap: 5, fontWeight: "normal", fontSize: 12 }}>
+                          <input type="checkbox" checked={editSiteIds.includes(s.id)} onChange={() => toggleEditSite(s.id)} />
+                          {s.name}
+                        </label>
+                      ))}
+                    </div>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <button onClick={() => saveSites(u.id)}>Save</button>
+                      <button onClick={() => setEditingSitesId(null)}>Cancel</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 4 }}>
+                      {u.role === "ADMIN" ? "All sites" : (u.sites?.length ? u.sites.map((s: any) => s.site.name).join(", ") : "None assigned")}
+                    </div>
+                    <button onClick={() => startEditSites(u)}>Edit sites</button>
+                  </div>
+                )}
               </td>
               <td>
                 <button onClick={() => toggleActive(u.id, !u.active)}>

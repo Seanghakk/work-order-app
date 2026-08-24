@@ -27,8 +27,9 @@ export default function SaleOrderDetail() {
   }
   useEffect(() => { load(); }, [id]);
   useEffect(() => {
-    fetch("/api/users/assignable").then((r) => r.json()).then((data) => Array.isArray(data) && setPeople(data));
-  }, []);
+    if (!order?.siteId) return;
+    fetch(`/api/users/assignable?siteId=${order.siteId}`).then((r) => r.json()).then((data) => Array.isArray(data) && setPeople(data));
+  }, [order?.siteId]);
 
   async function updateField(data: any) {
     const res = await fetch(`/api/sale-orders/${id}`, {
@@ -106,7 +107,7 @@ export default function SaleOrderDetail() {
       )}
 
       <div className="card" style={{ marginBottom: 16 }}>
-        <p><strong>Customer:</strong> {order.customerName}</p>
+        <p><strong>Site:</strong> {order.site?.name || "—"} · <strong>Customer:</strong> {order.customerName}</p>
         {order.description && <p>{order.description}</p>}
         <p style={{ fontSize: 13, color: "var(--text-muted)" }}>
           Value: {order.value ? `$${Number(order.value).toLocaleString()}` : "—"} · Created by {order.createdBy?.name} · {new Date(order.createdAt).toLocaleString()}

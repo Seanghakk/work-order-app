@@ -51,7 +51,7 @@ export default function PMSchedulesPage() {
           <label>Asset</label>
           <select value={form.assetId} onChange={(e) => setForm({ ...form, assetId: e.target.value })}>
             <option value="">Select</option>
-            {assets.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+            {assets.map((a) => <option key={a.id} value={a.id}>{a.name} — {a.site?.name}</option>)}
           </select>
         </div>
         <div><label>Frequency (days)</label><input type="number" value={form.frequencyDays} onChange={(e) => setForm({ ...form, frequencyDays: e.target.value })} style={{ width: 90 }} /></div>
@@ -61,11 +61,11 @@ export default function PMSchedulesPage() {
       {error && <p style={{ color: "var(--danger)", fontSize: 13 }}>{error}</p>}
       <div className="table-scroll">
       <table>
-        <thead><tr><th>Name</th><th>Asset</th><th>Every</th><th>Next due</th><th>Active</th><th></th></tr></thead>
+        <thead><tr><th>Name</th><th>Asset</th><th>Site</th><th>Every</th><th>Next due</th><th>Active</th><th></th></tr></thead>
         <tbody>
           {schedules.map((s) => (
             <tr key={s.id}>
-              <td>{s.name}</td><td>{s.asset.name}</td><td>{s.frequencyDays} days</td>
+              <td>{s.name}</td><td>{s.asset.name}</td><td>{s.asset.site?.name || "—"}</td><td>{s.frequencyDays} days</td>
               <td>{new Date(s.nextDueAt).toLocaleDateString()}</td><td>{s.active ? "Yes" : "No"}</td>
               <td><button className="danger" onClick={() => removeSchedule(s.id)}>Delete</button></td>
             </tr>

@@ -60,6 +60,29 @@ model User {
   saleOrdersAssigned SaleOrder[]        @relation("saleOrderAssignedTo")
   saleOrderComments  SaleOrderComment[]
   notifications Notification[]
+  sites         UserSite[]
+}
+
+model Site {
+  id         String      @id @default(cuid())
+  name       String      @unique
+  address    String?
+  active     Boolean     @default(true)
+  createdAt  DateTime    @default(now())
+  users      UserSite[]
+  assets     Asset[]
+  workOrders WorkOrder[]
+  saleOrders SaleOrder[]
+}
+
+model UserSite {
+  id     String @id @default(cuid())
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  site   Site   @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  siteId String
+
+  @@unique([userId, siteId])
 }
 
 model Asset {
@@ -72,6 +95,8 @@ model Asset {
   installDate  DateTime?
   notes        String?
   createdAt    DateTime     @default(now())
+  site         Site         @relation(fields: [siteId], references: [id])
+  siteId       String
   workOrders   WorkOrder[]
   pmSchedules  PMSchedule[]
 }
@@ -83,6 +108,8 @@ model WorkOrder {
   status        WorkOrderStatus @default(OPEN)
   priority      Priority        @default(MEDIUM)
   source        String          @default("MANUAL")
+  site          Site            @relation(fields: [siteId], references: [id])
+  siteId        String
   asset         Asset?          @relation(fields: [assetId], references: [id])
   assetId       String?
   requestedBy   User            @relation("requestedBy", fields: [requestedById], references: [id])
@@ -137,6 +164,8 @@ model SaleOrder {
   status        SaleOrderStatus   @default(INQUIRY)
   value         Float?
   dueDate       DateTime?
+  site          Site              @relation(fields: [siteId], references: [id])
+  siteId        String
   createdBy     User              @relation("saleOrderCreatedBy", fields: [createdById], references: [id])
   createdById   String
   assignedTo    User?             @relation("saleOrderAssignedTo", fields: [assignedToId], references: [id])

@@ -70,3 +70,18 @@ Natural next additions once this is in use: file/photo attachments on work
 orders, email notifications on assignment, a technician mobile view, audit
 history, and CSV export from Reports. Happy to build any of these next —
 just say which.
+
+## Multi-site (added)
+
+Work orders, assets, and sale orders now belong to a specific **Site**. Users are
+assigned to one or more sites (via the Users page) and only see data from their
+assigned sites — except Admins, who see everything across every site regardless
+of assignment.
+
+**After deploying this update:**
+1. Every existing record was automatically assigned to a default "Main Site" by
+   the migration, and every existing user was automatically given access to it —
+   nothing breaks, nobody is locked out.
+2. Go to **Sites** (Admin only) to rename "Main Site" or add your real sites.
+3. Go to **Users** to assign each person to the site(s) they should actually see.
+   Admins don't need site assignments — they bypass the restriction entirely.

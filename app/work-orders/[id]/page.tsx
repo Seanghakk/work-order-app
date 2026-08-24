@@ -18,8 +18,9 @@ export default function WorkOrderDetail() {
 
    useEffect(() => { load(); }, [id]);
   useEffect(() => {
-    fetch("/api/users/assignable").then((r) => r.json()).then((data) => Array.isArray(data) && setTechnicians(data));
-  }, []);
+    if (!wo?.siteId) return;
+    fetch(`/api/users/assignable?siteId=${wo.siteId}`).then((r) => r.json()).then((data) => Array.isArray(data) && setTechnicians(data));
+  }, [wo?.siteId]);
 
   const role = session?.user?.role;
   const canEdit = role === "MANAGER" || role === "ADMIN" || role === "TECHNICIAN";
@@ -58,7 +59,7 @@ export default function WorkOrderDetail() {
       <div className="card" style={{ marginBottom: 16 }}>
         <p>{wo.description}</p>
         <p style={{ fontSize: 13, color: "var(--text-muted)" }}>
-          Asset: {wo.asset?.name || "—"} · Requested by {wo.requestedBy?.name} · Created {new Date(wo.createdAt).toLocaleString()}
+          Site: {wo.site?.name || "—"} · Asset: {wo.asset?.name || "—"} · Requested by {wo.requestedBy?.name} · Created {new Date(wo.createdAt).toLocaleString()}
         </p>
       </div>
 

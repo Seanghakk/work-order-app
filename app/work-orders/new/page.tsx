@@ -8,24 +8,34 @@ export default function NewWorkOrder() {
   const [priority, setPriority] = useState("MEDIUM");
   const [assetId, setAssetId] = useState("");
   const [dueDate, setDueDate] = useState("");
+  const [siteId, setSiteId] = useState("");
   const [assets, setAssets] = useState<any[]>([]);
+  const [sites, setSites] = useState<any[]>([]);
   const [error, setError] = useState("");
   const router = useRouter();
 
   useEffect(() => {
     fetch("/api/assets").then((r) => r.json()).then(setAssets);
+    fetch("/api/sites").then((r) => r.json()).then((data) => {
+      if (Array.isArray(data)) {
+        setSites(data);
+        if (data.length === 1) setSiteId(data[0].id);
+      }
+    });
   }, []);
+
+  const assetsForSite = siteId ? assets.filter((a) => a.siteId === siteId) : [];
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!title.trim() || !description.trim()) {
-      setError("Title and description are required.");
+    if (!title.trim() || !description.trim() || !siteId) {
+      setError("Title, description, and site are required.");
       return;
     }
     const res = await fetch("/api/work-orders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, description, priority, assetId: assetId || null, dueDate: dueDate || null }),
+      body: JSON.stringify({ title, description, priority, assetId: assetId || null, dueDate: dueDate || null, siteId }),
     });
     if (!res.ok) {
       const data = await res.json();
@@ -39,6 +49,13 @@ export default function NewWorkOrder() {
     <div className="container" style={{ maxWidth: 560 }}>
       <h1>New work order</h1>
       <form onSubmit={handleSubmit} className="card">
+        <div className="field">
+          <label>Site</label>
+          <select value={siteId} onChange={(e) => { setSiteId(e.target.value); setAssetId(""); }} style={{ width: "100%" }}>
+            <option value="">Select</option>
+            {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
+        </div>
         <div className="field">
           <label>Title</label>
           <input value={title} onChange={(e) => setTitle(e.target.value)} style={{ width: "100%" }} placeholder="AHU-01 not reaching setpoint" />
@@ -58,10 +75,11 @@ export default function NewWorkOrder() {
         </div>
         <div className="field">
           <label>Asset (optional)</label>
-          <select value={assetId} onChange={(e) => setAssetId(e.target.value)} style={{ width: "100%" }}>
+          <select value={assetId} onChange={(e) => setAssetId(e.target.value)} style={{ width: "100%" }} disabled={!siteId}>
             <option value="">None</option>
-            {assets.map((a) => <option key={a.id} value={a.id}>{a.name} ({a.tag})</option>)}
+            {assetsForSite.map((a) => <option key={a.id} value={a.id}>{a.name} ({a.tag})</option>)}
           </select>
+          {!siteId && <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>Choose a site first to see its assets.</p>}
         </div>
         <div className="field">
           <label>Due date (optional)</label>

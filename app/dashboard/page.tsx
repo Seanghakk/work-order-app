@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { canAccessSaleOrders } from "@/lib/permissions";
+import { canAccessSaleOrders, getUserSiteIds, siteWhere } from "@/lib/permissions";
 import BarChart from "@/components/BarChart";
 import Link from "next/link";
 
@@ -18,11 +18,13 @@ const SO_STATUS_LABEL: Record<string, string> = {
 export default async function Dashboard() {
   const session = await getServerSession(authOptions);
   const role = session!.user.role;
+  const siteIds = await getUserSiteIds(session!.user.id, role);
+  const siteFilter = siteWhere(siteIds);
 
   const woWhere =
-    role === "TECHNICIAN" ? { OR: [{ assignedToId: session!.user.id }, { requestedById: session!.user.id }] } :
-    role === "REQUESTER" ? { requestedById: session!.user.id } :
-    {};
+    role === "TECHNICIAN" ? { OR: [{ assignedToId: session!.user.id }, { requestedById: session!.user.id }], ...siteFilter } :
+    role === "REQUESTER" ? { requestedById: session!.user.id, ...siteFilter } :
+    siteFilter;
 
   const [open, inProgress, overdue, completedThisWeek, woByStatus, woByPriority] = await Promise.all([
     prisma.workOrder.count({ where: { ...woWhere, status: "OPEN" } }),
@@ -40,10 +42,10 @@ export default async function Dashboard() {
     monthStart.setDate(1);
     monthStart.setHours(0, 0, 0, 0);
     const [pipeline, closedThisMonth, valueAgg, byStage] = await Promise.all([
-      prisma.saleOrder.count({ where: { status: { notIn: ["CLOSED", "CANCELLED"] } } }),
-      prisma.saleOrder.count({ where: { status: "CLOSED", updatedAt: { gte: monthStart } } }),
-      prisma.saleOrder.aggregate({ _sum: { value: true }, where: { status: { notIn: ["CLOSED", "CANCELLED"] } } }),
-      prisma.saleOrder.groupBy({ by: ["status"], _count: true }),
+      prisma.saleOrder.count({ where: { ...siteFilter, status: { notIn: ["CLOSED", "CANCELLED"] } } }),
+      prisma.saleOrder.count({ where: { ...siteFilter, status: "CLOSED", updatedAt: { gte: monthStart } } }),
+      prisma.saleOrder.aggregate({ _sum: { value: true }, where: { ...siteFilter, status: { notIn: ["CLOSED", "CANCELLED"] } } }),
+      prisma.saleOrder.groupBy({ by: ["status"], where: siteFilter, _count: true }),
     ]);
     soPipeline = pipeline;
     soClosedThisMonth = closedThisMonth;

@@ -4,6 +4,12 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendEmail, workOrderAssignedEmail, statusChangedEmail, newCommentEmail } from "@/lib/email";
 import { notifyUser } from "@/lib/notifications";
+import { getUserSiteIds } from "@/lib/permissions";
+
+async function checkSiteAccess(userId: string, role: string, siteId: string) {
+  const siteIds = await getUserSiteIds(userId, role);
+  return siteIds === "ALL" || siteIds.includes(siteId);
+}
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
@@ -15,10 +21,14 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
       asset: true,
       assignedTo: true,
       requestedBy: true,
+      site: true,
       comments: { include: { author: true }, orderBy: { createdAt: "asc" } },
     },
   });
   if (!workOrder) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!(await checkSiteAccess(session.user.id, session.user.role, workOrder.siteId))) {
+    return NextResponse.json({ error: "You don't have access to that site." }, { status: 403 });
+  }
   return NextResponse.json(workOrder);
 }
 
@@ -29,6 +39,9 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
   }
   const workOrder = await prisma.workOrder.findUnique({ where: { id: params.id } });
   if (!workOrder) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!(await checkSiteAccess(session.user.id, session.user.role, workOrder.siteId))) {
+    return NextResponse.json({ error: "You don't have access to that site." }, { status: 403 });
+  }
   if (workOrder.status !== "COMPLETED" && workOrder.status !== "CANCELED") {
     return NextResponse.json({ error: "Only completed or canceled work orders can be cleared." }, { status: 400 });
   }
@@ -52,6 +65,9 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     include: { assignedTo: true, requestedBy: true },
   });
   if (!before) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!(await checkSiteAccess(session.user.id, session.user.role, before.siteId))) {
+    return NextResponse.json({ error: "You don't have access to that site." }, { status: 403 });
+  }
 
   const data: any = {};
   if (body.status) {
@@ -72,12 +88,20 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   }
 
   // Email notifications — never let a failure here affect the response
-    try {
+  try {
     const emails: Promise<any>[] = [];
-    const managers = await prisma.user.findMany({
+    const allManagersAndAdmins = await prisma.user.findMany({
       where: { role: { in: ["MANAGER", "ADMIN"] }, active: true, id: { not: session.user.id } },
-      select: { id: true, email: true },
+      select: { id: true, email: true, role: true },
     });
+    // Only notify managers/admins who actually have access to this work order's site —
+    // admins always do, managers only if they're assigned to that site.
+    const managers: { id: string; email: string }[] = [];
+    for (const m of allManagersAndAdmins) {
+      if (m.role === "ADMIN" || (await checkSiteAccess(m.id, m.role, before.siteId))) {
+        managers.push(m);
+      }
+    }
 
     if (data.assignedToId && data.assignedToId !== before.assignedToId) {
       const newAssignee = await prisma.user.findUnique({ where: { id: data.assignedToId } });

@@ -5,25 +5,27 @@ import { useSession } from "next-auth/react";
 export default function AssetsPage() {
   const { data: session } = useSession();
   const [assets, setAssets] = useState<any[]>([]);
-  const [form, setForm] = useState({ name: "", tag: "", location: "", category: "" });
+  const [sites, setSites] = useState<any[]>([]);
+  const [form, setForm] = useState({ name: "", tag: "", location: "", category: "", siteId: "" });
   const [error, setError] = useState("");
   const canAdd = session?.user?.role === "MANAGER" || session?.user?.role === "ADMIN";
 
   function load() {
     fetch("/api/assets").then((r) => r.json()).then(setAssets);
+    fetch("/api/sites").then((r) => r.json()).then((data) => Array.isArray(data) && setSites(data));
   }
   useEffect(load, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.name.trim() || !form.tag.trim()) { setError("Name and tag are required."); return; }
+    if (!form.name.trim() || !form.tag.trim() || !form.siteId) { setError("Name, tag, and site are required."); return; }
     const res = await fetch("/api/assets", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
     });
     if (!res.ok) { setError((await res.json()).error); return; }
-    setForm({ name: "", tag: "", location: "", category: "" });
+    setForm({ name: "", tag: "", location: "", category: "", siteId: "" });
     setError("");
     load();
   }
@@ -45,17 +47,24 @@ export default function AssetsPage() {
           <div><label>Tag</label><input value={form.tag} onChange={(e) => setForm({ ...form, tag: e.target.value })} placeholder="AHU-02" /></div>
           <div><label>Location</label><input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} /></div>
           <div><label>Category</label><input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="HVAC" /></div>
+          <div>
+            <label>Site</label>
+            <select value={form.siteId} onChange={(e) => setForm({ ...form, siteId: e.target.value })}>
+              <option value="">Select</option>
+              {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          </div>
           <button className="primary" type="submit">Add asset</button>
         </form>
       )}
       {error && <p style={{ color: "var(--danger)", fontSize: 13 }}>{error}</p>}
       <div className="table-scroll">
       <table>
-        <thead><tr><th>Name</th><th>Tag</th><th>Location</th><th>Category</th><th>Status</th>{canAdd && <th></th>}</tr></thead>
+        <thead><tr><th>Name</th><th>Tag</th><th>Site</th><th>Location</th><th>Category</th><th>Status</th>{canAdd && <th></th>}</tr></thead>
         <tbody>
           {assets.map((a) => (
             <tr key={a.id}>
-              <td>{a.name}</td><td>{a.tag}</td><td>{a.location || "—"}</td><td>{a.category || "—"}</td><td>{a.status}</td>
+              <td>{a.name}</td><td>{a.tag}</td><td>{a.site?.name || "—"}</td><td>{a.location || "—"}</td><td>{a.category || "—"}</td><td>{a.status}</td>
               {canAdd && <td><button className="danger" onClick={() => removeAsset(a.id)}>Delete</button></td>}
             </tr>
           ))}

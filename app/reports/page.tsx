@@ -1,11 +1,18 @@
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getUserSiteIds, siteWhere } from "@/lib/permissions";
 
 export default async function ReportsPage() {
+  const session = await getServerSession(authOptions);
+  const siteIds = await getUserSiteIds(session!.user.id, session!.user.role);
+  const where = siteWhere(siteIds);
+
   const [byStatus, byPriority, completed, overdue] = await Promise.all([
-    prisma.workOrder.groupBy({ by: ["status"], _count: true }),
-    prisma.workOrder.groupBy({ by: ["priority"], _count: true }),
-    prisma.workOrder.findMany({ where: { status: "COMPLETED", completedAt: { not: null } }, select: { createdAt: true, completedAt: true } }),
-    prisma.workOrder.count({ where: { dueDate: { lt: new Date() }, status: { notIn: ["COMPLETED", "CANCELED"] } } }),
+    prisma.workOrder.groupBy({ by: ["status"], where, _count: true }),
+    prisma.workOrder.groupBy({ by: ["priority"], where, _count: true }),
+    prisma.workOrder.findMany({ where: { ...where, status: "COMPLETED", completedAt: { not: null } }, select: { createdAt: true, completedAt: true } }),
+    prisma.workOrder.count({ where: { ...where, dueDate: { lt: new Date() }, status: { notIn: ["COMPLETED", "CANCELED"] } } }),
   ]);
 
   const avgHours = completed.length

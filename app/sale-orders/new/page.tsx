@@ -9,24 +9,36 @@ export default function NewSaleOrder() {
   const [value, setValue] = useState("");
   const [assignedToId, setAssignedToId] = useState("");
   const [dueDate, setDueDate] = useState("");
+  const [siteId, setSiteId] = useState("");
   const [people, setPeople] = useState<any[]>([]);
+  const [sites, setSites] = useState<any[]>([]);
   const [error, setError] = useState("");
   const router = useRouter();
 
   useEffect(() => {
-    fetch("/api/users/assignable").then((r) => r.json()).then((data) => Array.isArray(data) && setPeople(data));
+    fetch("/api/sites").then((r) => r.json()).then((data) => {
+      if (Array.isArray(data)) {
+        setSites(data);
+        if (data.length === 1) setSiteId(data[0].id);
+      }
+    });
   }, []);
+
+  useEffect(() => {
+    if (!siteId) { setPeople([]); return; }
+    fetch(`/api/users/assignable?siteId=${siteId}`).then((r) => r.json()).then((data) => Array.isArray(data) && setPeople(data));
+  }, [siteId]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!title.trim() || !customerName.trim()) {
-      setError("Title and customer name are required.");
+    if (!title.trim() || !customerName.trim() || !siteId) {
+      setError("Title, customer name, and site are required.");
       return;
     }
     const res = await fetch("/api/sale-orders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, customerName, description, value: value || null, assignedToId: assignedToId || null, dueDate: dueDate || null }),
+      body: JSON.stringify({ title, customerName, description, value: value || null, assignedToId: assignedToId || null, dueDate: dueDate || null, siteId }),
     });
     if (!res.ok) {
       const data = await res.json();
@@ -40,6 +52,13 @@ export default function NewSaleOrder() {
     <div className="container" style={{ maxWidth: 560 }}>
       <h1>New sale order</h1>
       <form onSubmit={handleSubmit} className="card">
+        <div className="field">
+          <label>Site</label>
+          <select value={siteId} onChange={(e) => setSiteId(e.target.value)} style={{ width: "100%" }}>
+            <option value="">Select</option>
+            {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
+        </div>
         <div className="field">
           <label>Title</label>
           <input value={title} onChange={(e) => setTitle(e.target.value)} style={{ width: "100%" }} placeholder="CCTV upgrade — ABC Tower" />

@@ -12,7 +12,10 @@ export async function GET() {
   const session = await getServerSession(authOptions);
   if (!requireManager(session)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const users = await prisma.user.findMany({
-    select: { id: true, name: true, email: true, role: true, active: true, createdAt: true },
+    select: {
+      id: true, name: true, email: true, role: true, active: true, createdAt: true,
+      sites: { select: { site: { select: { id: true, name: true } } } },
+    },
     orderBy: { createdAt: "asc" },
   });
   return NextResponse.json(users);
@@ -31,8 +34,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "A user with that email already exists." }, { status: 400 });
   }
   const passwordHash = await bcrypt.hash(body.password, 10);
+  const siteIds: string[] = Array.isArray(body.siteIds) ? body.siteIds : [];
   const user = await prisma.user.create({
-    data: { name: body.name, email: body.email, passwordHash, role: body.role || "REQUESTER" },
+    data: {
+      name: body.name,
+      email: body.email,
+      passwordHash,
+      role: body.role || "REQUESTER",
+      sites: siteIds.length > 0 ? { create: siteIds.map((siteId) => ({ siteId })) } : undefined,
+    },
     select: { id: true, name: true, email: true, role: true, createdAt: true },
   });
   return NextResponse.json(user, { status: 201 });

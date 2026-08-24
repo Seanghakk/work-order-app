@@ -25,6 +25,7 @@ export async function POST(req: Request) {
         priority: "MEDIUM",
         source: "PM",
         assetId: schedule.assetId,
+        siteId: schedule.asset.siteId,
         requestedById: admin.id,
         pmScheduleId: schedule.id,
       },
