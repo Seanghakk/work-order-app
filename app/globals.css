@@ -81,7 +81,7 @@ tr:hover td { background: var(--surface-hover); }
 .nav-links { display: flex; gap: 20px; align-items: center; padding: 12px 24px; }
 .nav-logo-inline { margin-right: 8px; }
 .nav-user { margin-left: auto; font-size: 13px; color: var(--text-muted); display: flex; align-items: center; gap: 12px; white-space: nowrap; }
-.container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+.container { max-width: 1400px; margin: 0 auto; padding: 24px; }
 .table-scroll { overflow-x: auto; border-radius: 10px; border: 1px solid var(--border); }
 .table-scroll table { border: none; }
 .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }

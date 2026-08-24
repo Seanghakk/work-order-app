@@ -124,7 +124,7 @@ export default function UsersPage() {
   }
 
   return (
-    <div className="container" style={{ maxWidth: 1400 }}>
+    <div className="container">
       <h1>Users</h1>
 
       <form onSubmit={handleCreate} className="card" style={{ marginBottom: 16 }}>
@@ -177,12 +177,12 @@ export default function UsersPage() {
                   {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
                 </select>
               </td>
-              <td style={{ minWidth: 160 }}>
+              <td style={{ minWidth: 220 }}>
                 {editingSitesId === u.id ? (
                   <div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 6 }}>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 6, maxWidth: 260 }}>
                       {sites.map((s) => (
-                        <label key={s.id} style={{ display: "flex", alignItems: "center", gap: 5, fontWeight: "normal", fontSize: 12 }}>
+                        <label key={s.id} style={{ display: "flex", alignItems: "center", gap: 5, fontWeight: "normal", fontSize: 12, whiteSpace: "nowrap" }}>
                           <input type="checkbox" checked={editSiteIds.includes(s.id)} onChange={() => toggleEditSite(s.id)} />
                           {s.name}
                         </label>
