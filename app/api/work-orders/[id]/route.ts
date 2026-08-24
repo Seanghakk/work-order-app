@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendEmail, workOrderAssignedEmail, statusChangedEmail, newCommentEmail } from "@/lib/email";
 import { notifyUser } from "@/lib/notifications";
+import { sendTelegramMessage } from "@/lib/telegram";
 import { getUserSiteIds } from "@/lib/permissions";
 
 async function checkSiteAccess(userId: string, role: string, siteId: string) {
@@ -92,11 +93,11 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     const emails: Promise<any>[] = [];
     const allManagersAndAdmins = await prisma.user.findMany({
       where: { role: { in: ["MANAGER", "ADMIN"] }, active: true, id: { not: session.user.id } },
-      select: { id: true, email: true, role: true },
+      select: { id: true, email: true, role: true, telegramChatId: true },
     });
     // Only notify managers/admins who actually have access to this work order's site —
     // admins always do, managers only if they're assigned to that site.
-    const managers: { id: string; email: string }[] = [];
+    const managers: { id: string; email: string; telegramChatId: string | null }[] = [];
     for (const m of allManagersAndAdmins) {
       if (m.role === "ADMIN" || (await checkSiteAccess(m.id, m.role, before.siteId))) {
         managers.push(m);
@@ -105,34 +106,43 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 
     if (data.assignedToId && data.assignedToId !== before.assignedToId) {
       const newAssignee = await prisma.user.findUnique({ where: { id: data.assignedToId } });
-            if (newAssignee) {
+      if (newAssignee) {
         const { subject, html } = workOrderAssignedEmail(before.title, params.id);
         emails.push(sendEmail(newAssignee.email, subject, html));
         emails.push(notifyUser(newAssignee.id, `You've been assigned to "${before.title}"`, params.id));
+        if (newAssignee.telegramChatId) {
+          emails.push(sendTelegramMessage(newAssignee.telegramChatId, `You've been assigned to: ${before.title}`));
+        }
       }
     }
 
     if (data.status && data.status !== before.status) {
       const { subject, html } = statusChangedEmail(before.title, data.status, params.id);
-      const recipients = new Map<string, string>();
-      if (before.requestedBy && before.requestedBy.id !== session.user.id) recipients.set(before.requestedBy.id, before.requestedBy.email);
-      if (before.assignedTo && before.assignedTo.id !== session.user.id) recipients.set(before.assignedTo.id, before.assignedTo.email);
-      managers.forEach((m) => recipients.set(m.id, m.email));
-      recipients.forEach((email, userId) => {
-        emails.push(sendEmail(email, subject, html));
+      const recipients = new Map<string, { email: string; telegramChatId: string | null }>();
+      if (before.requestedBy && before.requestedBy.id !== session.user.id) recipients.set(before.requestedBy.id, { email: before.requestedBy.email, telegramChatId: before.requestedBy.telegramChatId });
+      if (before.assignedTo && before.assignedTo.id !== session.user.id) recipients.set(before.assignedTo.id, { email: before.assignedTo.email, telegramChatId: before.assignedTo.telegramChatId });
+      managers.forEach((m) => recipients.set(m.id, { email: m.email, telegramChatId: m.telegramChatId }));
+      recipients.forEach((info, userId) => {
+        emails.push(sendEmail(info.email, subject, html));
         emails.push(notifyUser(userId, `"${before.title}" status changed to ${data.status.replace("_", " ")}`, params.id));
+        if (info.telegramChatId) {
+          emails.push(sendTelegramMessage(info.telegramChatId, `${before.title}\nStatus changed to ${data.status.replace("_", " ")}`));
+        }
       });
     }
 
-        if (newComment) {
+    if (newComment) {
       const { subject, html } = newCommentEmail(before.title, session.user.name, newComment.body, params.id);
-      const recipients = new Map<string, string>();
-      if (before.requestedBy && before.requestedBy.id !== session.user.id) recipients.set(before.requestedBy.id, before.requestedBy.email);
-      if (before.assignedTo && before.assignedTo.id !== session.user.id) recipients.set(before.assignedTo.id, before.assignedTo.email);
-      managers.forEach((m) => recipients.set(m.id, m.email));
-      recipients.forEach((email, userId) => {
-        emails.push(sendEmail(email, subject, html));
+      const recipients = new Map<string, { email: string; telegramChatId: string | null }>();
+      if (before.requestedBy && before.requestedBy.id !== session.user.id) recipients.set(before.requestedBy.id, { email: before.requestedBy.email, telegramChatId: before.requestedBy.telegramChatId });
+      if (before.assignedTo && before.assignedTo.id !== session.user.id) recipients.set(before.assignedTo.id, { email: before.assignedTo.email, telegramChatId: before.assignedTo.telegramChatId });
+      managers.forEach((m) => recipients.set(m.id, { email: m.email, telegramChatId: m.telegramChatId }));
+      recipients.forEach((info, userId) => {
+        emails.push(sendEmail(info.email, subject, html));
         emails.push(notifyUser(userId, `${session.user.name} commented on "${before.title}"`, params.id));
+        if (info.telegramChatId) {
+          emails.push(sendTelegramMessage(info.telegramChatId, `${session.user.name} commented on: ${before.title}\n"${newComment.body}"`));
+        }
       });
     }
 
