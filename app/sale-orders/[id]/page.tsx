@@ -3,14 +3,13 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 
-const STAGES = ["INQUIRY", "QUOTATION", "CONFIRMED", "PROCUREMENT", "DELIVERED", "INVOICED", "CLOSED", "CANCELLED"];
+const STAGES = ["INQUIRY", "DRAWING", "BOQ", "SUBMIT_TO_SALE", "CONFIRM_PO", "CANCELLED"];
 const STATUS_LABEL: Record<string, string> = {
-  INQUIRY: "Inquiry", QUOTATION: "Quotation", CONFIRMED: "Confirmed",
-  PROCUREMENT: "Procurement", DELIVERED: "Delivered", INVOICED: "Invoiced",
-  CLOSED: "Closed", CANCELLED: "Cancelled",
+  INQUIRY: "Inquiry", DRAWING: "Drawing", BOQ: "BoQ",
+  SUBMIT_TO_SALE: "Submit to Sale", CONFIRM_PO: "Confirm PO", CANCELLED: "Cancelled",
 };
 // The stepper only shows the forward-moving stages — Cancelled is a separate outcome, not a step in the sequence
-const STEP_STAGES = ["INQUIRY", "QUOTATION", "CONFIRMED", "PROCUREMENT", "DELIVERED", "INVOICED", "CLOSED"];
+const STEP_STAGES = ["INQUIRY", "DRAWING", "BOQ", "SUBMIT_TO_SALE", "CONFIRM_PO"];
 
 export default function SaleOrderDetail() {
   const { id } = useParams<{ id: string }>();
@@ -63,7 +62,7 @@ export default function SaleOrderDetail() {
   if (!order || order.error) return <div className="container"><p>{order?.error || "Loading…"}</p></div>;
 
   const canManage = session && ["MANAGER", "ADMIN"].includes(session.user.role);
-  const canClose = canManage && (order.status === "CLOSED" || order.status === "CANCELLED");
+  const canClose = canManage && (order.status === "CONFIRM_PO" || order.status === "CANCELLED");
   const currentStepIndex = STEP_STAGES.indexOf(order.status);
 
   return (
@@ -72,7 +71,7 @@ export default function SaleOrderDetail() {
       <div style={{ marginBottom: 16 }}>
         <span className="badge badge-medium">{STATUS_LABEL[order.status]}</span>
         {order.dueDate && (
-          <span style={{ marginLeft: 10, fontSize: 13, color: new Date(order.dueDate) < new Date() && order.status !== "CLOSED" && order.status !== "CANCELLED" ? "var(--danger)" : "var(--text-muted)" }}>
+          <span style={{ marginLeft: 10, fontSize: 13, color: new Date(order.dueDate) < new Date() && order.status !== "CONFIRM_PO" && order.status !== "CANCELLED" ? "var(--danger)" : "var(--text-muted)" }}>
             Due {new Date(order.dueDate).toLocaleDateString()}
           </span>
         )}

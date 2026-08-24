@@ -11,8 +11,8 @@ const WO_STATUS_LABEL: Record<string, string> = {
 };
 const PRIORITY_LABEL: Record<string, string> = { LOW: "Low", MEDIUM: "Medium", HIGH: "High", URGENT: "Urgent" };
 const SO_STATUS_LABEL: Record<string, string> = {
-  INQUIRY: "Inquiry", QUOTATION: "Quotation", CONFIRMED: "Confirmed", PROCUREMENT: "Procurement",
-  DELIVERED: "Delivered", INVOICED: "Invoiced", CLOSED: "Closed", CANCELLED: "Cancelled",
+  INQUIRY: "Inquiry", DRAWING: "Drawing", BOQ: "BoQ", SUBMIT_TO_SALE: "Submit to Sale",
+  CONFIRM_PO: "Confirm PO", CANCELLED: "Cancelled",
 };
 
 export default async function Dashboard() {
@@ -42,11 +42,9 @@ export default async function Dashboard() {
     monthStart.setDate(1);
     monthStart.setHours(0, 0, 0, 0);
     const [pipeline, closedThisMonth, valueAgg, byStage] = await Promise.all([
-      prisma.saleOrder.count({ where: { ...siteFilter, status: { notIn: ["CLOSED", "CANCELLED"] } } }),
-      prisma.saleOrder.count({ where: { ...siteFilter, status: "CLOSED", updatedAt: { gte: monthStart } } }),
-      prisma.saleOrder.aggregate({ _sum: { value: true }, where: { ...siteFilter, status: { notIn: ["CLOSED", "CANCELLED"] } } }),
-      prisma.saleOrder.groupBy({ by: ["status"], where: siteFilter, _count: true }),
-    ]);
+      prisma.saleOrder.count({ where: { ...siteFilter, status: { notIn: ["CONFIRM_PO", "CANCELLED"] } } }),
+      prisma.saleOrder.count({ where: { ...siteFilter, status: "CONFIRM_PO", updatedAt: { gte: monthStart } } }),
+      prisma.saleOrder.aggregate({ _sum: { value: true }, where: { ...siteFilter, status: { notIn: ["CONFIRM_PO", "CANCELLED"] } } }),
     soPipeline = pipeline;
     soClosedThisMonth = closedThisMonth;
     soPipelineValue = valueAgg._sum.value || 0;

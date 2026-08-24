@@ -3,9 +3,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 
 const STATUS_LABEL: Record<string, string> = {
-  INQUIRY: "Inquiry", QUOTATION: "Quotation", CONFIRMED: "Confirmed",
-  PROCUREMENT: "Procurement", DELIVERED: "Delivered", INVOICED: "Invoiced",
-  CLOSED: "Closed", CANCELLED: "Cancelled",
+  INQUIRY: "Inquiry", DRAWING: "Drawing", BOQ: "BoQ",
+  SUBMIT_TO_SALE: "Submit to Sale", CONFIRM_PO: "Confirm PO", CANCELLED: "Cancelled",
 };
 
 export default function SaleOrdersPage() {

@@ -70,7 +70,7 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
   if (!(await checkSiteAccess(session.user.id, session.user.role, saleOrder.siteId))) {
     return NextResponse.json({ error: "You don't have access to that site." }, { status: 403 });
   }
-  if (saleOrder.status !== "CLOSED" && saleOrder.status !== "CANCELLED") {
+  if (saleOrder.status !== "CONFIRM_PO" && saleOrder.status !== "CANCELLED") {
     return NextResponse.json({ error: "Only closed or cancelled sale orders can be removed." }, { status: 400 });
   }
   await prisma.saleOrderComment.deleteMany({ where: { saleOrderId: params.id } });
