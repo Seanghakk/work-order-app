@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 
-const ROLES = ["REQUESTER", "TECHNICIAN", "MANAGER", "ADMIN", "SALES", "ENGINEERING", "AA"];
+const ROLES = ["REQUESTER", "TECHNICIAN", "MANAGER", "ADMIN", "SALES", "ENGINEERING", "AA", "TNC_ENGINEER", "TNC_LEADER", "MAINTENANCE_SUP"];
 
 export default function UsersPage() {
   const [users, setUsers] = useState<any[]>([]);

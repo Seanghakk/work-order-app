@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import Logo from "./Logo";
-import { canAccessSaleOrders, canAccessWorkOrders } from "@/lib/permissions";
+import { canAccessSaleOrders, canAccessWorkOrders, canAccessServiceRequests } from "@/lib/permissions";
 
 export default function NavBar() {
   const { data: session } = useSession();
@@ -107,14 +107,15 @@ export default function NavBar() {
       </span>
       )}
 
-      {canAccessSaleOrders(role) && (
+      {(canAccessSaleOrders(role) || canAccessServiceRequests(role)) && (
         <span className="nav-dropdown-wrap">
           <button className={`nav-dropdown-trigger ${saleOpen ? "active" : ""}`} onClick={toggleSale}>
             Sale Orders ▾
           </button>
           {saleOpen && (
             <div className="nav-dropdown-panel">
-              <Link href="/sale-orders" onClick={closeMenuAndPanels}>Sale Orders</Link>
+              {canAccessSaleOrders(role) && <Link href="/sale-orders" onClick={closeMenuAndPanels}>Sale Orders</Link>}
+              {canAccessServiceRequests(role) && <Link href="/service-requests" onClick={closeMenuAndPanels}>Service Requests</Link>}
             </div>
           )}
         </span>

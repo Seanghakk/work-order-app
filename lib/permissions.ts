@@ -8,6 +8,10 @@ export function canAccessWorkOrders(role?: string | null): boolean {
   return !["AA", "ENGINEERING"].includes(role || "");
 }
 
+export function canAccessServiceRequests(role?: string | null): boolean {
+  return ["SALES", "ENGINEERING", "AA", "MANAGER", "ADMIN", "TNC_ENGINEER", "TNC_LEADER", "MAINTENANCE_SUP"].includes(role || "");
+}
+
 // Returns "ALL" for admins (no site restriction), or the list of site IDs this user is assigned to.
 export async function getUserSiteIds(userId: string, role: string): Promise<string[] | "ALL"> {
   if (role === "ADMIN") return "ALL";

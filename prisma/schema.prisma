@@ -16,6 +16,16 @@ enum Role {
   SALES
   ENGINEERING
   AA
+  TNC_ENGINEER
+  TNC_LEADER
+  MAINTENANCE_SUP
+}
+
+enum ServiceRequestStatus {
+  REQUEST
+  CHECK
+  REPORT
+  CLOSE
 }
 
 enum SaleOrderStatus {
@@ -60,6 +70,9 @@ model User {
   saleOrdersCreated  SaleOrder[]        @relation("saleOrderCreatedBy")
   saleOrdersAssigned SaleOrder[]        @relation("saleOrderAssignedTo")
   saleOrderComments  SaleOrderComment[]
+  serviceRequestsCreated  ServiceRequest[]        @relation("serviceRequestCreatedBy")
+  serviceRequestsAssigned ServiceRequest[]        @relation("serviceRequestAssignedTo")
+  serviceRequestComments  ServiceRequestComment[]
   notifications Notification[]
   sites         UserSite[]
 }
@@ -183,4 +196,29 @@ model SaleOrderComment {
   authorId    String
   body        String
   createdAt   DateTime  @default(now())
+}
+model ServiceRequest {
+  id            String                @id @default(cuid())
+  title         String
+  customerName  String
+  description   String?
+  status        ServiceRequestStatus  @default(REQUEST)
+  dueDate       DateTime?
+  createdBy     User                  @relation("serviceRequestCreatedBy", fields: [createdById], references: [id])
+  createdById   String
+  assignedTo    User?                 @relation("serviceRequestAssignedTo", fields: [assignedToId], references: [id])
+  assignedToId  String?
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+  comments      ServiceRequestComment[]
+}
+
+model ServiceRequestComment {
+  id                String          @id @default(cuid())
+  serviceRequest    ServiceRequest  @relation(fields: [serviceRequestId], references: [id])
+  serviceRequestId  String
+  author            User            @relation(fields: [authorId], references: [id])
+  authorId          String
+  body              String
+  createdAt         DateTime        @default(now())
 }
