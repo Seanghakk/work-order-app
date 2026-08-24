@@ -45,6 +45,8 @@ export default async function Dashboard() {
       prisma.saleOrder.count({ where: { ...siteFilter, status: { notIn: ["CONFIRM_PO", "CANCELLED"] } } }),
       prisma.saleOrder.count({ where: { ...siteFilter, status: "CONFIRM_PO", updatedAt: { gte: monthStart } } }),
       prisma.saleOrder.aggregate({ _sum: { value: true }, where: { ...siteFilter, status: { notIn: ["CONFIRM_PO", "CANCELLED"] } } }),
+      prisma.saleOrder.groupBy({ by: ["status"], where: siteFilter, _count: true }),
+    ]);
     soPipeline = pipeline;
     soClosedThisMonth = closedThisMonth;
     soPipelineValue = valueAgg._sum.value || 0;
