@@ -3,12 +3,12 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 
+const CORPORATE_PARTNERS = ["SCE", "DBD", "PITTA", "CE&P", "ESD", "CAIC", "LGT", "ACT", "ET&S", "GGEAR", "LBL"];
 const STAGES = ["INQUIRY", "DRAWING", "BOQ", "SUBMIT_TO_SALE", "CONFIRM_PO", "CANCELLED"];
 const STATUS_LABEL: Record<string, string> = {
   INQUIRY: "Inquiry", DRAWING: "Drawing", BOQ: "BoQ",
   SUBMIT_TO_SALE: "Submit to Sale", CONFIRM_PO: "Confirm PO", CANCELLED: "Cancelled",
 };
-// The stepper only shows the forward-moving stages — Cancelled is a separate outcome, not a step in the sequence
 const STEP_STAGES = ["INQUIRY", "DRAWING", "BOQ", "SUBMIT_TO_SALE", "CONFIRM_PO"];
 
 export default function SaleOrderDetail() {
@@ -26,9 +26,8 @@ export default function SaleOrderDetail() {
   }
   useEffect(() => { load(); }, [id]);
   useEffect(() => {
-    if (!order?.siteId) return;
-    fetch(`/api/users/assignable?siteId=${order.siteId}`).then((r) => r.json()).then((data) => Array.isArray(data) && setPeople(data));
-  }, [order?.siteId]);
+    fetch("/api/users/assignable").then((r) => r.json()).then((data) => Array.isArray(data) && setPeople(data));
+  }, []);
 
   async function updateField(data: any) {
     const res = await fetch(`/api/sale-orders/${id}`, {
@@ -106,7 +105,7 @@ export default function SaleOrderDetail() {
       )}
 
       <div className="card" style={{ marginBottom: 16 }}>
-        <p><strong>Site:</strong> {order.site?.name || "—"} · <strong>Customer:</strong> {order.customerName}</p>
+        <p><strong>Customer:</strong> {order.customerName} ({order.isCorporatePartner ? "Corporate partner" : "General customer"})</p>
         {order.description && <p>{order.description}</p>}
         <p style={{ fontSize: 13, color: "var(--text-muted)" }}>
           Value: {order.value ? `$${Number(order.value).toLocaleString()}` : "—"} · Created by {order.createdBy?.name} · {new Date(order.createdAt).toLocaleString()}

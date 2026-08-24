@@ -42,10 +42,10 @@ export default async function Dashboard() {
     monthStart.setDate(1);
     monthStart.setHours(0, 0, 0, 0);
     const [pipeline, closedThisMonth, valueAgg, byStage] = await Promise.all([
-      prisma.saleOrder.count({ where: { ...siteFilter, status: { notIn: ["CONFIRM_PO", "CANCELLED"] } } }),
-      prisma.saleOrder.count({ where: { ...siteFilter, status: "CONFIRM_PO", updatedAt: { gte: monthStart } } }),
-      prisma.saleOrder.aggregate({ _sum: { value: true }, where: { ...siteFilter, status: { notIn: ["CONFIRM_PO", "CANCELLED"] } } }),
-      prisma.saleOrder.groupBy({ by: ["status"], where: siteFilter, _count: true }),
+      prisma.saleOrder.count({ where: { status: { notIn: ["CONFIRM_PO", "CANCELLED"] } } }),
+      prisma.saleOrder.count({ where: { status: "CONFIRM_PO", updatedAt: { gte: monthStart } } }),
+      prisma.saleOrder.aggregate({ _sum: { value: true }, where: { status: { notIn: ["CONFIRM_PO", "CANCELLED"] } } }),
+      prisma.saleOrder.groupBy({ by: ["status"], _count: true }),
     ]);
     soPipeline = pipeline;
     soClosedThisMonth = closedThisMonth;

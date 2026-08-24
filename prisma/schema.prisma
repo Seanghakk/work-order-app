@@ -72,7 +72,6 @@ model Site {
   users      UserSite[]
   assets     Asset[]
   workOrders WorkOrder[]
-  saleOrders SaleOrder[]
 }
 
 model UserSite {
@@ -164,8 +163,7 @@ model SaleOrder {
   status        SaleOrderStatus   @default(INQUIRY)
   value         Float?
   dueDate       DateTime?
-  site          Site              @relation(fields: [siteId], references: [id])
-  siteId        String
+  isCorporatePartner Boolean      @default(false)
   createdBy     User              @relation("saleOrderCreatedBy", fields: [createdById], references: [id])
   createdById   String
   assignedTo    User?             @relation("saleOrderAssignedTo", fields: [assignedToId], references: [id])
