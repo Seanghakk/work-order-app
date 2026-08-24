@@ -24,3 +24,10 @@ export async function PATCH() {
   });
   return NextResponse.json({ ok: true });
 }
+
+export async function DELETE() {
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  await prisma.notification.deleteMany({ where: { userId: session.user.id } });
+  return NextResponse.json({ ok: true });
+}

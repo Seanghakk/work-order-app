@@ -86,6 +86,18 @@ export default function NavBar() {
     loadNotifications();
   }
 
+  async function clearAllNotifications() {
+    if (!confirm("Clear all notifications?")) return;
+    await fetch("/api/notifications", { method: "DELETE" });
+    loadNotifications();
+  }
+
+  async function dismissNotification(id: string, e: React.MouseEvent) {
+    e.stopPropagation();
+    await fetch(`/api/notifications/${id}`, { method: "DELETE" });
+    loadNotifications();
+  }
+
   const links = (
     <>
       <Link href="/dashboard" onClick={closeMenuAndPanels}>Dashboard</Link>
@@ -148,18 +160,26 @@ export default function NavBar() {
             {panelOpen && (
               <div className="notif-panel">
                 {notifications.length > 0 && (
-                  <button className="notif-item" onClick={markAllRead} style={{ color: "var(--blue)", textAlign: "center" }}>
-                    Mark all as read
-                  </button>
+                  <div style={{ display: "flex", borderBottom: "1px solid var(--border)" }}>
+                    <button className="notif-item" onClick={markAllRead} style={{ color: "var(--blue)", textAlign: "center", border: "none" }}>
+                      Mark all as read
+                    </button>
+                    <button className="notif-item" onClick={clearAllNotifications} style={{ color: "var(--danger)", textAlign: "center", border: "none" }}>
+                      Clear all
+                    </button>
+                  </div>
                 )}
                 {notifications.length === 0 && <div className="notif-empty">No notifications yet.</div>}
                 {notifications.map((n) => (
-                  <button key={n.id} className={`notif-item ${!n.readAt ? "unread" : ""}`} onClick={() => handleNotificationClick(n)}>
-                    <div>{n.message}</div>
-                    <div style={{ color: "var(--text-muted)", fontSize: 11, marginTop: 4 }}>
-                      {new Date(n.createdAt).toLocaleString()}
+                  <div key={n.id} className={`notif-item ${!n.readAt ? "unread" : ""}`} style={{ display: "flex", alignItems: "flex-start", gap: 8, cursor: "pointer" }} onClick={() => handleNotificationClick(n)}>
+                    <div style={{ flex: 1 }}>
+                      <div>{n.message}</div>
+                      <div style={{ color: "var(--text-muted)", fontSize: 11, marginTop: 4 }}>
+                        {new Date(n.createdAt).toLocaleString()}
+                      </div>
                     </div>
-                  </button>
+                    <button onClick={(e) => dismissNotification(n.id, e)} aria-label="Dismiss" style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 16, lineHeight: 1, padding: "0 2px" }}>×</button>
+                  </div>
                 ))}
               </div>
             )}
