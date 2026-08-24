@@ -57,9 +57,24 @@ export function newRegistrationEmail(name: string, email: string) {
   };
 }
 
-export function registrationApprovedEmail(name: string) {
+
+export function serviceRequestAssignedEmail(title: string, serviceRequestId: string) {
   return {
-    subject: `Your account is ready`,
-    html: `<p>Hi ${name},</p><p>Your account has been approved and is ready to use.</p><p><a href="${APP_URL}/login">Sign in</a></p>`,
+    subject: `You've been assigned: ${title}`,
+    html: `<p>You've been assigned to a service request:</p><p><strong>${title}</strong></p><p><a href="${APP_URL}/service-requests/${serviceRequestId}">View service request</a></p>`,
+  };
+}
+
+export function serviceRequestStatusChangedEmail(title: string, status: string, serviceRequestId: string) {
+  return {
+    subject: `Stage update: ${title}`,
+    html: `<p>A service request moved to <strong>${status}</strong>:</p><p><strong>${title}</strong></p><p><a href="${APP_URL}/service-requests/${serviceRequestId}">View service request</a></p>`,
+  };
+}
+
+export function serviceRequestNewCommentEmail(title: string, author: string, body: string, serviceRequestId: string) {
+  return {
+    subject: `New update on: ${title}`,
+    html: `<p><strong>${author}</strong> commented on a service request:</p><p><strong>${title}</strong></p><p>"${body}"</p><p><a href="${APP_URL}/service-requests/${serviceRequestId}">View service request</a></p>`,
   };
 }
