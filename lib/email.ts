@@ -42,9 +42,17 @@ export function statusChangedEmail(title: string, status: string, workOrderId: s
   };
 }
 
-export function newCommentEmail(title: string, author: string, body: string, workOrderId: string) {
+
+export function newRegistrationEmail(name: string, email: string) {
   return {
-    subject: `New update on: ${title}`,
-    html: `<p><strong>${author}</strong> commented on a work order:</p><p><strong>${title}</strong></p><p>"${body}"</p><p><a href="${APP_URL}/work-orders/${workOrderId}">View work order</a></p>`,
+    subject: `New account registration: ${name}`,
+    html: `<p><strong>${name}</strong> (${email}) has registered for an account and is waiting for approval.</p><p><a href="${APP_URL}/users">Review and assign a role</a></p>`,
+  };
+}
+
+export function registrationApprovedEmail(name: string) {
+  return {
+    subject: `Your account is ready`,
+    html: `<p>Hi ${name},</p><p>Your account has been approved and is ready to use.</p><p><a href="${APP_URL}/login">Sign in</a></p>`,
   };
 }

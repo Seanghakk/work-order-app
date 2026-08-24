@@ -3,6 +3,7 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Logo from "@/components/Logo";
+import Link from "next/link";
 
 export default function LoginPage() {
   const [identifier, setIdentifier] = useState("");
@@ -44,6 +45,9 @@ export default function LoginPage() {
             {error && <p style={{ color: "var(--danger)", fontSize: 13 }}>{error}</p>}
             <button className="primary" type="submit" style={{ width: "100%" }}>Sign in</button>
           </form>
+          <p style={{ fontSize: 13, textAlign: "center", marginTop: 16 }}>
+            <Link href="/register">Don't have an account? Register</Link>
+          </p>
         </div>
       </div>
     </div>

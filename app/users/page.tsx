@@ -118,6 +118,11 @@ export default function UsersPage() {
     load();
   }
 
+  async function approveUser(id: string) {
+    await fetch(`/api/users/${id}/approve`, { method: "POST" });
+    load();
+  }
+
   async function removeUser(id: string) {
     if (!confirm("Remove this user? This can't be undone.")) return;
     const res = await fetch(`/api/users/${id}`, { method: "DELETE" });
@@ -208,9 +213,17 @@ export default function UsersPage() {
                 )}
               </td>
               <td>
-                <button onClick={() => toggleActive(u.id, !u.active)}>
-                  {u.active ? "Active — deactivate" : "Inactive — reactivate"}
-                </button>
+                {u.pendingApproval ? (
+                  <div>
+                    <span className="badge badge-assigned" style={{ marginBottom: 6, display: "inline-block" }}>Pending approval</span>
+                    <br />
+                    <button className="primary" onClick={() => approveUser(u.id)}>Approve</button>
+                  </div>
+                ) : (
+                  <button onClick={() => toggleActive(u.id, !u.active)}>
+                    {u.active ? "Active — deactivate" : "Inactive — reactivate"}
+                  </button>
+                )}
               </td>
               <td>
                 {editingId === u.id ? (
