@@ -43,6 +43,13 @@ export function statusChangedEmail(title: string, status: string, workOrderId: s
 }
 
 
+export function newCommentEmail(title: string, author: string, body: string, workOrderId: string) {
+  return {
+    subject: `New update on: ${title}`,
+    html: `<p><strong>${author}</strong> commented on a work order:</p><p><strong>${title}</strong></p><p>"${body}"</p><p><a href="${APP_URL}/work-orders/${workOrderId}">View work order</a></p>`,
+  };
+}
+
 export function newRegistrationEmail(name: string, email: string) {
   return {
     subject: `New account registration: ${name}`,
