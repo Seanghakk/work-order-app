@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { sendEmail, workOrderAssignedEmail, statusChangedEmail, newCommentEmail } from "@/lib/email";
 import { notifyUser } from "@/lib/notifications";
 import { sendTelegramMessage } from "@/lib/telegram";
-import { getUserSiteIds } from "@/lib/permissions";
+import { getUserSiteIds, canAccessWorkOrders } from "@/lib/permissions";
 
 async function checkSiteAccess(userId: string, role: string, siteId: string) {
   const siteIds = await getUserSiteIds(userId, role);
@@ -14,7 +14,7 @@ async function checkSiteAccess(userId: string, role: string, siteId: string) {
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session || !canAccessWorkOrders(session.user.role)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const workOrder = await prisma.workOrder.findUnique({
     where: { id: params.id },
@@ -53,7 +53,7 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session || !canAccessWorkOrders(session.user.role)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
   const tryingToEditFields = body.status || body.assignedToId !== undefined || body.priority || body.dueDate !== undefined;

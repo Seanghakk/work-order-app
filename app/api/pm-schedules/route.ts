@@ -2,11 +2,11 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getUserSiteIds } from "@/lib/permissions";
+import { getUserSiteIds, canAccessWorkOrders } from "@/lib/permissions";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session || !canAccessWorkOrders(session.user.role)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const siteIds = await getUserSiteIds(session.user.id, session.user.role);
   const schedules = await prisma.pMSchedule.findMany({
     where: siteIds === "ALL" ? {} : { asset: { siteId: { in: siteIds } } },

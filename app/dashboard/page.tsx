@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { canAccessSaleOrders, getUserSiteIds, siteWhere } from "@/lib/permissions";
+import { canAccessSaleOrders, canAccessWorkOrders, getUserSiteIds, siteWhere } from "@/lib/permissions";
 import BarChart from "@/components/BarChart";
 import Link from "next/link";
 
@@ -64,6 +64,8 @@ export default async function Dashboard() {
     <div className="container">
       <h1>Dashboard</h1>
 
+      {canAccessWorkOrders(role) && (
+      <>
       <h3>Work Orders</h3>
       <div className="stat-grid">
         <div className="card"><div style={{ fontSize: 13, color: "var(--text-muted)" }}>Open</div><div style={{ fontSize: 28, fontWeight: 600 }}>{open}</div></div>
@@ -82,6 +84,8 @@ export default async function Dashboard() {
         </div>
       </div>
       <Link href="/work-orders"><button className="primary">View work orders</button></Link>
+      </>
+      )}
 
       {showSales && (
         <>
