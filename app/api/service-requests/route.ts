@@ -31,6 +31,8 @@ export async function POST(req: Request) {
     data: {
       title: body.title,
       customerName: body.customerName,
+      isCorporatePartner: !!body.isCorporatePartner,
+      soNumber: body.soNumber || null,
       description: body.description || null,
       dueDate: body.dueDate ? new Date(body.dueDate) : null,
       createdById: session.user.id,

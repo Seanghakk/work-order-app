@@ -2,9 +2,13 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+const CORPORATE_PARTNERS = ["SCE", "DBD", "PITTA", "CE&P", "ESD", "CAIC", "LGT", "ACT", "ET&S", "GGEAR", "LBL"];
+
 export default function NewServiceRequest() {
   const [title, setTitle] = useState("");
+  const [customerType, setCustomerType] = useState<"GENERAL" | "CORPORATE">("GENERAL");
   const [customerName, setCustomerName] = useState("");
+  const [soNumber, setSoNumber] = useState("");
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [assignedToId, setAssignedToId] = useState("");
@@ -16,6 +20,11 @@ export default function NewServiceRequest() {
     fetch("/api/users/assignable").then((r) => r.json()).then((data) => Array.isArray(data) && setPeople(data));
   }, []);
 
+  function handleCustomerTypeChange(type: "GENERAL" | "CORPORATE") {
+    setCustomerType(type);
+    setCustomerName("");
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!title.trim() || !customerName.trim()) {
@@ -25,7 +34,10 @@ export default function NewServiceRequest() {
     const res = await fetch("/api/service-requests", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, customerName, description, dueDate: dueDate || null, assignedToId: assignedToId || null }),
+      body: JSON.stringify({
+        title, customerName, description, dueDate: dueDate || null, assignedToId: assignedToId || null,
+        isCorporatePartner: customerType === "CORPORATE", soNumber: soNumber || null,
+      }),
     });
     if (!res.ok) {
       const data = await res.json();
@@ -44,8 +56,32 @@ export default function NewServiceRequest() {
           <input value={title} onChange={(e) => setTitle(e.target.value)} style={{ width: "100%" }} placeholder="CCTV not recording — floor 3" />
         </div>
         <div className="field">
+          <label>Customer type</label>
+          <div style={{ display: "flex", gap: 16 }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: "normal" }}>
+              <input type="radio" checked={customerType === "GENERAL"} onChange={() => handleCustomerTypeChange("GENERAL")} />
+              General customer
+            </label>
+            <label style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: "normal" }}>
+              <input type="radio" checked={customerType === "CORPORATE"} onChange={() => handleCustomerTypeChange("CORPORATE")} />
+              Corporate partner
+            </label>
+          </div>
+        </div>
+        <div className="field">
           <label>Customer name</label>
-          <input value={customerName} onChange={(e) => setCustomerName(e.target.value)} style={{ width: "100%" }} />
+          {customerType === "CORPORATE" ? (
+            <select value={customerName} onChange={(e) => setCustomerName(e.target.value)} style={{ width: "100%" }}>
+              <option value="">Select partner</option>
+              {CORPORATE_PARTNERS.map((p) => <option key={p} value={p}>{p}</option>)}
+            </select>
+          ) : (
+            <input value={customerName} onChange={(e) => setCustomerName(e.target.value)} style={{ width: "100%" }} />
+          )}
+        </div>
+        <div className="field">
+          <label>Sale Order (S.O. Number) (optional)</label>
+          <input value={soNumber} onChange={(e) => setSoNumber(e.target.value)} style={{ width: "100%" }} placeholder="e.g. SO-2026-0142" />
         </div>
         <div className="field">
           <label>Description (optional)</label>

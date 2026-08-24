@@ -207,6 +207,8 @@ model ServiceRequest {
   status        ServiceRequestStatus  @default(REQUEST)
   dueDate       DateTime?
   archived      Boolean               @default(false)
+  isCorporatePartner Boolean          @default(false)
+  soNumber      String?
   createdBy     User                  @relation("serviceRequestCreatedBy", fields: [createdById], references: [id])
   createdById   String
   assignedTo    User?                 @relation("serviceRequestAssignedTo", fields: [assignedToId], references: [id])

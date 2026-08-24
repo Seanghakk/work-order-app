@@ -43,6 +43,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (body.title?.trim()) data.title = body.title;
   if (body.dueDate !== undefined) data.dueDate = body.dueDate ? new Date(body.dueDate) : null;
   if (body.customerName?.trim()) data.customerName = body.customerName;
+  if (body.isCorporatePartner !== undefined) data.isCorporatePartner = !!body.isCorporatePartner;
+  if (body.soNumber !== undefined) data.soNumber = body.soNumber || null;
   if (typeof body.archived === "boolean" && (session.user.role === "MANAGER" || session.user.role === "ADMIN")) data.archived = body.archived;
 
   const serviceRequest = await prisma.serviceRequest.update({ where: { id: params.id }, data });

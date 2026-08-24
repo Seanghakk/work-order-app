@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 
+const CORPORATE_PARTNERS = ["SCE", "DBD", "PITTA", "CE&P", "ESD", "CAIC", "LGT", "ACT", "ET&S", "GGEAR", "LBL"];
 const STAGES = ["REQUEST", "CHECK", "REPORT", "CLOSE"];
 const STATUS_LABEL: Record<string, string> = {
   REQUEST: "Request", CHECK: "Check", REPORT: "Report", CLOSE: "Close",
@@ -16,6 +17,12 @@ export default function ServiceRequestDetail() {
   const [people, setPeople] = useState<any[]>([]);
   const [comment, setComment] = useState("");
   const [error, setError] = useState("");
+  const [editingDetails, setEditingDetails] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editCustomerType, setEditCustomerType] = useState<"GENERAL" | "CORPORATE">("GENERAL");
+  const [editCustomerName, setEditCustomerName] = useState("");
+  const [editSoNumber, setEditSoNumber] = useState("");
+  const [editDescription, setEditDescription] = useState("");
 
   async function load() {
     const res = await fetch(`/api/service-requests/${id}`);
@@ -57,6 +64,27 @@ export default function ServiceRequestDetail() {
 
   async function handleUnarchive() {
     await updateField({ archived: false });
+  }
+
+  function startEditDetails() {
+    setEditTitle(item.title);
+    setEditCustomerType(item.isCorporatePartner ? "CORPORATE" : "GENERAL");
+    setEditCustomerName(item.customerName);
+    setEditSoNumber(item.soNumber || "");
+    setEditDescription(item.description || "");
+    setEditingDetails(true);
+  }
+
+  async function saveDetails() {
+    if (!editTitle.trim() || !editCustomerName.trim()) { setError("Title and customer name can't be empty."); return; }
+    await updateField({
+      title: editTitle,
+      customerName: editCustomerName,
+      isCorporatePartner: editCustomerType === "CORPORATE",
+      soNumber: editSoNumber || null,
+      description: editDescription,
+    });
+    setEditingDetails(false);
   }
 
   if (!item || item.error) return <div className="container"><p>{item?.error || "Loading…"}</p></div>;
@@ -105,11 +133,60 @@ export default function ServiceRequestDetail() {
       </div>
 
       <div className="card" style={{ marginBottom: 16 }}>
-        <p><strong>Customer:</strong> {item.customerName}</p>
-        {item.description && <p>{item.description}</p>}
-        <p style={{ fontSize: 13, color: "var(--text-muted)" }}>
-          Created by {item.createdBy?.name} · {new Date(item.createdAt).toLocaleString()}
-        </p>
+        {editingDetails ? (
+          <>
+            <div className="field">
+              <label>Title</label>
+              <input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} style={{ width: "100%" }} />
+            </div>
+            <div className="field">
+              <label>Customer type</label>
+              <div style={{ display: "flex", gap: 16 }}>
+                <label style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: "normal" }}>
+                  <input type="radio" checked={editCustomerType === "GENERAL"} onChange={() => { setEditCustomerType("GENERAL"); setEditCustomerName(""); }} />
+                  General customer
+                </label>
+                <label style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: "normal" }}>
+                  <input type="radio" checked={editCustomerType === "CORPORATE"} onChange={() => { setEditCustomerType("CORPORATE"); setEditCustomerName(""); }} />
+                  Corporate partner
+                </label>
+              </div>
+            </div>
+            <div className="field">
+              <label>Customer name</label>
+              {editCustomerType === "CORPORATE" ? (
+                <select value={editCustomerName} onChange={(e) => setEditCustomerName(e.target.value)} style={{ width: "100%" }}>
+                  <option value="">Select partner</option>
+                  {CORPORATE_PARTNERS.map((p) => <option key={p} value={p}>{p}</option>)}
+                </select>
+              ) : (
+                <input value={editCustomerName} onChange={(e) => setEditCustomerName(e.target.value)} style={{ width: "100%" }} />
+              )}
+            </div>
+            <div className="field">
+              <label>Sale Order (S.O. Number)</label>
+              <input value={editSoNumber} onChange={(e) => setEditSoNumber(e.target.value)} style={{ width: "100%" }} />
+            </div>
+            <div className="field">
+              <label>Description</label>
+              <textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)} rows={4} style={{ width: "100%" }} />
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button className="primary" onClick={saveDetails}>Save</button>
+              <button onClick={() => setEditingDetails(false)}>Cancel</button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p><strong>Customer:</strong> {item.customerName} ({item.isCorporatePartner ? "Corporate partner" : "General customer"})</p>
+            {item.soNumber && <p><strong>S.O. Number:</strong> {item.soNumber}</p>}
+            {item.description && <p>{item.description}</p>}
+            <p style={{ fontSize: 13, color: "var(--text-muted)" }}>
+              Created by {item.createdBy?.name} · {new Date(item.createdAt).toLocaleString()}
+            </p>
+            {canManage && <button onClick={startEditDetails}>Edit details</button>}
+          </>
+        )}
       </div>
 
       <div className="card" style={{ marginBottom: 16, display: "flex", gap: 12, flexWrap: "wrap" }}>
