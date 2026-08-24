@@ -77,8 +77,7 @@ export default function NavBar() {
       await fetch(`/api/notifications/${n.id}`, { method: "PATCH" });
     }
     setPanelOpen(false);
-    if (n.workOrderId) router.push(`/work-orders/${n.workOrderId}`);
-    else if (n.message?.includes("waiting for approval")) router.push("/users");
+    if (n.link) router.push(n.link);
     loadNotifications();
   }
 

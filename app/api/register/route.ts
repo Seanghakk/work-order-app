@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     const { subject, html } = newRegistrationEmail(user.name, user.email);
     await sendEmail("adtechbms@gmail.com", subject, html);
     if (admin) {
-      await notifyUser(admin.id, `${user.name} registered and is waiting for approval`);
+      await notifyUser(admin.id, `${user.name} registered and is waiting for approval`, "/users");
     }
   } catch (err) {
     console.error("Registration notification error:", err);

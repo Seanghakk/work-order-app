@@ -109,7 +109,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       if (newAssignee) {
         const { subject, html } = workOrderAssignedEmail(before.title, params.id);
         emails.push(sendEmail(newAssignee.email, subject, html));
-        emails.push(notifyUser(newAssignee.id, `You've been assigned to "${before.title}"`, params.id));
+        emails.push(notifyUser(newAssignee.id, `You've been assigned to "${before.title}"`, `/work-orders/${params.id}`));
         if (newAssignee.telegramChatId) {
           emails.push(sendTelegramMessage(newAssignee.telegramChatId, `You've been assigned to: ${before.title}`));
         }
@@ -124,7 +124,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       managers.forEach((m) => recipients.set(m.id, { email: m.email, telegramChatId: m.telegramChatId }));
       recipients.forEach((info, userId) => {
         emails.push(sendEmail(info.email, subject, html));
-        emails.push(notifyUser(userId, `"${before.title}" status changed to ${data.status.replace("_", " ")}`, params.id));
+        emails.push(notifyUser(userId, `"${before.title}" status changed to ${data.status.replace("_", " ")}`, `/work-orders/${params.id}`));
         if (info.telegramChatId) {
           emails.push(sendTelegramMessage(info.telegramChatId, `${before.title}\nStatus changed to ${data.status.replace("_", " ")}`));
         }
@@ -139,7 +139,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       managers.forEach((m) => recipients.set(m.id, { email: m.email, telegramChatId: m.telegramChatId }));
       recipients.forEach((info, userId) => {
         emails.push(sendEmail(info.email, subject, html));
-        emails.push(notifyUser(userId, `${session.user.name} commented on "${before.title}"`, params.id));
+        emails.push(notifyUser(userId, `${session.user.name} commented on "${before.title}"`, `/work-orders/${params.id}`));
         if (info.telegramChatId) {
           emails.push(sendTelegramMessage(info.telegramChatId, `${session.user.name} commented on: ${before.title}\n"${newComment.body}"`));
         }

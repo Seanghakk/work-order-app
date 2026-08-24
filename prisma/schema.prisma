@@ -153,6 +153,7 @@ model Notification {
   userId      String
   message     String
   workOrderId String?
+  link        String?
   readAt      DateTime?
   createdAt   DateTime  @default(now())
 }

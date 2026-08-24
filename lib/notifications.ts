@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/prisma";
 
-export async function notifyUser(userId: string, message: string, workOrderId?: string) {
+export async function notifyUser(userId: string, message: string, link?: string) {
   try {
-    await prisma.notification.create({ data: { userId, message, workOrderId } });
+    await prisma.notification.create({ data: { userId, message, link } });
   } catch (err) {
     console.error("Failed to create notification:", err);
   }
