@@ -141,7 +141,7 @@ export default function NavBar() {
   );
 
   return (
-    <div className="nav" style={{ position: "relative" }} ref={navRef}>
+    <div className="nav" ref={navRef}>
       <div className="nav-top">
         <Logo size={20} />
         <button className="nav-toggle" onClick={() => setOpen(!open)} aria-label="Toggle menu">
