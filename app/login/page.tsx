@@ -59,7 +59,7 @@ export default function LoginPage() {
                 <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} style={{ width: "100%" }} />
               </div>
               {error && <p style={{ color: "var(--danger)", fontSize: 13 }}>{error}</p>}
-              <button className="primary" type="submit" style={{ width: "100%" }}>Sign in</button>
+              <button className="primary" type="submit" style={{ width: "100%", marginTop: 8 }}>Sign in</button>
             </form>
             <p style={{ fontSize: 13, textAlign: "center", marginTop: 16 }}>
               <Link href="/register">Don't have an account? Register</Link>
