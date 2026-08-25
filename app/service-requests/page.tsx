@@ -62,7 +62,7 @@ export default function ServiceRequestsPage() {
       ) : (
         <div className="table-scroll">
         <table>
-          <thead><tr><th>Title</th><th>Customer</th><th>Type</th><th>S.O. Number</th><th>Stage</th><th>Assigned to</th><th>Due</th><th>Updated</th>{canManage && <th></th>}</tr></thead>
+          <thead><tr><th>Title</th><th>Customer</th><th>Type</th><th>S.O. Number</th><th>Team</th><th>Stage</th><th>Assigned to</th><th>Due</th><th>Updated</th>{canManage && <th></th>}</tr></thead>
           <tbody>
             {items.map((s) => (
               <tr key={s.id}>
@@ -70,6 +70,7 @@ export default function ServiceRequestsPage() {
                 <td>{s.customerName}</td>
                 <td>{s.isCorporatePartner ? "Corporate" : "General"}</td>
                 <td>{s.soNumber || "—"}</td>
+                <td>{s.team?.name || "—"}</td>
                 <td><span className="badge badge-medium">{STATUS_LABEL[s.status]}</span></td>
                 <td>{s.assignedTo?.name || "Unassigned"}</td>
                 <td>{s.dueDate ? new Date(s.dueDate).toLocaleDateString() : "—"}</td>

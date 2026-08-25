@@ -15,6 +15,7 @@ export default function ServiceRequestDetail() {
   const router = useRouter();
   const [item, setItem] = useState<any>(null);
   const [people, setPeople] = useState<any[]>([]);
+  const [teams, setTeams] = useState<any[]>([]);
   const [comment, setComment] = useState("");
   const [error, setError] = useState("");
   const [editingDetails, setEditingDetails] = useState(false);
@@ -31,6 +32,7 @@ export default function ServiceRequestDetail() {
   useEffect(() => { load(); }, [id]);
   useEffect(() => {
     fetch("/api/users/assignable").then((r) => r.json()).then((data) => Array.isArray(data) && setPeople(data));
+    fetch("/api/teams").then((r) => r.json()).then((data) => Array.isArray(data) && setTeams(data));
   }, []);
 
   async function updateField(data: any) {
@@ -182,7 +184,7 @@ export default function ServiceRequestDetail() {
             {item.soNumber && <p><strong>S.O. Number:</strong> {item.soNumber}</p>}
             {item.description && <p>{item.description}</p>}
             <p style={{ fontSize: 13, color: "var(--text-muted)" }}>
-              Created by {item.createdBy?.name} · {new Date(item.createdAt).toLocaleString()}
+              Team: {item.team?.name || "—"} · Created by {item.createdBy?.name} · {new Date(item.createdAt).toLocaleString()}
             </p>
             {canManage && <button onClick={startEditDetails}>Edit details</button>}
           </>
@@ -206,6 +208,13 @@ export default function ServiceRequestDetail() {
         <div>
           <label>Due date</label>
           <input type="date" value={item.dueDate ? item.dueDate.slice(0, 10) : ""} onChange={(e) => updateField({ dueDate: e.target.value || null })} />
+        </div>
+        <div>
+          <label>Team</label>
+          <select value={item.teamId || ""} onChange={(e) => updateField({ teamId: e.target.value || null })}>
+            <option value="">No team</option>
+            {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+          </select>
         </div>
       </div>
 

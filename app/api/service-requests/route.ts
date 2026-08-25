@@ -12,7 +12,7 @@ export async function GET(req: Request) {
   const showArchived = new URL(req.url).searchParams.get("showArchived") === "1";
   const serviceRequests = await prisma.serviceRequest.findMany({
     where: { archived: showArchived },
-    include: { createdBy: true, assignedTo: true },
+    include: { createdBy: true, assignedTo: true, team: true },
     orderBy: { createdAt: "desc" },
   });
   return NextResponse.json(serviceRequests);
@@ -27,6 +27,12 @@ export async function POST(req: Request) {
   if (!body.title?.trim() || !body.customerName?.trim()) {
     return NextResponse.json({ error: "Title and customer name are required." }, { status: 400 });
   }
+  let category: string | null = "MAINTENANCE";
+  if (body.teamId) {
+    const team = await prisma.team.findUnique({ where: { id: body.teamId }, select: { category: true } });
+    category = team?.category || "MAINTENANCE";
+  }
+
   const serviceRequest = await prisma.serviceRequest.create({
     data: {
       title: body.title,
@@ -37,6 +43,8 @@ export async function POST(req: Request) {
       dueDate: body.dueDate ? new Date(body.dueDate) : null,
       createdById: session.user.id,
       assignedToId: body.assignedToId || null,
+      teamId: body.teamId || null,
+      category: category as any,
     },
   });
   return NextResponse.json(serviceRequest, { status: 201 });

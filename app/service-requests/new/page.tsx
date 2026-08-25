@@ -13,11 +13,14 @@ export default function NewServiceRequest() {
   const [dueDate, setDueDate] = useState("");
   const [assignedToId, setAssignedToId] = useState("");
   const [people, setPeople] = useState<any[]>([]);
+  const [teams, setTeams] = useState<any[]>([]);
+  const [teamId, setTeamId] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
 
   useEffect(() => {
     fetch("/api/users/assignable").then((r) => r.json()).then((data) => Array.isArray(data) && setPeople(data));
+    fetch("/api/teams").then((r) => r.json()).then((data) => Array.isArray(data) && setTeams(data));
   }, []);
 
   function handleCustomerTypeChange(type: "GENERAL" | "CORPORATE") {
@@ -37,6 +40,7 @@ export default function NewServiceRequest() {
       body: JSON.stringify({
         title, customerName, description, dueDate: dueDate || null, assignedToId: assignedToId || null,
         isCorporatePartner: customerType === "CORPORATE", soNumber: soNumber || null,
+        teamId: teamId || null,
       }),
     });
     if (!res.ok) {
@@ -96,6 +100,13 @@ export default function NewServiceRequest() {
           <select value={assignedToId} onChange={(e) => setAssignedToId(e.target.value)} style={{ width: "100%" }}>
             <option value="">Unassigned</option>
             {people.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.role})</option>)}
+          </select>
+        </div>
+        <div className="field">
+          <label>Team (optional)</label>
+          <select value={teamId} onChange={(e) => setTeamId(e.target.value)} style={{ width: "100%" }}>
+            <option value="">No team</option>
+            {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
           </select>
         </div>
         {error && <p style={{ color: "var(--danger)", fontSize: 13 }}>{error}</p>}
