@@ -53,7 +53,7 @@ export default function TeamsPage() {
                 </div>
                 <label>Team leader</label>
                 {isAdmin ? (
-                  <select value={t.teamLeaderId || ""} onChange={(e) => setLeader(t.id, e.target.value)}>
+                  <select value={t.teamLeaderId || ""} onChange={(e) => setLeader(t.id, e.target.value)} style={{ width: "100%", fontSize: 14 }}>
                     <option value="">None assigned</option>
                     {people.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.role})</option>)}
                   </select>

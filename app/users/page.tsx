@@ -26,6 +26,17 @@ export default function UsersPage() {
   const [editUsername, setEditUsername] = useState("");
   const [editingSitesId, setEditingSitesId] = useState<string | null>(null);
   const [editSiteIds, setEditSiteIds] = useState<string[]>([]);
+  const [search, setSearch] = useState("");
+
+  const filteredUsers = users.filter((u) => {
+    const q = search.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      u.name?.toLowerCase().includes(q) ||
+      u.email?.toLowerCase().includes(q) ||
+      u.username?.toLowerCase().includes(q)
+    );
+  });
 
   function load() {
     fetch("/api/users").then((r) => r.json()).then((data) => Array.isArray(data) ? setUsers(data) : setError(data.error));
@@ -182,11 +193,15 @@ export default function UsersPage() {
       </form>
       {error && <p style={{ color: "var(--danger)", fontSize: 13 }}>{error}</p>}
 
+      <div className="field" style={{ maxWidth: 320 }}>
+        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name, email, or username…" style={{ width: "100%" }} />
+      </div>
+
       <div className="table-scroll">
       <table>
         <thead><tr><th>Name</th><th>Email</th><th>Username</th><th>Role</th><th>Team</th><th>Sites</th><th>Status</th><th>Reset password</th><th></th><th></th></tr></thead>
         <tbody>
-          {users.map((u) => (
+          {filteredUsers.map((u) => (
             <tr key={u.id}>
               {editingInfoId === u.id ? (
                 <>
