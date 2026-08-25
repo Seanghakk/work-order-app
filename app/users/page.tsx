@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useEffect, useState } from "react";
 
 const ROLES = [
@@ -162,6 +162,7 @@ export default function UsersPage() {
 
   return (
     <div className="container">
+      <span className="eyebrow">Administration</span>
       <h1>Users</h1>
 
       <form onSubmit={handleCreate} className="card" style={{ marginBottom: 16 }}>
@@ -178,15 +179,16 @@ export default function UsersPage() {
           </div>
         </div>
         <div style={{ marginBottom: 12 }}>
-          <label>Sites (leave empty for Admins — they see everything regardless)</label>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+          <label>Sites</label>
+          <p style={{ fontSize: 12, color: "var(--text-muted)", margin: "0 0 8px" }}>Leave empty for Admins - they see everything regardless.</p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 12, padding: 12, border: "1px solid var(--border)", borderRadius: 8, background: "var(--surface-hover)" }}>
             {sites.map((s) => (
-              <label key={s.id} style={{ display: "flex", alignItems: "center", gap: 5, fontWeight: "normal", fontSize: 13 }}>
-                <input type="checkbox" checked={formSiteIds.includes(s.id)} onChange={() => toggleFormSite(s.id)} />
+              <label key={s.id} style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: "normal", fontSize: 14 }}>
+                <input type="checkbox" checked={formSiteIds.includes(s.id)} onChange={() => toggleFormSite(s.id)} style={{ width: 16, height: 16 }} />
                 {s.name}
               </label>
             ))}
-            {sites.length === 0 && <span style={{ fontSize: 13, color: "var(--text-muted)" }}>No sites created yet — add one from the Sites page first.</span>}
+            {sites.length === 0 && <span style={{ fontSize: 13, color: "var(--text-muted)" }}>No sites created yet - add one from the Sites page first.</span>}
           </div>
         </div>
         <button className="primary" type="submit">Add user</button>
@@ -194,7 +196,7 @@ export default function UsersPage() {
       {error && <p style={{ color: "var(--danger)", fontSize: 13 }}>{error}</p>}
 
       <div className="field" style={{ maxWidth: 320 }}>
-        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name, email, or username…" style={{ width: "100%" }} />
+        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name, email, or usernameâ€¦" style={{ width: "100%" }} />
       </div>
 
       <div className="table-scroll">
@@ -213,7 +215,7 @@ export default function UsersPage() {
                 <>
                   <td>{u.name}</td>
                   <td>{u.email}</td>
-                  <td>{u.username || "—"}</td>
+                  <td>{u.username || "â€”"}</td>
                 </>
               )}
               <td>
@@ -244,11 +246,11 @@ export default function UsersPage() {
                     </div>
                   </div>
                 ) : (
-                  <div>
-                    <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 4 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                    <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
                       {u.role === "ADMIN" ? "All sites" : (u.sites?.length ? u.sites.map((s: any) => s.site.name).join(", ") : "None assigned")}
-                    </div>
-                    <button onClick={() => startEditSites(u)}>Edit sites</button>
+                    </span>
+                    <button onClick={() => startEditSites(u)} style={{ fontSize: 12, padding: "4px 8px" }}>Edit sites</button>
                   </div>
                 )}
               </td>
@@ -260,9 +262,10 @@ export default function UsersPage() {
                     <button className="primary" onClick={() => approveUser(u.id)}>Approve</button>
                   </div>
                 ) : (
-                  <button onClick={() => toggleActive(u.id, !u.active)}>
-                    {u.active ? "Active — deactivate" : "Inactive — reactivate"}
-                  </button>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-start" }}>
+                    <span className={`badge ${u.active ? "badge-open" : "badge-canceled"}`}>{u.active ? "Active" : "Inactive"}</span>
+                    <button onClick={() => toggleActive(u.id, !u.active)} style={{ fontSize: 12, padding: "4px 8px" }}>{u.active ? "Deactivate" : "Reactivate"}</button>
+                  </div>
                 )}
               </td>
               <td>
@@ -295,3 +298,4 @@ export default function UsersPage() {
     </div>
   );
 }
+
