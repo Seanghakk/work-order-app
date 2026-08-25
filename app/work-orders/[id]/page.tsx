@@ -23,7 +23,7 @@ export default function WorkOrderDetail() {
   }, [wo?.siteId]);
 
   const role = session?.user?.role;
-  const canEdit = role === "MANAGER" || role === "ADMIN" || role === "TECHNICIAN";
+  const canEdit = role === "MANAGER" || role === "ADMIN" || role === "MAINTENANCE_LEADER" || role === "MAINTENANCE_TECHNICIAN";
   const canManage = role === "MANAGER" || role === "ADMIN";
 
   async function toggleArchived() {

@@ -1,15 +1,33 @@
 import { prisma } from "@/lib/prisma";
 
 export function canAccessSaleOrders(role?: string | null): boolean {
-  return ["SALES", "ENGINEERING", "AA", "MANAGER", "ADMIN"].includes(role || "");
+  return [
+    "SALES_LEADER", "SALES_ENGINEER",
+    "SHOP_DRAWING_LEADER", "SHOP_DRAWING_ENGINEER",
+    "ANA_LEADER", "ANA_ENGINEER",
+    "QC_LEADER", "QC_ENGINEER",
+    "MANAGER", "ADMIN",
+  ].includes(role || "");
 }
 
 export function canAccessWorkOrders(role?: string | null): boolean {
-  return !["AA", "ENGINEERING"].includes(role || "");
+  return ![
+    "SHOP_DRAWING_LEADER", "SHOP_DRAWING_ENGINEER",
+    "ANA_LEADER", "ANA_ENGINEER",
+    "QC_LEADER", "QC_ENGINEER",
+  ].includes(role || "");
 }
 
 export function canAccessServiceRequests(role?: string | null): boolean {
-  return ["SALES", "ENGINEERING", "AA", "MANAGER", "ADMIN", "TNC_ENGINEER", "TNC_LEADER", "MAINTENANCE_SUP"].includes(role || "");
+  return [
+    "SALES_LEADER", "SALES_ENGINEER",
+    "SHOP_DRAWING_LEADER", "SHOP_DRAWING_ENGINEER",
+    "ANA_LEADER", "ANA_ENGINEER",
+    "QC_LEADER", "QC_ENGINEER",
+    "TNC_LEADER", "TNC_ENGINEER",
+    "MAINTENANCE_LEADER", "MAINTENANCE_TECHNICIAN",
+    "MANAGER", "ADMIN",
+  ].includes(role || "");
 }
 
 // Returns "ALL" for admins (no site restriction), or the list of site IDs this user is assigned to.

@@ -12,7 +12,7 @@ export async function GET(req: Request) {
   const siteId = searchParams.get("siteId");
 
   const users = await prisma.user.findMany({
-    where: { role: { in: ["TECHNICIAN", "MANAGER", "ADMIN", "SALES", "ENGINEERING", "AA", "TNC_ENGINEER", "TNC_LEADER", "MAINTENANCE_SUP"] }, active: true },
+    where: { role: { not: "REQUESTER" }, active: true },
     select: { id: true, name: true, role: true, sites: { select: { siteId: true } } },
     orderBy: { name: "asc" },
   });

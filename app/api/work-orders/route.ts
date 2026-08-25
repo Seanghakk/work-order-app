@@ -10,7 +10,7 @@ export async function GET(req: Request) {
   const role = session.user.role;
   const showArchived = new URL(req.url).searchParams.get("showArchived") === "1";
   const roleWhere =
-    role === "TECHNICIAN" ? { OR: [{ assignedToId: session.user.id }, { requestedById: session.user.id }] } :
+    role === "MAINTENANCE_TECHNICIAN" ? { OR: [{ assignedToId: session.user.id }, { requestedById: session.user.id }] } :
     role === "REQUESTER" ? { requestedById: session.user.id } :
     {};
   const siteIds = await getUserSiteIds(session.user.id, role);

@@ -22,7 +22,7 @@ export default async function Dashboard() {
   const siteFilter = siteWhere(siteIds);
 
   const woWhere =
-    role === "TECHNICIAN" ? { OR: [{ assignedToId: session!.user.id }, { requestedById: session!.user.id }], ...siteFilter } :
+    role === "MAINTENANCE_TECHNICIAN" ? { OR: [{ assignedToId: session!.user.id }, { requestedById: session!.user.id }], ...siteFilter } :
     role === "REQUESTER" ? { requestedById: session!.user.id, ...siteFilter } :
     siteFilter;
 
