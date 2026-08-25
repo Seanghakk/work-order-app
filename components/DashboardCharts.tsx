@@ -17,7 +17,7 @@ export function DonutChart({ data }: { data: DataPoint[] }) {
                 <Cell key={i} fill={d.color || DEFAULT_COLORS[i % DEFAULT_COLORS.length]} />
               ))}
             </Pie>
-            <Tooltip formatter={(value: number, name: string) => [`${value}`, name]} />
+            <Tooltip />
           </PieChart>
         </ResponsiveContainer>
         <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
