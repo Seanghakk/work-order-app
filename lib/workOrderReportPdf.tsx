@@ -156,30 +156,10 @@ export function WorkOrderReportDocument({ wo }: { wo: any }) {
         )}
 
         <View style={styles.signRow}>
-          <View style={styles.signCol}>
-            <Text style={styles.signRoleTitle}>ADTECH Technician</Text>
-            <View style={styles.signatureArea} />
-            <Text style={styles.signLine}>Name: {wo.assignedTo?.name || ""}</Text>
-            <Text style={styles.signLine}>Date: ___________________</Text>
-          </View>
-          <View style={styles.signCol}>
-            <Text style={styles.signRoleTitle}>Checked By</Text>
-            <View style={styles.signatureArea} />
-            <Text style={styles.signLine}>Name: ___________________</Text>
-            <Text style={styles.signLine}>Date: ___________________</Text>
-          </View>
-          <View style={styles.signCol}>
-            <Text style={styles.signRoleTitle}>Approved By</Text>
-            <View style={styles.signatureArea} />
-            <Text style={styles.signLine}>Name: ___________________</Text>
-            <Text style={styles.signLine}>Date: ___________________</Text>
-          </View>
-          <View style={styles.signCol}>
-            <Text style={styles.signRoleTitle}>Customer</Text>
-            <View style={styles.signatureArea} />
-            <Text style={styles.signLine}>Name / Position: ___________________</Text>
-            <Text style={styles.signLine}>Date: ___________________</Text>
-          </View>
+          <SignatureBlock role="ADTECH Technician" name={wo.assignedTo?.name} />
+          <SignatureBlock role="Checked By" />
+          <SignatureBlock role="Approved By" />
+          <SignatureBlock role="Customer" />
         </View>
 
         <Text style={styles.footer} fixed>
@@ -187,6 +167,18 @@ export function WorkOrderReportDocument({ wo }: { wo: any }) {
         </Text>
       </Page>
     </Document>
+  );
+}
+
+function SignatureBlock({ role, name }: { role: string; name?: string }) {
+  return (
+    <View style={styles.signCol}>
+      <Text style={styles.signRoleTitle}>{role}</Text>
+      <View style={styles.signatureArea} />
+      <Text style={styles.signLine}>Name: {name || "____________"}</Text>
+      <Text style={styles.signLine}>Position: ____________</Text>
+      <Text style={styles.signLine}>Date: ____________</Text>
+    </View>
   );
 }
 
