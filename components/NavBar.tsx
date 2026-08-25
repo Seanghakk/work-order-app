@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -14,21 +14,21 @@ export default function NavBar() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [panelOpen, setPanelOpen] = useState(false);
-  const [workOpen, setWorkOpen] = useState(false);
-  const [saleOpen, setSaleOpen] = useState(false);
+  const [maintenanceOpen, setMaintenanceOpen] = useState(false);
+  const [salesOpen, setSalesOpen] = useState(false);
+  const [projectOpen, setProjectOpen] = useState(false);
   const navRef = useRef<HTMLDivElement>(null);
 
   function closeAllPanels() {
     setPanelOpen(false);
-    setWorkOpen(false);
-    setSaleOpen(false);
+    setMaintenanceOpen(false);
+    setSalesOpen(false);
+    setProjectOpen(false);
   }
-
   function closeMenuAndPanels() {
     setOpen(false);
     closeAllPanels();
   }
-
   function loadNotifications() {
     fetch("/api/notifications").then((r) => r.json()).then((data) => {
       if (data.notifications) {
@@ -37,41 +37,44 @@ export default function NavBar() {
       }
     });
   }
-
   useEffect(() => {
     if (session) loadNotifications();
   }, [session]);
-
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (navRef.current && !navRef.current.contains(e.target as Node)) {
         closeAllPanels();
       }
     }
-    if (panelOpen || workOpen || saleOpen) document.addEventListener("mousedown", handleClickOutside);
+    if (panelOpen || maintenanceOpen || salesOpen || projectOpen) document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [panelOpen, workOpen, saleOpen]);
-
+  }, [panelOpen, maintenanceOpen, salesOpen, projectOpen]);
   async function handleBellClick() {
     const next = !panelOpen;
-    setWorkOpen(false);
-    setSaleOpen(false);
+    setMaintenanceOpen(false);
+    setSalesOpen(false);
+    setProjectOpen(false);
     setPanelOpen(next);
     if (next) loadNotifications();
   }
-
-  function toggleWork() {
+  function toggleMaintenance() {
     setPanelOpen(false);
-    setSaleOpen(false);
-    setWorkOpen((v) => !v);
+    setSalesOpen(false);
+    setProjectOpen(false);
+    setMaintenanceOpen((v) => !v);
   }
-
-  function toggleSale() {
+  function toggleSales() {
     setPanelOpen(false);
-    setWorkOpen(false);
-    setSaleOpen((v) => !v);
+    setMaintenanceOpen(false);
+    setProjectOpen(false);
+    setSalesOpen((v) => !v);
   }
-
+  function toggleProject() {
+    setPanelOpen(false);
+    setMaintenanceOpen(false);
+    setSalesOpen(false);
+    setProjectOpen((v) => !v);
+  }
   async function handleNotificationClick(n: any) {
     if (!n.readAt) {
       await fetch(`/api/notifications/${n.id}`, { method: "PATCH" });
@@ -80,64 +83,69 @@ export default function NavBar() {
     if (n.link) router.push(n.link);
     loadNotifications();
   }
-
   async function markAllRead() {
     await fetch("/api/notifications", { method: "PATCH" });
     loadNotifications();
   }
-
   async function clearAllNotifications() {
     if (!confirm("Clear all notifications?")) return;
     await fetch("/api/notifications", { method: "DELETE" });
     loadNotifications();
   }
-
   async function dismissNotification(id: string, e: React.MouseEvent) {
     e.stopPropagation();
     await fetch(`/api/notifications/${id}`, { method: "DELETE" });
     loadNotifications();
   }
-
+  const canSeeMaintenanceContracts = role === "MANAGER" || role === "ADMIN" || role === "SALES_LEADER" || role === "SALES_ENGINEER" || role === "MAINTENANCE_LEADER" || role === "MAINTENANCE_TECHNICIAN";
   const links = (
     <>
       <Link href="/dashboard" onClick={closeMenuAndPanels}>Dashboard</Link>
-
-      {canAccessWorkOrders(role) && (
-	<span className="nav-dropdown-wrap">
-        <button className={`nav-dropdown-trigger ${workOpen ? "active" : ""}`} onClick={toggleWork}>
-          Work Orders ▾
+      {(canAccessWorkOrders(role) || canAccessServiceRequests(role)) && (
+        <span className="nav-dropdown-wrap">
+        <button className={`nav-dropdown-trigger ${maintenanceOpen ? "active" : ""}`} onClick={toggleMaintenance}>
+          Maintenance v
         </button>
-        {workOpen && (
+        {maintenanceOpen && (
           <div className="nav-dropdown-panel">
-            <Link href="/work-orders" onClick={closeMenuAndPanels}>Work Orders</Link>
-            <Link href="/assets" onClick={closeMenuAndPanels}>Assets</Link>
+            {canAccessWorkOrders(role) && <Link href="/work-orders" onClick={closeMenuAndPanels}>Work Orders</Link>}
+            {canAccessWorkOrders(role) && <Link href="/assets" onClick={closeMenuAndPanels}>Assets</Link>}
             {(role === "MANAGER" || role === "ADMIN") && (
               <Link href="/pm-schedules" onClick={closeMenuAndPanels}>PM Schedules</Link>
             )}
-            <Link href="/defect-reports" onClick={closeMenuAndPanels}>Defect Reports</Link>
-            <Link href="/material-requisitions" onClick={closeMenuAndPanels}>Material Requisitions</Link>
+            {canAccessServiceRequests(role) && <Link href="/service-requests" onClick={closeMenuAndPanels}>Service Requests</Link>}
           </div>
         )}
       </span>
       )}
-
-      {(canAccessSaleOrders(role) || canAccessServiceRequests(role)) && (
+      {(canAccessSaleOrders(role) || canSeeMaintenanceContracts) && (
         <span className="nav-dropdown-wrap">
-          <button className={`nav-dropdown-trigger ${saleOpen ? "active" : ""}`} onClick={toggleSale}>
-            Sale Orders ▾
+          <button className={`nav-dropdown-trigger ${salesOpen ? "active" : ""}`} onClick={toggleSales}>
+            Sales v
           </button>
-          {saleOpen && (
+          {salesOpen && (
             <div className="nav-dropdown-panel">
               {canAccessSaleOrders(role) && <Link href="/sale-orders" onClick={closeMenuAndPanels}>Sale Orders</Link>}
-              {canAccessServiceRequests(role) && <Link href="/service-requests" onClick={closeMenuAndPanels}>Service Requests</Link>}
-              {(role === "MANAGER" || role === "ADMIN" || role === "SALES_LEADER" || role === "SALES_ENGINEER" || role === "MAINTENANCE_LEADER" || role === "MAINTENANCE_TECHNICIAN") && (
+              {canSeeMaintenanceContracts && (
                 <Link href="/maintenance-contracts" onClick={closeMenuAndPanels}>Maintenance Contracts</Link>
               )}
             </div>
           )}
         </span>
       )}
-
+      {role !== "REQUESTER" && (
+        <span className="nav-dropdown-wrap">
+          <button className={`nav-dropdown-trigger ${projectOpen ? "active" : ""}`} onClick={toggleProject}>
+            Project v
+          </button>
+          {projectOpen && (
+            <div className="nav-dropdown-panel">
+              <Link href="/defect-reports" onClick={closeMenuAndPanels}>Defect Reports</Link>
+              <Link href="/material-requisitions" onClick={closeMenuAndPanels}>Material Requisitions</Link>
+            </div>
+          )}
+        </span>
+      )}
       {(role === "MANAGER" || role === "ADMIN") && <Link href="/reports" onClick={closeMenuAndPanels}>Reports</Link>}
       {(role === "MANAGER" || role === "ADMIN") && <Link href="/users" onClick={closeMenuAndPanels}>Users</Link>}
       {role === "ADMIN" || role === "MANAGER" ? <Link href="/sites" onClick={closeMenuAndPanels}>Sites</Link> : null}
@@ -145,7 +153,6 @@ export default function NavBar() {
       <Link href="/about" onClick={closeMenuAndPanels}>About</Link>
     </>
   );
-
   return (
     <div className="nav" ref={navRef}>
       <div className="nav-top">
@@ -167,7 +174,7 @@ export default function NavBar() {
         <div className="nav-user">
           <span style={{ position: "relative" }}>
             <button className="notif-bell" onClick={handleBellClick} aria-label="Notifications">
-              🔔
+              {"\u{1F514}"}
               {unreadCount > 0 && <span className="notif-dot">{unreadCount > 9 ? "9+" : unreadCount}</span>}
             </button>
             {panelOpen && (
@@ -191,7 +198,7 @@ export default function NavBar() {
                         {new Date(n.createdAt).toLocaleString()}
                       </div>
                     </div>
-                    <button onClick={(e) => dismissNotification(n.id, e)} aria-label="Dismiss" style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 16, lineHeight: 1, padding: "0 2px" }}>×</button>
+                    <button onClick={(e) => dismissNotification(n.id, e)} aria-label="Dismiss" style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 16, lineHeight: 1, padding: "0 2px" }}>{"\u00D7"}</button>
                   </div>
                 ))}
               </div>
