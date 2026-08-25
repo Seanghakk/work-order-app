@@ -14,13 +14,16 @@ export async function GET(req: Request) {
     role === "MAINTENANCE_TECHNICIAN" ? [{ assignedToId: session.user.id }, { requestedById: session.user.id }] :
     role === "REQUESTER" ? [{ requestedById: session.user.id }] :
     [];
+  const isManagerOrAdmin = role === "MANAGER" || role === "ADMIN";
 
-  const leaderTeamId = await getLeaderTeamId(session.user.id);
+  const [leaderTeamId, siteIds] = await Promise.all([
+    isManagerOrAdmin ? Promise.resolve(null) : getLeaderTeamId(session.user.id),
+    getUserSiteIds(session.user.id, role),
+  ]);
   if (leaderTeamId) roleOr.push({ teamId: leaderTeamId });
 
-  const siteIds = await getUserSiteIds(session.user.id, role);
   const baseWhere = { ...siteWhere(siteIds), archived: showArchived };
-  const where = role === "MANAGER" || role === "ADMIN" || roleOr.length === 0
+  const where = isManagerOrAdmin || roleOr.length === 0
     ? baseWhere
     : { ...baseWhere, OR: roleOr };
 

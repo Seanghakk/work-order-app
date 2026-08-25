@@ -86,7 +86,7 @@ model User {
   requested     WorkOrder[]  @relation("requestedBy")
   assigned      WorkOrder[]  @relation("assignedTo")
   comments      Comment[]
-  workOrderPhotos WorkOrderPhoto[]
+  photos        WorkOrderPhoto[]
   saleOrdersCreated  SaleOrder[]        @relation("saleOrderCreatedBy")
   saleOrdersAssigned SaleOrder[]        @relation("saleOrderAssignedTo")
   saleOrderComments  SaleOrderComment[]
@@ -162,8 +162,12 @@ model WorkOrder {
   warrantyClaim Boolean         @default(false)
   comments      Comment[]
   photos        WorkOrderPhoto[]
-}
 
+  @@index([siteId, archived])
+  @@index([teamId])
+  @@index([assignedToId])
+  @@index([requestedById])
+}
 model WorkOrderPhoto {
   id          String    @id @default(cuid())
   workOrder   WorkOrder @relation(fields: [workOrderId], references: [id])
