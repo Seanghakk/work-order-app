@@ -4,6 +4,7 @@ const nextConfig = {
     outputFileTracingIncludes: {
       "/api/work-orders/[id]/report": ["./node_modules/pdfkit/js/**/*"],
       "/api/work-orders/[id]": ["./node_modules/pdfkit/js/**/*"],
+      "/api/defect-reports/[id]/report": ["./node_modules/pdfkit/js/**/*"],
     },
   },
 };

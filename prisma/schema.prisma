@@ -86,7 +86,8 @@ model User {
   requested     WorkOrder[]  @relation("requestedBy")
   assigned      WorkOrder[]  @relation("assignedTo")
   comments      Comment[]
-  photos        WorkOrderPhoto[]
+  workOrderPhotos WorkOrderPhoto[]
+  defectReportsCreated DefectReport[]
   saleOrdersCreated  SaleOrder[]        @relation("saleOrderCreatedBy")
   saleOrdersAssigned SaleOrder[]        @relation("saleOrderAssignedTo")
   saleOrderComments  SaleOrderComment[]
@@ -106,6 +107,7 @@ model Site {
   users      UserSite[]
   assets     Asset[]
   workOrders WorkOrder[]
+  defectReports DefectReport[]
 }
 
 model UserSite {
@@ -169,6 +171,7 @@ model WorkOrder {
   departureAt   DateTime?
   comments      Comment[]
   photos        WorkOrderPhoto[]
+  defectReports DefectReport[]
 
   @@index([siteId, archived])
   @@index([teamId])
@@ -279,6 +282,42 @@ model ServiceRequestComment {
   authorId          String
   body              String
   createdAt         DateTime        @default(now())
+}
+model DefectReport {
+  id                  String             @id @default(cuid())
+  dfNumber            String?
+  projectName         String
+  mainContractor      String?
+  subContractor       String             @default("ADTECH CO., LTD")
+  date                DateTime           @default(now())
+  section             String?
+  discipline          String?
+  otherDisciplineText String?
+  remark              String?
+  status              String             @default("OPEN")
+  workOrderId         String?
+  workOrder           WorkOrder?         @relation(fields: [workOrderId], references: [id])
+  siteId              String?
+  site                Site?              @relation(fields: [siteId], references: [id])
+  createdById         String
+  createdBy           User               @relation(fields: [createdById], references: [id])
+  items               DefectReportItem[]
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+}
+
+model DefectReportItem {
+  id                String       @id @default(cuid())
+  defectReport      DefectReport @relation(fields: [defectReportId], references: [id], onDelete: Cascade)
+  defectReportId    String
+  itemNo            Int
+  partNumber        String?
+  description       String?
+  brand             String?
+  unit              String?
+  qty               Int?
+  defectDescription String?
+  photoReference    String?
 }
 model Team {
   id              String            @id @default(cuid())

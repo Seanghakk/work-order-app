@@ -114,6 +114,7 @@ export default function NavBar() {
             {(role === "MANAGER" || role === "ADMIN") && (
               <Link href="/pm-schedules" onClick={closeMenuAndPanels}>PM Schedules</Link>
             )}
+            <Link href="/defect-reports" onClick={closeMenuAndPanels}>Defect Reports</Link>
           </div>
         )}
       </span>
