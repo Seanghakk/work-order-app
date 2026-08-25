@@ -20,11 +20,17 @@ export default function DefectReportDetail() {
   const router = useRouter();
   const [report, setReport] = useState<any>(null);
   const [sites, setSites] = useState<any[]>([]);
+  const [people, setPeople] = useState<any[]>([]);
   const [error, setError] = useState("");
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<any>({});
   const [items, setItems] = useState<Item[]>([]);
   const [uploadingKey, setUploadingKey] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
+  const [showSend, setShowSend] = useState(false);
+  const [sendUserIds, setSendUserIds] = useState<string[]>([]);
+  const [sendMessage, setSendMessage] = useState("");
+  const [sendResult, setSendResult] = useState("");
   const canManage = session && ["MANAGER", "ADMIN"].includes(session.user.role);
   const canEdit = session && session.user.role !== "REQUESTER";
 
@@ -34,6 +40,7 @@ export default function DefectReportDetail() {
   useEffect(load, [id]);
   useEffect(() => {
     fetch("/api/sites").then((r) => r.json()).then((data) => Array.isArray(data) && setSites(data));
+    fetch("/api/users/assignable").then((r) => r.json()).then((data) => Array.isArray(data) && setPeople(data));
   }, []);
 
   async function updateField(data: any) {
@@ -128,6 +135,32 @@ export default function DefectReportDetail() {
       return;
     }
     load();
+  }
+
+  function toggleSendUser(userId: string) {
+    setSendUserIds((prev) => (prev.includes(userId) ? prev.filter((u) => u !== userId) : [...prev, userId]));
+  }
+
+  async function sendReport() {
+    if (sendUserIds.length === 0) { setError("Select at least one recipient."); return; }
+    setSending(true);
+    setError("");
+    setSendResult("");
+    const res = await fetch(`/api/defect-reports/${id}/send`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userIds: sendUserIds, message: sendMessage || undefined }),
+    });
+    setSending(false);
+    if (!res.ok) {
+      const d = await res.json();
+      setError(d.error || "Couldn't send the report.");
+      return;
+    }
+    const d = await res.json();
+    setSendResult(`Sent to ${d.sentTo} recipient${d.sentTo !== 1 ? "s" : ""}.`);
+    setSendUserIds([]);
+    setSendMessage("");
   }
 
   if (!report || report.error) return <div className="container"><p>{report?.error || "Loading…"}</p></div>;
@@ -300,6 +333,29 @@ export default function DefectReportDetail() {
         </>
       )}
 
+      {showSend && (
+        <div className="card" style={{ marginBottom: 16 }}>
+          <h3 style={{ marginTop: 0 }}>Send report</h3>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 12, maxHeight: 160, overflowY: "auto" }}>
+            {people.map((p) => (
+              <label key={p.id} style={{ display: "flex", alignItems: "center", gap: 5, fontWeight: "normal", fontSize: 13 }}>
+                <input type="checkbox" checked={sendUserIds.includes(p.id)} onChange={() => toggleSendUser(p.id)} />
+                {p.name} ({p.role})
+              </label>
+            ))}
+          </div>
+          <div className="field" style={{ marginBottom: 12 }}>
+            <label>Message (optional)</label>
+            <textarea value={sendMessage} onChange={(e) => setSendMessage(e.target.value)} rows={2} style={{ width: "100%" }} />
+          </div>
+          {sendResult && <p style={{ color: "var(--success)", fontSize: 13 }}>{sendResult}</p>}
+          <div style={{ display: "flex", gap: 8 }}>
+            <button className="primary" onClick={sendReport} disabled={sending}>{sending ? "Sending…" : "Send"}</button>
+            <button onClick={() => setShowSend(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
+
       {error && <p style={{ color: "var(--danger)", fontSize: 13 }}>{error}</p>}
 
       {!editing && (
@@ -307,6 +363,7 @@ export default function DefectReportDetail() {
           <a href={`/api/defect-reports/${id}/report`} target="_blank" rel="noopener noreferrer">
             <button>Download report</button>
           </a>
+          {canEdit && !showSend && <button onClick={() => setShowSend(true)}>Send report</button>}
           {canManage && <button className="danger" onClick={removeReport}>Delete this defect report</button>}
         </div>
       )}

@@ -20,12 +20,18 @@ export default function WorkOrderDetail() {
   const [wo, setWo] = useState<any>(null);
   const [technicians, setTechnicians] = useState<any[]>([]);
   const [teams, setTeams] = useState<any[]>([]);
+  const [people, setPeople] = useState<any[]>([]);
   const [comment, setComment] = useState("");
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
   const [partsNeeded, setPartsNeeded] = useState("");
   const [soNumber, setSoNumber] = useState("");
   const [problemNotFixedReason, setProblemNotFixedReason] = useState("");
+  const [sending, setSending] = useState(false);
+  const [showSend, setShowSend] = useState(false);
+  const [sendUserIds, setSendUserIds] = useState<string[]>([]);
+  const [sendMessage, setSendMessage] = useState("");
+  const [sendResult, setSendResult] = useState("");
 
   async function load() {
     const res = await fetch(`/api/work-orders/${id}`);
@@ -44,6 +50,7 @@ export default function WorkOrderDetail() {
   }, [wo?.siteId]);
   useEffect(() => {
     fetch("/api/teams").then((r) => r.json()).then((data) => Array.isArray(data) && setTeams(data));
+    fetch("/api/users/assignable").then((r) => r.json()).then((data) => Array.isArray(data) && setPeople(data));
   }, []);
 
   const role = session?.user?.role;
@@ -113,6 +120,32 @@ export default function WorkOrderDetail() {
     load();
   }
 
+  function toggleSendUser(userId: string) {
+    setSendUserIds((prev) => (prev.includes(userId) ? prev.filter((u) => u !== userId) : [...prev, userId]));
+  }
+
+  async function sendReport() {
+    if (sendUserIds.length === 0) { setError("Select at least one recipient."); return; }
+    setSending(true);
+    setError("");
+    setSendResult("");
+    const res = await fetch(`/api/work-orders/${id}/send`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userIds: sendUserIds, message: sendMessage || undefined }),
+    });
+    setSending(false);
+    if (!res.ok) {
+      const d = await res.json();
+      setError(d.error || "Couldn't send the report.");
+      return;
+    }
+    const d = await res.json();
+    setSendResult(`Sent to ${d.sentTo} recipient${d.sentTo !== 1 ? "s" : ""}.`);
+    setSendUserIds([]);
+    setSendMessage("");
+  }
+
   if (!wo || wo.error) return <div className="container"><p>{wo?.error || "Loading…"}</p></div>;
 
   return (
@@ -126,8 +159,33 @@ export default function WorkOrderDetail() {
         <a href={`/api/work-orders/${id}/report`} target="_blank" rel="noopener noreferrer">
           <button>Download report</button>
         </a>
+        {canEdit && <button onClick={() => setShowSend((v) => !v)}>Send report</button>}
         {canManage && <button onClick={toggleArchived}>{wo.archived ? "Unarchive" : "Archive"}</button>}
       </div>
+
+      {showSend && (
+        <div className="card" style={{ marginBottom: 16 }}>
+          <h3 style={{ marginTop: 0 }}>Send report</h3>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 12, maxHeight: 160, overflowY: "auto" }}>
+            {people.map((p) => (
+              <label key={p.id} style={{ display: "flex", alignItems: "center", gap: 5, fontWeight: "normal", fontSize: 13 }}>
+                <input type="checkbox" checked={sendUserIds.includes(p.id)} onChange={() => toggleSendUser(p.id)} />
+                {p.name} ({p.role})
+              </label>
+            ))}
+          </div>
+          <div className="field" style={{ marginBottom: 12 }}>
+            <label>Message (optional)</label>
+            <textarea value={sendMessage} onChange={(e) => setSendMessage(e.target.value)} rows={2} style={{ width: "100%" }} />
+          </div>
+          {sendResult && <p style={{ color: "var(--success)", fontSize: 13 }}>{sendResult}</p>}
+          <div style={{ display: "flex", gap: 8 }}>
+            <button className="primary" onClick={sendReport} disabled={sending}>{sending ? "Sending…" : "Send"}</button>
+            <button onClick={() => setShowSend(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
+
       <div className="card" style={{ marginBottom: 16 }}>
         <p>{wo.description}</p>
         <p style={{ fontSize: 13, color: "var(--text-muted)" }}>
