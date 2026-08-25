@@ -128,6 +128,9 @@ export default function NavBar() {
             <div className="nav-dropdown-panel">
               {canAccessSaleOrders(role) && <Link href="/sale-orders" onClick={closeMenuAndPanels}>Sale Orders</Link>}
               {canAccessServiceRequests(role) && <Link href="/service-requests" onClick={closeMenuAndPanels}>Service Requests</Link>}
+              {(role === "MANAGER" || role === "ADMIN" || role === "SALES_LEADER" || role === "SALES_ENGINEER" || role === "MAINTENANCE_LEADER" || role === "MAINTENANCE_TECHNICIAN") && (
+                <Link href="/maintenance-contracts" onClick={closeMenuAndPanels}>Maintenance Contracts</Link>
+              )}
             </div>
           )}
         </span>
