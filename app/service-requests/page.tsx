@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
@@ -48,6 +48,7 @@ export default function ServiceRequestsPage() {
   return (
     <div className="container">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span className="eyebrow">Maintenance</span>
         <h1>Service Requests</h1>
         <Link href="/service-requests/new"><button className="primary">New service request</button></Link>
       </div>
@@ -56,7 +57,7 @@ export default function ServiceRequestsPage() {
         Show archived
       </label>
       {loading ? (
-        <p>Loading…</p>
+        <p>Loadingâ€¦</p>
       ) : items.length === 0 ? (
         <p style={{ color: "var(--text-muted)" }}>{showArchived ? "No archived service requests." : "No service requests yet."}</p>
       ) : (
@@ -69,11 +70,11 @@ export default function ServiceRequestsPage() {
                 <td><Link href={`/service-requests/${s.id}`}>{s.title}</Link></td>
                 <td>{s.customerName}</td>
                 <td>{s.isCorporatePartner ? "Corporate" : "General"}</td>
-                <td>{s.soNumber || "—"}</td>
-                <td>{s.team?.name || "—"}</td>
+                <td>{s.soNumber || "â€”"}</td>
+                <td>{s.team?.name || "â€”"}</td>
                 <td><span className="badge badge-medium">{STATUS_LABEL[s.status]}</span></td>
                 <td>{s.assignedTo?.name || "Unassigned"}</td>
-                <td>{s.dueDate ? new Date(s.dueDate).toLocaleDateString() : "—"}</td>
+                <td>{s.dueDate ? new Date(s.dueDate).toLocaleDateString() : "â€”"}</td>
                 <td>{new Date(s.updatedAt).toLocaleDateString()}</td>
                 {canManage && (
                   <td>
