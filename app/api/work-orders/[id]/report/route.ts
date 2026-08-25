@@ -30,7 +30,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   const pdfBuffer = await generateWorkOrderReportPdf(wo);
   const safeName = wo.title.replace(/[^a-z0-9]+/gi, "-").toLowerCase();
 
-  return new NextResponse(pdfBuffer, {
+  return new NextResponse(new Uint8Array(pdfBuffer), {
     headers: {
       "Content-Type": "application/pdf",
       "Content-Disposition": `attachment; filename="work-order-${safeName}.pdf"`,
