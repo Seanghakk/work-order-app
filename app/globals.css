@@ -129,3 +129,55 @@ body { padding-top: 64px; }
   .card form input, .card form select, .card form textarea { width: 100%; }
   .card form button { width: 100%; }
 }
+
+:root {
+  --login-navy-deep: #0a1420;
+  --login-navy: #0e2439;
+  --login-teal: #2dd4c5;
+}
+
+/* ===== Login page ===== */
+.login-shell { display: flex; min-height: 100vh; overflow: hidden; }
+.login-form-side {
+  flex: 1; display: flex; align-items: center; justify-content: center; padding: 24px;
+  background: var(--bg); opacity: 0; transform: translateY(10px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.login-form-side.in { opacity: 1; transform: translateY(0); }
+.login-card { animation: none; }
+.login-showcase-side {
+  flex: 1; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(160deg, var(--login-navy-deep), var(--login-navy));
+  color: white; padding: 48px; opacity: 0; transition: opacity 0.8s ease 0.2s;
+}
+.login-showcase-side.in { opacity: 1; }
+.login-network { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0.55; pointer-events: none; }
+.login-node { animation: loginNodePulse 2.4s ease-in-out infinite; transform-origin: center; }
+@keyframes loginNodePulse {
+  0%, 100% { opacity: 0.5; r: 4; }
+  50% { opacity: 1; r: 6; }
+}
+.login-showcase-content { position: relative; z-index: 2; max-width: 400px; }
+.login-showcase-title { font-family: "Almarai", sans-serif; font-size: 28px; line-height: 1.3; margin: 0 0 32px; color: white; }
+.login-tip-stack { position: relative; min-height: 76px; }
+.login-tip {
+  position: absolute; top: 0; left: 0; right: 0; display: flex; flex-direction: column; gap: 6px;
+  opacity: 0; transform: translateY(6px); transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.login-tip.active { opacity: 1; transform: translateY(0); }
+.login-tip-label { color: var(--login-teal); font-size: 13px; font-weight: 700; letter-spacing: 0.3px; }
+.login-tip-body { color: rgba(255, 255, 255, 0.75); font-size: 15px; line-height: 1.5; }
+.login-tip-dots { display: flex; gap: 8px; margin-top: 28px; }
+.login-tip-dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(255, 255, 255, 0.25); transition: background 0.4s ease; }
+.login-tip-dot.active { background: var(--login-teal); }
+@media (max-width: 860px) {
+  .login-showcase-side { display: none; }
+}
+
+/* ===== Global micro-interactions ===== */
+button, .card, .nav-dropdown-panel, .notif-panel {
+  transition: box-shadow 0.2s ease, transform 0.15s ease, background 0.2s ease;
+}
+button:hover:not(:disabled) { transform: translateY(-1px); }
+.card:hover { box-shadow: 0 4px 16px rgba(16, 40, 60, 0.08); }
+a { transition: color 0.15s ease; }
