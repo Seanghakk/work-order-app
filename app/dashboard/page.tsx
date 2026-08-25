@@ -62,6 +62,7 @@ export default async function Dashboard() {
 
   return (
     <div className="container">
+<span className="eyebrow">Overview</span>
       <h1>Dashboard</h1>
 
       {canAccessWorkOrders(role) && (
