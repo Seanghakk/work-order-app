@@ -1,0 +1,2 @@
+ALTER TABLE "DefectReportPhoto" ADD COLUMN "itemId" TEXT;
+ALTER TABLE "DefectReportPhoto" ADD CONSTRAINT "DefectReportPhoto_itemId_fkey" FOREIGN KEY ("itemId") REFERENCES "DefectReportItem"("id") ON DELETE SET NULL ON UPDATE CASCADE;

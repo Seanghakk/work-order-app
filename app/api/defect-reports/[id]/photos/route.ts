@@ -22,13 +22,21 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     return NextResponse.json({ error: "File is too large (10MB max)." }, { status: 400 });
   }
 
+  const itemId = formData.get("itemId") as string | null;
+  if (itemId) {
+    const item = await prisma.defectReportItem.findUnique({ where: { id: itemId } });
+    if (!item || item.defectReportId !== params.id) {
+      return NextResponse.json({ error: "Item not found on this report." }, { status: 400 });
+    }
+  }
+
   const blob = await put(`defect-reports/${params.id}/${Date.now()}-${file.name}`, file, {
     access: "public",
   });
-
   const photo = await prisma.defectReportPhoto.create({
     data: {
       defectReportId: params.id,
+      itemId: itemId || null,
       url: blob.url,
       fileName: file.name,
       uploadedById: session.user.id,

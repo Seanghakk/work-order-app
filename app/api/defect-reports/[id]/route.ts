@@ -19,8 +19,8 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     where: { id: params.id },
     include: {
       createdBy: true, site: true, workOrder: true,
-      items: { orderBy: { itemNo: "asc" } },
-      photos: { include: { uploadedBy: true }, orderBy: { createdAt: "asc" } },
+      items: { orderBy: { itemNo: "asc" }, include: { photos: { include: { uploadedBy: true }, orderBy: { createdAt: "asc" } } } },
+      photos: { where: { itemId: null }, include: { uploadedBy: true }, orderBy: { createdAt: "asc" } },
     },
   });
   if (!report) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -47,10 +47,22 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (body.workOrderId !== undefined) data.workOrderId = body.workOrderId || null;
   if (body.siteId !== undefined) data.siteId = body.siteId || null;
 
+  const report = await prisma.defectReport.update({
+    where: { id: params.id },
+    data,
+    include: { items: true },
+  });
+
   if (Array.isArray(body.items)) {
-    await prisma.defectReportItem.deleteMany({ where: { defectReportId: params.id } });
-    data.items = {
-      create: body.items.map((it: any, i: number) => ({
+    const existing = await prisma.defectReportItem.findMany({ where: { defectReportId: params.id }, select: { id: true } });
+    const keepIds = body.items.filter((it: any) => it.id).map((it: any) => it.id);
+    const removedIds = existing.map((e) => e.id).filter((id) => !keepIds.includes(id));
+    if (removedIds.length > 0) {
+      await prisma.defectReportItem.deleteMany({ where: { id: { in: removedIds } } });
+    }
+    for (let i = 0; i < body.items.length; i++) {
+      const it = body.items[i];
+      const itemData = {
         itemNo: i + 1,
         partNumber: it.partNumber || null,
         description: it.description || null,
@@ -59,16 +71,20 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
         qty: it.qty ? Number(it.qty) : null,
         defectDescription: it.defectDescription || null,
         photoReference: it.photoReference || null,
-      })),
-    };
+      };
+      if (it.id) {
+        await prisma.defectReportItem.update({ where: { id: it.id }, data: itemData });
+      } else {
+        await prisma.defectReportItem.create({ data: { ...itemData, defectReportId: params.id } });
+      }
+    }
   }
 
-  const report = await prisma.defectReport.update({
+  const finalReport = await prisma.defectReport.findUnique({
     where: { id: params.id },
-    data,
-    include: { items: true },
+    include: { items: { orderBy: { itemNo: "asc" }, include: { photos: true } } },
   });
-  return NextResponse.json(report);
+  return NextResponse.json(finalReport);
 }
 
 export async function DELETE(_req: Request, { params }: { params: { id: string } }) {

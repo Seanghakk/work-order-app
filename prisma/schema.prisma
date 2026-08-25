@@ -311,6 +311,8 @@ model DefectReportPhoto {
   id             String       @id @default(cuid())
   defectReport   DefectReport @relation(fields: [defectReportId], references: [id], onDelete: Cascade)
   defectReportId String
+  item           DefectReportItem? @relation(fields: [itemId], references: [id], onDelete: SetNull)
+  itemId         String?
   url            String
   fileName       String
   uploadedBy     User         @relation(fields: [uploadedById], references: [id])
@@ -329,6 +331,7 @@ model DefectReportItem {
   qty               Int?
   defectDescription String?
   photoReference    String?
+  photos            DefectReportPhoto[]
 }
 model Team {
   id              String            @id @default(cuid())
