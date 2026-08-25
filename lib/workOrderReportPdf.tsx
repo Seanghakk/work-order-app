@@ -194,12 +194,15 @@ async function toDataUri(url: string): Promise<string | null> {
   try {
     const res = await fetch(url);
     if (!res.ok) return null;
-    const contentType = res.headers.get("content-type") || "image/jpeg";
     const arrayBuffer = await res.arrayBuffer();
-    const base64 = Buffer.from(arrayBuffer).toString("base64");
-    return `data:${contentType};base64,${base64}`;
+    // Normalize every photo to PNG — pdfkit (the engine behind @react-pdf/renderer)
+    // only supports JPEG and PNG natively, and phone photos are often WebP/HEIC.
+    const sharp = (await import("sharp")).default;
+    const pngBuffer = await sharp(Buffer.from(arrayBuffer)).png().toBuffer();
+    const base64 = pngBuffer.toString("base64");
+    return `data:image/png;base64,${base64}`;
   } catch (err) {
-    console.error("Failed to fetch photo for PDF:", err);
+    console.error("Failed to fetch/convert photo for PDF:", err);
     return null;
   }
 }
