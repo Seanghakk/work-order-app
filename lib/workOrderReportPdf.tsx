@@ -6,6 +6,7 @@ const NAVY_DEEP = "#0a3f5c";
 const RED = "#c62430";
 const TEXT_MUTED = "#5b6b7a";
 const BORDER = "#e1e5ea";
+const APP_URL = process.env.NEXTAUTH_URL || "";
 
 const SERVICE_TYPE_LABEL: Record<string, string> = {
   REPAIR: "Repair", TROUBLESHOOTING: "Troubleshooting (minor repair)", WARRANTY: "Warranty",
@@ -18,9 +19,9 @@ const DISCIPLINE_LABEL: Record<string, string> = {
 
 const styles = StyleSheet.create({
   page: { padding: 32, fontSize: 9, fontFamily: "Helvetica", color: "#1c2b39" },
-  companyHeader: { textAlign: "center", marginBottom: 10, borderBottom: `2 solid ${NAVY}`, paddingBottom: 8 },
-  companyName: { fontSize: 16, fontFamily: "Helvetica-Bold", color: NAVY },
-  companyLine: { fontSize: 7, color: TEXT_MUTED, marginTop: 2 },
+  companyHeader: { alignItems: "center", marginBottom: 10, borderBottom: `2 solid ${NAVY}`, paddingBottom: 8 },
+  logoImage: { width: 150, height: 38, objectFit: "contain", marginBottom: 4 },
+  companyLine: { fontSize: 7, color: TEXT_MUTED, marginTop: 2, textAlign: "center" },
   reportBanner: { backgroundColor: NAVY, color: "white", textAlign: "center", paddingVertical: 5, marginBottom: 10, fontSize: 11, fontFamily: "Helvetica-Bold" },
   metaRow: { flexDirection: "row", marginBottom: 10 },
   metaCol: { flex: 1 },
@@ -45,8 +46,9 @@ const styles = StyleSheet.create({
   commentBody: { fontSize: 8 },
   signRow: { flexDirection: "row", marginTop: 16, borderTop: `1 solid ${BORDER}`, paddingTop: 10 },
   signCol: { flex: 1, paddingRight: 8 },
-  signTitle: { fontSize: 8, fontFamily: "Helvetica-Bold", marginBottom: 18 },
-  signLine: { fontSize: 8, color: TEXT_MUTED, marginBottom: 8, borderBottom: `1 solid ${BORDER}`, paddingBottom: 2 },
+  signRoleTitle: { fontSize: 8, fontFamily: "Helvetica-Bold", marginBottom: 6 },
+  signatureArea: { height: 44, borderBottom: `1 solid ${BORDER}`, marginBottom: 6 },
+  signLine: { fontSize: 8, color: TEXT_MUTED, marginBottom: 8 },
   footer: { position: "absolute", bottom: 20, left: 32, right: 32, fontSize: 6, color: TEXT_MUTED, textAlign: "center", borderTop: `1 solid ${BORDER}`, paddingTop: 5 },
 });
 
@@ -69,8 +71,7 @@ export function WorkOrderReportDocument({ wo }: { wo: any }) {
     <Document>
       <Page size="A4" style={styles.page}>
         <View style={styles.companyHeader}>
-          <Text style={styles.companyName}>ADTECH</Text>
-          <Text style={styles.companyLine}>Automation Advance Technology (Cambodia) Co., Ltd</Text>
+          <Image src={`${APP_URL}/logo.png`} style={styles.logoImage} />
           <Text style={styles.companyLine}>No.69, Street 103, Phum 8, Sangkat Beong Trabek, Khan Chamkarnom, Phnom Penh, Cambodia</Text>
           <Text style={styles.companyLine}>Hotline: +855 99 415 189 · Tel: (855) 23 990 001 · Fax: (855) 23 990 136</Text>
         </View>
@@ -156,27 +157,27 @@ export function WorkOrderReportDocument({ wo }: { wo: any }) {
 
         <View style={styles.signRow}>
           <View style={styles.signCol}>
-            <Text style={styles.signTitle}>ADTECH Technician</Text>
+            <Text style={styles.signRoleTitle}>ADTECH Technician</Text>
+            <View style={styles.signatureArea} />
             <Text style={styles.signLine}>Name: {wo.assignedTo?.name || ""}</Text>
-            <Text style={styles.signLine}>Signature: ___________________</Text>
             <Text style={styles.signLine}>Date: ___________________</Text>
           </View>
           <View style={styles.signCol}>
-            <Text style={styles.signTitle}>Checked By</Text>
+            <Text style={styles.signRoleTitle}>Checked By</Text>
+            <View style={styles.signatureArea} />
             <Text style={styles.signLine}>Name: ___________________</Text>
-            <Text style={styles.signLine}>Signature: ___________________</Text>
             <Text style={styles.signLine}>Date: ___________________</Text>
           </View>
           <View style={styles.signCol}>
-            <Text style={styles.signTitle}>Approved By</Text>
+            <Text style={styles.signRoleTitle}>Approved By</Text>
+            <View style={styles.signatureArea} />
             <Text style={styles.signLine}>Name: ___________________</Text>
-            <Text style={styles.signLine}>Signature: ___________________</Text>
             <Text style={styles.signLine}>Date: ___________________</Text>
           </View>
           <View style={styles.signCol}>
-            <Text style={styles.signTitle}>Customer</Text>
+            <Text style={styles.signRoleTitle}>Customer</Text>
+            <View style={styles.signatureArea} />
             <Text style={styles.signLine}>Name / Position: ___________________</Text>
-            <Text style={styles.signLine}>Signature: ___________________</Text>
             <Text style={styles.signLine}>Date: ___________________</Text>
           </View>
         </View>
