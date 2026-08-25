@@ -135,7 +135,7 @@ export function WorkOrderReportDocument({ wo }: { wo: any }) {
             <View style={styles.photoGrid}>
               {wo.photos.map((p: any) => (
                 <View key={p.id} style={styles.photoBox}>
-                  <Image src={p.url} style={styles.photo} />
+                  {p.dataUri && <Image src={p.dataUri} style={styles.photo} />}
                   <Text style={styles.photoCaption}>{p.uploadedBy?.name} · {new Date(p.createdAt).toLocaleDateString()}</Text>
                 </View>
               ))}
@@ -190,6 +190,24 @@ export function WorkOrderReportDocument({ wo }: { wo: any }) {
   );
 }
 
+async function toDataUri(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const contentType = res.headers.get("content-type") || "image/jpeg";
+    const arrayBuffer = await res.arrayBuffer();
+    const base64 = Buffer.from(arrayBuffer).toString("base64");
+    return `data:${contentType};base64,${base64}`;
+  } catch (err) {
+    console.error("Failed to fetch photo for PDF:", err);
+    return null;
+  }
+}
+
 export async function generateWorkOrderReportPdf(wo: any): Promise<Buffer> {
-  return renderToBuffer(<WorkOrderReportDocument wo={wo} />);
+  const photosWithData = await Promise.all(
+    (wo.photos || []).map(async (p: any) => ({ ...p, dataUri: await toDataUri(p.url) }))
+  );
+  const woWithPhotoData = { ...wo, photos: photosWithData };
+  return renderToBuffer(<WorkOrderReportDocument wo={woWithPhotoData} />);
 }
