@@ -156,7 +156,14 @@ export default function NavBar() {
       </div>
       <div className={`nav-links ${open ? "nav-links-open" : ""}`}>
         <span className="nav-logo-inline"><Logo size={18} /></span>
-        {links}
+        <div className="nav-desktop-links">{links}</div>
+        <div className="nav-mobile-links">
+          <Link href="/dashboard" onClick={closeMenuAndPanels}>Dashboard</Link>
+          {canAccessWorkOrders(role) && <Link href="/work-orders" onClick={closeMenuAndPanels}>Work Orders</Link>}
+          {canAccessSaleOrders(role) && <Link href="/sale-orders" onClick={closeMenuAndPanels}>Sale Orders</Link>}
+          {canAccessServiceRequests(role) && <Link href="/service-requests" onClick={closeMenuAndPanels}>Service Requests</Link>}
+          <p className="nav-mobile-note">For full features, open on a desktop browser.</p>
+        </div>
         <div className="nav-user">
           <span style={{ position: "relative" }}>
             <button className="notif-bell" onClick={handleBellClick} aria-label="Notifications">
