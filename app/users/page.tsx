@@ -199,7 +199,7 @@ export default function UsersPage() {
         <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name, email, or usernameâ€¦" style={{ width: "100%" }} />
       </div>
 
-      <div className="table-scroll">
+      <div className="table-scroll table-scroll-bounded">
       <table>
         <thead><tr><th>Name</th><th>Email</th><th>Username</th><th>Role</th><th>Team</th><th>Sites</th><th>Status</th><th>Reset password</th><th></th><th></th></tr></thead>
         <tbody>
@@ -298,4 +298,7 @@ export default function UsersPage() {
     </div>
   );
 }
+
+
+
 

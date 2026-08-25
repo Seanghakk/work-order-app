@@ -206,3 +206,6 @@ a { transition: color 0.15s ease; }
 
 
 
+
+.table-scroll-bounded { max-height: 60vh; overflow-y: auto; }
+.table-scroll-bounded th { top: 0; }
