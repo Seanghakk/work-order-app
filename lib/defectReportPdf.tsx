@@ -152,18 +152,22 @@ async function toDataUri(url: string): Promise<string | null> {
     const res = await fetch(url);
     if (!res.ok) return null;
     const arrayBuffer = await res.arrayBuffer();
-    // Normalize every photo to PNG — pdfkit (the engine behind @react-pdf/renderer)
-    // only supports JPEG and PNG natively, and phone photos are often WebP/HEIC.
+    // Normalize to JPEG at a sensible display resolution — pdfkit (the engine behind
+    // @react-pdf/renderer) only supports JPEG and PNG natively, and phone photos are
+    // often WebP/HEIC at very high resolution, which some PDF viewers downscale poorly.
     const sharp = (await import("sharp")).default;
-    const pngBuffer = await sharp(Buffer.from(arrayBuffer)).png().toBuffer();
-    const base64 = pngBuffer.toString("base64");
-    return `data:image/png;base64,${base64}`;
+    const jpegBuffer = await sharp(Buffer.from(arrayBuffer))
+      .rotate()
+      .resize({ width: 1000, withoutEnlargement: true })
+      .jpeg({ quality: 90 })
+      .toBuffer();
+    const base64 = jpegBuffer.toString("base64");
+    return `data:image/jpeg;base64,${base64}`;
   } catch (err) {
     console.error("Failed to fetch/convert photo for PDF:", err);
     return null;
   }
 }
-
 export async function generateDefectReportPdf(report: any): Promise<Buffer> {
   const itemPhotos = (report.items || []).flatMap((it: any) =>
     (it.photos || []).map((p: any) => ({ ...p, caption: `Item ${it.itemNo}` }))
