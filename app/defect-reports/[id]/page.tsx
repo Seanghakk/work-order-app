@@ -24,6 +24,7 @@ export default function DefectReportDetail() {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<any>({});
   const [items, setItems] = useState<Item[]>([]);
+  const [uploading, setUploading] = useState(false);
   const canManage = session && ["MANAGER", "ADMIN"].includes(session.user.role);
   const canEdit = session && session.user.role !== "REQUESTER";
 
@@ -96,6 +97,35 @@ export default function DefectReportDetail() {
       items: items.filter((it) => it.description.trim() || it.defectDescription.trim()),
     });
     setEditing(false);
+  }
+
+  async function handlePhotoSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setError("");
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch(`/api/defect-reports/${id}/photos`, { method: "POST", body: formData });
+    setUploading(false);
+    e.target.value = "";
+    if (!res.ok) {
+      const d = await res.json();
+      setError(d.error || "Photo upload failed.");
+      return;
+    }
+    load();
+  }
+
+  async function deletePhoto(photoId: string) {
+    if (!confirm("Remove this photo?")) return;
+    const res = await fetch(`/api/defect-reports/${id}/photos/${photoId}`, { method: "DELETE" });
+    if (!res.ok) {
+      const d = await res.json();
+      setError(d.error || "Couldn't remove photo.");
+      return;
+    }
+    load();
   }
 
   if (!report || report.error) return <div className="container"><p>{report?.error || "Loading…"}</p></div>;
@@ -222,6 +252,33 @@ export default function DefectReportDetail() {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          <div className="card" style={{ marginBottom: 16 }}>
+            <h3 style={{ marginTop: 0 }}>Photos</h3>
+            {report.photos.length === 0 && <p style={{ color: "var(--text-muted)", fontSize: 13 }}>No photos yet.</p>}
+            {report.photos.length > 0 && (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))", gap: 8, marginBottom: 12 }}>
+                {report.photos.map((p: any) => (
+                  <div key={p.id} style={{ position: "relative" }}>
+                    <a href={p.url} target="_blank" rel="noopener noreferrer">
+                      <img src={p.url} alt={p.fileName} style={{ width: "100%", height: 100, objectFit: "cover", borderRadius: 6, border: "1px solid var(--border)" }} />
+                    </a>
+                    <button
+                      onClick={() => deletePhoto(p.id)}
+                      aria-label="Remove photo"
+                      style={{ position: "absolute", top: 4, right: 4, background: "rgba(0,0,0,0.6)", color: "white", border: "none", borderRadius: "50%", width: 22, height: 22, cursor: "pointer", fontSize: 13, lineHeight: 1, padding: 0 }}
+                    >×</button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {canEdit && (
+              <div>
+                <input type="file" accept="image/*" onChange={handlePhotoSelect} disabled={uploading} />
+                {uploading && <p style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 6 }}>Uploading…</p>}
+              </div>
+            )}
           </div>
         </>
       )}

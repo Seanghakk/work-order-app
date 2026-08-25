@@ -88,6 +88,7 @@ model User {
   comments      Comment[]
   workOrderPhotos WorkOrderPhoto[]
   defectReportsCreated DefectReport[]
+  defectReportPhotos DefectReportPhoto[]
   saleOrdersCreated  SaleOrder[]        @relation("saleOrderCreatedBy")
   saleOrdersAssigned SaleOrder[]        @relation("saleOrderAssignedTo")
   saleOrderComments  SaleOrderComment[]
@@ -302,10 +303,20 @@ model DefectReport {
   createdById         String
   createdBy           User               @relation(fields: [createdById], references: [id])
   items               DefectReportItem[]
+  photos              DefectReportPhoto[]
   createdAt           DateTime           @default(now())
   updatedAt           DateTime           @updatedAt
 }
-
+model DefectReportPhoto {
+  id             String       @id @default(cuid())
+  defectReport   DefectReport @relation(fields: [defectReportId], references: [id], onDelete: Cascade)
+  defectReportId String
+  url            String
+  fileName       String
+  uploadedBy     User         @relation(fields: [uploadedById], references: [id])
+  uploadedById   String
+  createdAt      DateTime     @default(now())
+}
 model DefectReportItem {
   id                String       @id @default(cuid())
   defectReport      DefectReport @relation(fields: [defectReportId], references: [id], onDelete: Cascade)
