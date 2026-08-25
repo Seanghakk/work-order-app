@@ -21,6 +21,17 @@ enum Role {
   MAINTENANCE_SUP
 }
 
+enum TeamCategory {
+  SALES
+  PROJECT
+  MAINTENANCE
+}
+
+enum ContractType {
+  DLP
+  MAINTENANCE
+}
+
 enum ServiceRequestStatus {
   REQUEST
   CHECK
@@ -63,6 +74,9 @@ model User {
   active        Boolean      @default(true)
   pendingApproval Boolean    @default(false)
   telegramChatId String?
+  teamId       String?
+  team         Team?    @relation("TeamMembers", fields: [teamId], references: [id])
+  leadingTeams Team[]   @relation("TeamLeader")
   createdAt     DateTime     @default(now())
   requested     WorkOrder[]  @relation("requestedBy")
   assigned      WorkOrder[]  @relation("assignedTo")
@@ -135,6 +149,9 @@ model WorkOrder {
   dueDate       DateTime?
   completedAt   DateTime?
   archived      Boolean         @default(false)
+  category      TeamCategory?
+  teamId        String?
+  team          Team?           @relation(fields: [teamId], references: [id])
   comments      Comment[]
 }
 
@@ -181,6 +198,9 @@ model SaleOrder {
   dueDate       DateTime?
   isCorporatePartner Boolean      @default(false)
   archived      Boolean           @default(false)
+  category      TeamCategory?     @default(SALES)
+  teamId        String?
+  team          Team?             @relation(fields: [teamId], references: [id])
   createdBy     User              @relation("saleOrderCreatedBy", fields: [createdById], references: [id])
   createdById   String
   assignedTo    User?             @relation("saleOrderAssignedTo", fields: [assignedToId], references: [id])
@@ -209,6 +229,9 @@ model ServiceRequest {
   archived      Boolean               @default(false)
   isCorporatePartner Boolean          @default(false)
   soNumber      String?
+  category      TeamCategory?         @default(MAINTENANCE)
+  teamId        String?
+  team          Team?                 @relation(fields: [teamId], references: [id])
   createdBy     User                  @relation("serviceRequestCreatedBy", fields: [createdById], references: [id])
   createdById   String
   assignedTo    User?                 @relation("serviceRequestAssignedTo", fields: [assignedToId], references: [id])
@@ -226,4 +249,40 @@ model ServiceRequestComment {
   authorId          String
   body              String
   createdAt         DateTime        @default(now())
+}
+model Team {
+  id              String            @id @default(cuid())
+  name            String            @unique
+  category        TeamCategory
+  isCrossCategory Boolean           @default(false)
+  colorHex        String            @default("#0e5c86")
+  teamLeaderId    String?
+  teamLeader      User?             @relation("TeamLeader", fields: [teamLeaderId], references: [id])
+  members         User[]            @relation("TeamMembers")
+  workOrders      WorkOrder[]
+  saleOrders      SaleOrder[]
+  serviceRequests ServiceRequest[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+model MaintenanceContract {
+  id                String       @id @default(cuid())
+  contractType      ContractType
+  clientName        String
+  siteLocation      String
+  originalProjectId String?
+  startDate         DateTime
+  endDate           DateTime
+  contractValue     Float?
+  renewalDate       DateTime?
+  siteVisitsPerYear Int?
+  alert30SentAt     DateTime?
+  alert7SentAt      DateTime?
+  status            String       @default("ACTIVE")
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  @@index([endDate])
+  @@index([contractType, status])
 }

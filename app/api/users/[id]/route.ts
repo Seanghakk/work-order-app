@@ -34,6 +34,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   }
   if (body.role) data.role = body.role;
   if (typeof body.active === "boolean") data.active = body.active;
+  if (body.teamId !== undefined) data.teamId = body.teamId || null;
   if (body.password) {
     if (body.password.length < 8) {
       return NextResponse.json({ error: "Password must be at least 8 characters." }, { status: 400 });

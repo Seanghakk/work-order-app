@@ -6,6 +6,7 @@ const ROLES = ["REQUESTER", "TECHNICIAN", "MANAGER", "ADMIN", "SALES", "ENGINEER
 export default function UsersPage() {
   const [users, setUsers] = useState<any[]>([]);
   const [sites, setSites] = useState<any[]>([]);
+  const [teams, setTeams] = useState<any[]>([]);
   const [form, setForm] = useState({ name: "", email: "", username: "", password: "", role: "REQUESTER" });
   const [formSiteIds, setFormSiteIds] = useState<string[]>([]);
   const [error, setError] = useState("");
@@ -21,6 +22,16 @@ export default function UsersPage() {
   function load() {
     fetch("/api/users").then((r) => r.json()).then((data) => Array.isArray(data) ? setUsers(data) : setError(data.error));
     fetch("/api/sites").then((r) => r.json()).then((data) => Array.isArray(data) && setSites(data));
+    fetch("/api/teams").then((r) => r.json()).then((data) => Array.isArray(data) && setTeams(data));
+  }
+
+  async function updateTeam(id: string, teamId: string) {
+    await fetch(`/api/users/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ teamId: teamId || null }),
+    });
+    load();
   }
   useEffect(load, []);
 
@@ -165,7 +176,7 @@ export default function UsersPage() {
 
       <div className="table-scroll">
       <table>
-        <thead><tr><th>Name</th><th>Email</th><th>Username</th><th>Role</th><th>Sites</th><th>Status</th><th>Reset password</th><th></th><th></th></tr></thead>
+        <thead><tr><th>Name</th><th>Email</th><th>Username</th><th>Role</th><th>Team</th><th>Sites</th><th>Status</th><th>Reset password</th><th></th><th></th></tr></thead>
         <tbody>
           {users.map((u) => (
             <tr key={u.id}>
@@ -185,6 +196,12 @@ export default function UsersPage() {
               <td>
                 <select value={u.role} onChange={(e) => updateRole(u.id, e.target.value)}>
                   {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+                </select>
+              </td>
+              <td>
+                <select value={u.teamId || ""} onChange={(e) => updateTeam(u.id, e.target.value)}>
+                  <option value="">No team</option>
+                  {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
                 </select>
               </td>
               <td style={{ minWidth: 220 }}>

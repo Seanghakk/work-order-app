@@ -136,6 +136,7 @@ export default function NavBar() {
       {(role === "MANAGER" || role === "ADMIN") && <Link href="/reports" onClick={closeMenuAndPanels}>Reports</Link>}
       {(role === "MANAGER" || role === "ADMIN") && <Link href="/users" onClick={closeMenuAndPanels}>Users</Link>}
       {role === "ADMIN" || role === "MANAGER" ? <Link href="/sites" onClick={closeMenuAndPanels}>Sites</Link> : null}
+      {role === "ADMIN" || role === "MANAGER" ? <Link href="/teams" onClick={closeMenuAndPanels}>Teams</Link> : null}
       <Link href="/about" onClick={closeMenuAndPanels}>About</Link>
     </>
   );
