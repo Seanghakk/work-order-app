@@ -25,6 +25,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
       site: true,
       team: true,
       comments: { include: { author: true }, orderBy: { createdAt: "asc" } },
+      photos: { include: { uploadedBy: true }, orderBy: { createdAt: "asc" } },
     },
   });
   if (!workOrder) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -79,6 +80,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (body.priority) data.priority = body.priority;
   if (body.dueDate !== undefined) data.dueDate = body.dueDate ? new Date(body.dueDate) : null;
   if (typeof body.archived === "boolean" && (session.user.role === "MANAGER" || session.user.role === "ADMIN")) data.archived = body.archived;
+  if (body.partsNeeded !== undefined) data.partsNeeded = body.partsNeeded || null;
+  if (typeof body.warrantyClaim === "boolean") data.warrantyClaim = body.warrantyClaim;
   if (body.teamId !== undefined) {
     data.teamId = body.teamId || null;
     if (body.teamId) {

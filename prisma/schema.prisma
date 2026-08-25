@@ -86,6 +86,7 @@ model User {
   requested     WorkOrder[]  @relation("requestedBy")
   assigned      WorkOrder[]  @relation("assignedTo")
   comments      Comment[]
+  workOrderPhotos WorkOrderPhoto[]
   saleOrdersCreated  SaleOrder[]        @relation("saleOrderCreatedBy")
   saleOrdersAssigned SaleOrder[]        @relation("saleOrderAssignedTo")
   saleOrderComments  SaleOrderComment[]
@@ -157,9 +158,22 @@ model WorkOrder {
   category      TeamCategory?
   teamId        String?
   team          Team?           @relation(fields: [teamId], references: [id])
+  partsNeeded   String?
+  warrantyClaim Boolean         @default(false)
   comments      Comment[]
+  photos        WorkOrderPhoto[]
 }
 
+model WorkOrderPhoto {
+  id          String    @id @default(cuid())
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id])
+  workOrderId String
+  url         String
+  fileName    String
+  uploadedBy  User      @relation(fields: [uploadedById], references: [id])
+  uploadedById String
+  createdAt   DateTime  @default(now())
+}
 model Comment {
   id          String    @id @default(cuid())
   workOrder   WorkOrder @relation(fields: [workOrderId], references: [id])

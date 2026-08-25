@@ -11,12 +11,15 @@ export default function WorkOrderDetail() {
   const [teams, setTeams] = useState<any[]>([]);
   const [comment, setComment] = useState("");
   const [error, setError] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [partsNeeded, setPartsNeeded] = useState("");
 
   async function load() {
     const res = await fetch(`/api/work-orders/${id}`);
-    setWo(await res.json());
+    const data = await res.json();
+    setWo(data);
+    if (data && !data.error) setPartsNeeded(data.partsNeeded || "");
   }
-
    useEffect(() => { load(); }, [id]);
   useEffect(() => {
     if (!wo?.siteId) return;
@@ -64,6 +67,35 @@ export default function WorkOrderDetail() {
     setComment("");
   }
 
+  async function handlePhotoSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setError("");
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch(`/api/work-orders/${id}/photos`, { method: "POST", body: formData });
+    setUploading(false);
+    e.target.value = "";
+    if (!res.ok) {
+      const d = await res.json();
+      setError(d.error || "Photo upload failed.");
+      return;
+    }
+    load();
+  }
+
+  async function deletePhoto(photoId: string) {
+    if (!confirm("Remove this photo?")) return;
+    const res = await fetch(`/api/work-orders/${id}/photos/${photoId}`, { method: "DELETE" });
+    if (!res.ok) {
+      const d = await res.json();
+      setError(d.error || "Couldn't remove photo.");
+      return;
+    }
+    load();
+  }
+
   if (!wo || wo.error) return <div className="container"><p>{wo?.error || "Loading…"}</p></div>;
 
   return (
@@ -72,6 +104,7 @@ export default function WorkOrderDetail() {
       <div style={{ display: "flex", gap: 8, marginBottom: 16, alignItems: "center" }}>
         <span className={`badge badge-${wo.status.toLowerCase()}`}>{wo.status.replace("_", " ")}</span>
         <span className={`badge badge-${wo.priority.toLowerCase()}`}>{wo.priority}</span>
+        {wo.warrantyClaim && <span className="badge badge-urgent">Warranty claim</span>}
         {wo.archived && <span className="badge badge-on_hold">Archived</span>}
         {canManage && <button onClick={toggleArchived}>{wo.archived ? "Unarchive" : "Archive"}</button>}
       </div>
@@ -118,6 +151,54 @@ export default function WorkOrderDetail() {
           </div>
         </div>
       )}
+
+      {canEdit && (
+        <div className="card" style={{ marginBottom: 16 }}>
+          <div style={{ marginBottom: 12 }}>
+            <label>Parts needed (optional)</label>
+            <textarea
+              value={partsNeeded}
+              onChange={(e) => setPartsNeeded(e.target.value)}
+              onBlur={() => updateField({ partsNeeded })}
+              rows={2}
+              style={{ width: "100%" }}
+              placeholder="e.g. 2x AHU filter (24x24x2), 1x contactor 40A"
+            />
+          </div>
+          <label style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: "normal" }}>
+            <input type="checkbox" checked={!!wo.warrantyClaim} onChange={(e) => updateField({ warrantyClaim: e.target.checked })} />
+            This is a warranty claim
+          </label>
+        </div>
+      )}
+
+      <div className="card" style={{ marginBottom: 16 }}>
+        <h3 style={{ marginTop: 0 }}>Photos</h3>
+        {wo.photos.length === 0 && <p style={{ color: "var(--text-muted)", fontSize: 13 }}>No photos yet.</p>}
+        {wo.photos.length > 0 && (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))", gap: 8, marginBottom: 12 }}>
+            {wo.photos.map((p: any) => (
+              <div key={p.id} style={{ position: "relative" }}>
+                <a href={p.url} target="_blank" rel="noopener noreferrer">
+                  <img src={p.url} alt={p.fileName} style={{ width: "100%", height: 100, objectFit: "cover", borderRadius: 6, border: "1px solid var(--border)" }} />
+                </a>
+                <button
+                  onClick={() => deletePhoto(p.id)}
+                  aria-label="Remove photo"
+                  style={{ position: "absolute", top: 4, right: 4, background: "rgba(0,0,0,0.6)", color: "white", border: "none", borderRadius: "50%", width: 22, height: 22, cursor: "pointer", fontSize: 13, lineHeight: 1, padding: 0 }}
+                >×</button>
+              </div>
+            ))}
+          </div>
+        )}
+        {canEdit && (
+          <div>
+            <input type="file" accept="image/*" onChange={handlePhotoSelect} disabled={uploading} />
+            {uploading && <p style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 6 }}>Uploading…</p>}
+          </div>
+        )}
+      </div>
+
       {error && <p style={{ color: "var(--danger)", fontSize: 13 }}>{error}</p>}
 
       <h3>Activity</h3>
