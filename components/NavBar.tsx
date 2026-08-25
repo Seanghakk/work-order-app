@@ -115,6 +115,7 @@ export default function NavBar() {
               <Link href="/pm-schedules" onClick={closeMenuAndPanels}>PM Schedules</Link>
             )}
             <Link href="/defect-reports" onClick={closeMenuAndPanels}>Defect Reports</Link>
+            <Link href="/material-requisitions" onClick={closeMenuAndPanels}>Material Requisitions</Link>
           </div>
         )}
       </span>

@@ -89,6 +89,7 @@ model User {
   workOrderPhotos WorkOrderPhoto[]
   defectReportsCreated DefectReport[]
   defectReportPhotos DefectReportPhoto[]
+  materialRequisitionsCreated MaterialRequisition[]
   saleOrdersCreated  SaleOrder[]        @relation("saleOrderCreatedBy")
   saleOrdersAssigned SaleOrder[]        @relation("saleOrderAssignedTo")
   saleOrderComments  SaleOrderComment[]
@@ -332,6 +333,39 @@ model DefectReportItem {
   defectDescription String?
   photoReference    String?
   photos            DefectReportPhoto[]
+}
+model MaterialRequisition {
+  id               String    @id @default(cuid())
+  referenceNo      String?
+  date             DateTime  @default(now())
+  object           String?
+  requisitionType  String    @default("MATERIAL")
+  systemCheck      String?
+  applicantName    String?
+  soNumber         String?
+  projectName      String?
+  expectedDelivery DateTime?
+  status           String    @default("PENDING")
+  createdById      String
+  createdBy        User      @relation(fields: [createdById], references: [id])
+  items            MaterialRequisitionItem[]
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model MaterialRequisitionItem {
+  id             String               @id @default(cuid())
+  requisition    MaterialRequisition  @relation(fields: [requisitionId], references: [id], onDelete: Cascade)
+  requisitionId  String
+  itemNo         Int
+  productCode    String?
+  productName    String?
+  description    String?
+  brandName      String?
+  supplier       String?
+  unit           String?
+  qty            Int?
+  remark         String?
 }
 model Team {
   id              String            @id @default(cuid())
