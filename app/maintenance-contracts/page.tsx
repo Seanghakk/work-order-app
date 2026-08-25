@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
@@ -21,6 +21,7 @@ export default function MaintenanceContractsPage() {
   return (
     <div className="container">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span className="eyebrow">Sales</span>
         <h1>Maintenance Contracts</h1>
         {canManage && <Link href="/maintenance-contracts/new"><button className="primary">New contract</button></Link>}
       </div>
