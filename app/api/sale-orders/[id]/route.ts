@@ -14,6 +14,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     include: {
       createdBy: true,
       assignedTo: true,
+      team: true,
       comments: { include: { author: true }, orderBy: { createdAt: "asc" } },
     },
   });
@@ -40,7 +41,13 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (body.customerName?.trim()) data.customerName = body.customerName;
   if (body.isCorporatePartner !== undefined) data.isCorporatePartner = !!body.isCorporatePartner;
   if (typeof body.archived === "boolean" && (session.user.role === "MANAGER" || session.user.role === "ADMIN")) data.archived = body.archived;
-
+  if (body.teamId !== undefined) {
+    data.teamId = body.teamId || null;
+    if (body.teamId) {
+      const team = await prisma.team.findUnique({ where: { id: body.teamId }, select: { category: true } });
+      data.category = team?.category || null;
+    }
+  }
   const saleOrder = await prisma.saleOrder.update({ where: { id: params.id }, data });
 
   if (body.comment) {

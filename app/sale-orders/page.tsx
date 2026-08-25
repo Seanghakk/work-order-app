@@ -63,13 +63,14 @@ export default function SaleOrdersPage() {
       ) : (
         <div className="table-scroll">
         <table>
-          <thead><tr><th>Title</th><th>Customer</th><th>Type</th><th>Stage</th><th>Value</th><th>Assigned to</th><th>Updated</th>{canManage && <th></th>}</tr></thead>
+          <thead><tr><th>Title</th><th>Customer</th><th>Type</th><th>Team</th><th>Stage</th><th>Value</th><th>Assigned to</th><th>Updated</th>{canManage && <th></th>}</tr></thead>
           <tbody>
             {orders.map((o) => (
               <tr key={o.id}>
                 <td><Link href={`/sale-orders/${o.id}`}>{o.title}</Link></td>
                 <td>{o.customerName}</td>
                 <td>{o.isCorporatePartner ? "Corporate" : "General"}</td>
+                <td>{o.team?.name || "—"}</td>
                 <td><span className="badge badge-medium">{STATUS_LABEL[o.status]}</span></td>
                 <td>{o.value ? `$${Number(o.value).toLocaleString()}` : "—"}</td>
                 <td>{o.assignedTo?.name || "Unassigned"}</td>

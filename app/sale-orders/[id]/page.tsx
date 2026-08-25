@@ -17,6 +17,7 @@ export default function SaleOrderDetail() {
   const router = useRouter();
   const [order, setOrder] = useState<any>(null);
   const [people, setPeople] = useState<any[]>([]);
+  const [teams, setTeams] = useState<any[]>([]);
   const [comment, setComment] = useState("");
   const [error, setError] = useState("");
 
@@ -27,6 +28,7 @@ export default function SaleOrderDetail() {
   useEffect(() => { load(); }, [id]);
   useEffect(() => {
     fetch("/api/users/assignable").then((r) => r.json()).then((data) => Array.isArray(data) && setPeople(data));
+    fetch("/api/teams").then((r) => r.json()).then((data) => Array.isArray(data) && setTeams(data));
   }, []);
 
   async function updateField(data: any) {
@@ -113,7 +115,7 @@ export default function SaleOrderDetail() {
         <p><strong>Customer:</strong> {order.customerName} ({order.isCorporatePartner ? "Corporate partner" : "General customer"})</p>
         {order.description && <p>{order.description}</p>}
         <p style={{ fontSize: 13, color: "var(--text-muted)" }}>
-          Value: {order.value ? `$${Number(order.value).toLocaleString()}` : "—"} · Created by {order.createdBy?.name} · {new Date(order.createdAt).toLocaleString()}
+          Value: {order.value ? `$${Number(order.value).toLocaleString()}` : "—"} · Team: {order.team?.name || "—"} · Created by {order.createdBy?.name} · {new Date(order.createdAt).toLocaleString()}
         </p>
       </div>
 
@@ -134,6 +136,13 @@ export default function SaleOrderDetail() {
         <div>
           <label>Due date</label>
           <input type="date" value={order.dueDate ? order.dueDate.slice(0, 10) : ""} onChange={(e) => updateField({ dueDate: e.target.value || null })} />
+        </div>
+        <div>
+          <label>Team</label>
+          <select value={order.teamId || ""} onChange={(e) => updateField({ teamId: e.target.value || null })}>
+            <option value="">No team</option>
+            {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+          </select>
         </div>
       </div>
 
