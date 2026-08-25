@@ -26,6 +26,24 @@ export async function sendEmail(to: string, subject: string, html: string) {
   }
 }
 
+export async function sendEmailWithAttachment(to: string, subject: string, html: string, attachment: { filename: string; content: Buffer }) {
+  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+    console.log("Email not configured — skipping send to", to);
+    return;
+  }
+  try {
+    await transporter.sendMail({
+      from: `"ADTECH Work Orders" <${process.env.GMAIL_USER}>`,
+      to,
+      subject,
+      html,
+      attachments: [{ filename: attachment.filename, content: attachment.content }],
+    });
+  } catch (err) {
+    console.error("Failed to send email with attachment:", err);
+  }
+}
+
 const APP_URL = process.env.NEXTAUTH_URL || "";
 
 export function workOrderAssignedEmail(title: string, workOrderId: string) {

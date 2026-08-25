@@ -106,6 +106,9 @@ export default function WorkOrderDetail() {
         <span className={`badge badge-${wo.priority.toLowerCase()}`}>{wo.priority}</span>
         {wo.warrantyClaim && <span className="badge badge-urgent">Warranty claim</span>}
         {wo.archived && <span className="badge badge-on_hold">Archived</span>}
+        <a href={`/api/work-orders/${id}/report`} target="_blank" rel="noopener noreferrer">
+          <button>Download report</button>
+        </a>
         {canManage && <button onClick={toggleArchived}>{wo.archived ? "Unarchive" : "Archive"}</button>}
       </div>
       <div className="card" style={{ marginBottom: 16 }}>

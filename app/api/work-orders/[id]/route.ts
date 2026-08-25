@@ -2,10 +2,11 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { sendEmail, workOrderAssignedEmail, statusChangedEmail, newCommentEmail } from "@/lib/email";
+import { sendEmail, sendEmailWithAttachment, workOrderAssignedEmail, statusChangedEmail, newCommentEmail } from "@/lib/email";
 import { notifyUser } from "@/lib/notifications";
 import { sendTelegramMessage } from "@/lib/telegram";
 import { getUserSiteIds, canAccessWorkOrders } from "@/lib/permissions";
+import { generateWorkOrderReportPdf } from "@/lib/workOrderReportPdf";
 
 async function checkSiteAccess(userId: string, role: string, siteId: string) {
   const siteIds = await getUserSiteIds(userId, role);
@@ -142,6 +143,38 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
           emails.push(sendTelegramMessage(info.telegramChatId, `${before.title}\nStatus changed to ${data.status.replace("_", " ")}`));
         }
       });
+    }
+
+    if (data.status === "COMPLETED" && before.status !== "COMPLETED") {
+      const full = await prisma.workOrder.findUnique({
+        where: { id: params.id },
+        include: {
+          asset: true, assignedTo: true, requestedBy: true, site: true, team: true,
+          comments: { include: { author: true }, orderBy: { createdAt: "asc" } },
+          photos: { include: { uploadedBy: true }, orderBy: { createdAt: "asc" } },
+        },
+      });
+      if (full) {
+        try {
+          const pdfBuffer = await generateWorkOrderReportPdf(full);
+          const safeName = full.title.replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+          const reportRecipients = new Map<string, string>();
+          if (before.requestedBy) reportRecipients.set(before.requestedBy.id, before.requestedBy.email);
+          if (before.assignedTo) reportRecipients.set(before.assignedTo.id, before.assignedTo.email);
+          managers.forEach((m) => reportRecipients.set(m.id, m.email));
+          const reportEmails = [...reportRecipients.values()].map((email) =>
+            sendEmailWithAttachment(
+              email,
+              `Completed: ${full.title}`,
+              `<p>The work order <strong>${full.title}</strong> has been marked complete. The full report is attached.</p>`,
+              { filename: `work-order-${safeName}.pdf`, content: pdfBuffer }
+            )
+          );
+          emails.push(...reportEmails);
+        } catch (err) {
+          console.error("PDF report generation/email error:", err);
+        }
+      }
     }
 
     if (newComment) {
