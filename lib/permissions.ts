@@ -41,3 +41,9 @@ export async function getUserSiteIds(userId: string, role: string): Promise<stri
 export function siteWhere(siteIds: string[] | "ALL") {
   return siteIds === "ALL" ? {} : { siteId: { in: siteIds } };
 }
+
+// Returns the id of the team this user leads, or null if they don't lead any team.
+export async function getLeaderTeamId(userId: string): Promise<string | null> {
+  const team = await prisma.team.findFirst({ where: { teamLeaderId: userId }, select: { id: true } });
+  return team?.id || null;
+}

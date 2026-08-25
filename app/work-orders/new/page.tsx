@@ -11,11 +11,13 @@ export default function NewWorkOrder() {
   const [siteId, setSiteId] = useState("");
   const [assets, setAssets] = useState<any[]>([]);
   const [sites, setSites] = useState<any[]>([]);
+  const [teams, setTeams] = useState<any[]>([]);
+  const [teamId, setTeamId] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
-
   useEffect(() => {
     fetch("/api/assets").then((r) => r.json()).then(setAssets);
+    fetch("/api/teams").then((r) => r.json()).then((data) => Array.isArray(data) && setTeams(data));
     fetch("/api/sites").then((r) => r.json()).then((data) => {
       if (Array.isArray(data)) {
         setSites(data);
@@ -35,7 +37,7 @@ export default function NewWorkOrder() {
     const res = await fetch("/api/work-orders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, description, priority, assetId: assetId || null, dueDate: dueDate || null, siteId }),
+      body: JSON.stringify({ title, description, priority, assetId: assetId || null, dueDate: dueDate || null, siteId, teamId: teamId || null }),
     });
     if (!res.ok) {
       const data = await res.json();
@@ -84,6 +86,13 @@ export default function NewWorkOrder() {
         <div className="field">
           <label>Due date (optional)</label>
           <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} style={{ width: "100%" }} />
+        </div>
+        <div className="field">
+          <label>Team (optional)</label>
+          <select value={teamId} onChange={(e) => setTeamId(e.target.value)} style={{ width: "100%" }}>
+            <option value="">No team</option>
+            {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+          </select>
         </div>
         {error && <p style={{ color: "var(--danger)", fontSize: 13 }}>{error}</p>}
         <button className="primary" type="submit">Submit work order</button>

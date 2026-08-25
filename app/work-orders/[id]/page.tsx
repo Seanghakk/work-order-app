@@ -8,6 +8,7 @@ export default function WorkOrderDetail() {
   const { data: session } = useSession();
   const [wo, setWo] = useState<any>(null);
   const [technicians, setTechnicians] = useState<any[]>([]);
+  const [teams, setTeams] = useState<any[]>([]);
   const [comment, setComment] = useState("");
   const [error, setError] = useState("");
 
@@ -21,6 +22,9 @@ export default function WorkOrderDetail() {
     if (!wo?.siteId) return;
     fetch(`/api/users/assignable?siteId=${wo.siteId}`).then((r) => r.json()).then((data) => Array.isArray(data) && setTechnicians(data));
   }, [wo?.siteId]);
+  useEffect(() => {
+    fetch("/api/teams").then((r) => r.json()).then((data) => Array.isArray(data) && setTeams(data));
+  }, []);
 
   const role = session?.user?.role;
   const canEdit = role === "MANAGER" || role === "ADMIN" || role === "MAINTENANCE_LEADER" || role === "MAINTENANCE_TECHNICIAN";
@@ -74,7 +78,7 @@ export default function WorkOrderDetail() {
       <div className="card" style={{ marginBottom: 16 }}>
         <p>{wo.description}</p>
         <p style={{ fontSize: 13, color: "var(--text-muted)" }}>
-          Site: {wo.site?.name || "—"} · Asset: {wo.asset?.name || "—"} · Requested by {wo.requestedBy?.name} · Created {new Date(wo.createdAt).toLocaleString()}
+          Site: {wo.site?.name || "—"} · Team: {wo.team?.name || "—"} · Asset: {wo.asset?.name || "—"} · Requested by {wo.requestedBy?.name} · Created {new Date(wo.createdAt).toLocaleString()}
         </p>
       </div>
 
@@ -105,9 +109,15 @@ export default function WorkOrderDetail() {
             <label>Due date</label>
             <input type="date" value={wo.dueDate ? wo.dueDate.slice(0, 10) : ""} onChange={(e) => updateField({ dueDate: e.target.value || null })} />
           </div>
+          <div>
+            <label>Team</label>
+            <select value={wo.teamId || ""} onChange={(e) => updateField({ teamId: e.target.value || null })}>
+              <option value="">No team</option>
+              {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+            </select>
+          </div>
         </div>
       )}
-
       {error && <p style={{ color: "var(--danger)", fontSize: 13 }}>{error}</p>}
 
       <h3>Activity</h3>

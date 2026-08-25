@@ -23,6 +23,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
       assignedTo: true,
       requestedBy: true,
       site: true,
+      team: true,
       comments: { include: { author: true }, orderBy: { createdAt: "asc" } },
     },
   });
@@ -78,6 +79,15 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (body.priority) data.priority = body.priority;
   if (body.dueDate !== undefined) data.dueDate = body.dueDate ? new Date(body.dueDate) : null;
   if (typeof body.archived === "boolean" && (session.user.role === "MANAGER" || session.user.role === "ADMIN")) data.archived = body.archived;
+  if (body.teamId !== undefined) {
+    data.teamId = body.teamId || null;
+    if (body.teamId) {
+      const team = await prisma.team.findUnique({ where: { id: body.teamId }, select: { category: true } });
+      data.category = team?.category || null;
+    } else {
+      data.category = null;
+    }
+  }
 
   const workOrder = await prisma.workOrder.update({ where: { id: params.id }, data });
 
