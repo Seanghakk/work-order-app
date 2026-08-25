@@ -160,6 +160,13 @@ model WorkOrder {
   team          Team?           @relation(fields: [teamId], references: [id])
   partsNeeded   String?
   warrantyClaim Boolean         @default(false)
+  serviceType   String?
+  discipline    String?
+  soNumber      String?
+  problemFixed  Boolean?
+  problemNotFixedReason String?
+  arrivalAt     DateTime?
+  departureAt   DateTime?
   comments      Comment[]
   photos        WorkOrderPhoto[]
 

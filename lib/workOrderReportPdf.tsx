@@ -7,33 +7,47 @@ const RED = "#c62430";
 const TEXT_MUTED = "#5b6b7a";
 const BORDER = "#e1e5ea";
 
+const SERVICE_TYPE_LABEL: Record<string, string> = {
+  REPAIR: "Repair", TROUBLESHOOTING: "Troubleshooting (minor repair)", WARRANTY: "Warranty",
+  EMERGENCY_OT: "Emergency on duty (OT)", MAINTENANCE: "Maintenance", INSTALLATION: "Installation", OTHER: "Other",
+};
+const DISCIPLINE_LABEL: Record<string, string> = {
+  FAS: "FAS (Fire Alarm)", BMS: "BMS", FSS: "FSS (Fire Suppression)", ACS: "ACS (Access Control)",
+  CCTV: "CCTV", PA: "PA (Public Address)", OTHER: "Other",
+};
+
 const styles = StyleSheet.create({
-  page: { padding: 32, fontSize: 10, fontFamily: "Helvetica", color: "#1c2b39" },
-  headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16, borderBottom: `2 solid ${NAVY}`, paddingBottom: 10 },
-  logoText: { fontSize: 18, fontFamily: "Helvetica-Bold", color: NAVY },
-  logoSub: { fontSize: 8, color: TEXT_MUTED },
-  reportTitle: { fontSize: 12, fontFamily: "Helvetica-Bold", color: NAVY_DEEP, textAlign: "right" },
-  reportDate: { fontSize: 8, color: TEXT_MUTED, textAlign: "right", marginTop: 2 },
-  title: { fontSize: 15, fontFamily: "Helvetica-Bold", marginBottom: 8 },
-  badgeRow: { flexDirection: "row", gap: 6, marginBottom: 14 },
+  page: { padding: 32, fontSize: 9, fontFamily: "Helvetica", color: "#1c2b39" },
+  companyHeader: { textAlign: "center", marginBottom: 10, borderBottom: `2 solid ${NAVY}`, paddingBottom: 8 },
+  companyName: { fontSize: 16, fontFamily: "Helvetica-Bold", color: NAVY },
+  companyLine: { fontSize: 7, color: TEXT_MUTED, marginTop: 2 },
+  reportBanner: { backgroundColor: NAVY, color: "white", textAlign: "center", paddingVertical: 5, marginBottom: 10, fontSize: 11, fontFamily: "Helvetica-Bold" },
+  metaRow: { flexDirection: "row", marginBottom: 10 },
+  metaCol: { flex: 1 },
+  metaLine: { flexDirection: "row", marginBottom: 3 },
+  metaLabel: { fontSize: 8, color: TEXT_MUTED, width: 90 },
+  metaValue: { fontSize: 9, flex: 1 },
+  badgeRow: { flexDirection: "row", gap: 6, marginBottom: 10 },
   badge: { fontSize: 8, fontFamily: "Helvetica-Bold", paddingVertical: 3, paddingHorizontal: 8, borderRadius: 3, color: "white" },
-  section: { marginBottom: 14 },
-  sectionTitle: { fontSize: 10, fontFamily: "Helvetica-Bold", color: NAVY, marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 },
-  metaGrid: { flexDirection: "row", flexWrap: "wrap" },
-  metaItem: { width: "50%", marginBottom: 6 },
-  metaLabel: { fontSize: 8, color: TEXT_MUTED },
-  metaValue: { fontSize: 10 },
-  bodyText: { fontSize: 10, lineHeight: 1.5 },
-  warrantyBox: { backgroundColor: "#fdeceb", border: `1 solid ${RED}`, borderRadius: 4, padding: 8, marginBottom: 14 },
-  warrantyText: { fontSize: 10, fontFamily: "Helvetica-Bold", color: RED },
+  section: { marginBottom: 10 },
+  sectionTitle: { fontSize: 9, fontFamily: "Helvetica-Bold", color: NAVY, marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.5, borderBottom: `1 solid ${BORDER}`, paddingBottom: 2 },
+  bodyText: { fontSize: 9, lineHeight: 1.5 },
+  warrantyBox: { backgroundColor: "#fdeceb", border: `1 solid ${RED}`, borderRadius: 4, padding: 6, marginBottom: 10 },
+  warrantyText: { fontSize: 9, fontFamily: "Helvetica-Bold", color: RED },
+  fixedRow: { flexDirection: "row", gap: 16, alignItems: "center" },
+  fixedLabel: { fontSize: 9, fontFamily: "Helvetica-Bold" },
   photoGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  photoBox: { width: 150, marginBottom: 10 },
-  photo: { width: 150, height: 110, objectFit: "cover", borderRadius: 3, border: `1 solid ${BORDER}` },
+  photoBox: { width: 140, marginBottom: 10 },
+  photo: { width: 140, height: 100, objectFit: "cover", borderRadius: 3, border: `1 solid ${BORDER}` },
   photoCaption: { fontSize: 7, color: TEXT_MUTED, marginTop: 3 },
-  commentBox: { borderBottom: `1 solid ${BORDER}`, paddingVertical: 6 },
-  commentMeta: { fontSize: 8, color: TEXT_MUTED, marginBottom: 2 },
-  commentBody: { fontSize: 9 },
-  footer: { position: "absolute", bottom: 24, left: 32, right: 32, fontSize: 7, color: TEXT_MUTED, textAlign: "center", borderTop: `1 solid ${BORDER}`, paddingTop: 6 },
+  commentBox: { borderBottom: `1 solid ${BORDER}`, paddingVertical: 5 },
+  commentMeta: { fontSize: 7, color: TEXT_MUTED, marginBottom: 2 },
+  commentBody: { fontSize: 8 },
+  signRow: { flexDirection: "row", marginTop: 16, borderTop: `1 solid ${BORDER}`, paddingTop: 10 },
+  signCol: { flex: 1, paddingRight: 8 },
+  signTitle: { fontSize: 8, fontFamily: "Helvetica-Bold", marginBottom: 18 },
+  signLine: { fontSize: 8, color: TEXT_MUTED, marginBottom: 8, borderBottom: `1 solid ${BORDER}`, paddingBottom: 2 },
+  footer: { position: "absolute", bottom: 20, left: 32, right: 32, fontSize: 6, color: TEXT_MUTED, textAlign: "center", borderTop: `1 solid ${BORDER}`, paddingTop: 5 },
 });
 
 function statusColor(status: string) {
@@ -42,28 +56,44 @@ function statusColor(status: string) {
   if (status === "IN_PROGRESS") return "#7c3aed";
   return NAVY;
 }
-
 function priorityColor(priority: string) {
   if (priority === "URGENT" || priority === "HIGH") return "#d97706";
   return NAVY;
+}
+function fmtDateTime(d: any) {
+  return d ? new Date(d).toLocaleString() : "—";
 }
 
 export function WorkOrderReportDocument({ wo }: { wo: any }) {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        <View style={styles.headerRow}>
-          <View>
-            <Text style={styles.logoText}>ADTECH</Text>
-            <Text style={styles.logoSub}>Automation Advance Technology (Cambodia) Co., Ltd</Text>
+        <View style={styles.companyHeader}>
+          <Text style={styles.companyName}>ADTECH</Text>
+          <Text style={styles.companyLine}>Automation Advance Technology (Cambodia) Co., Ltd</Text>
+          <Text style={styles.companyLine}>No.69, Street 103, Phum 8, Sangkat Beong Trabek, Khan Chamkarnom, Phnom Penh, Cambodia</Text>
+          <Text style={styles.companyLine}>Hotline: +855 99 415 189 · Tel: (855) 23 990 001 · Fax: (855) 23 990 136</Text>
+        </View>
+
+        <Text style={styles.reportBanner}>SERVICE REPORT</Text>
+
+        <View style={styles.metaRow}>
+          <View style={styles.metaCol}>
+            <View style={styles.metaLine}><Text style={styles.metaLabel}>Report No.</Text><Text style={styles.metaValue}>{wo.id.slice(-8).toUpperCase()}</Text></View>
+            <View style={styles.metaLine}><Text style={styles.metaLabel}>S.O. No.</Text><Text style={styles.metaValue}>{wo.soNumber || "—"}</Text></View>
+            <View style={styles.metaLine}><Text style={styles.metaLabel}>Site / Location</Text><Text style={styles.metaValue}>{wo.site?.name || "—"}</Text></View>
+            <View style={styles.metaLine}><Text style={styles.metaLabel}>Asset</Text><Text style={styles.metaValue}>{wo.asset?.name || "—"}</Text></View>
+            <View style={styles.metaLine}><Text style={styles.metaLabel}>Team</Text><Text style={styles.metaValue}>{wo.team?.name || "—"}</Text></View>
           </View>
-          <View>
-            <Text style={styles.reportTitle}>Work Order Report</Text>
-            <Text style={styles.reportDate}>Generated {new Date().toLocaleString()}</Text>
+          <View style={styles.metaCol}>
+            <View style={styles.metaLine}><Text style={styles.metaLabel}>Service type</Text><Text style={styles.metaValue}>{wo.serviceType ? SERVICE_TYPE_LABEL[wo.serviceType] : "—"}</Text></View>
+            <View style={styles.metaLine}><Text style={styles.metaLabel}>Discipline</Text><Text style={styles.metaValue}>{wo.discipline ? DISCIPLINE_LABEL[wo.discipline] : "—"}</Text></View>
+            <View style={styles.metaLine}><Text style={styles.metaLabel}>Technician</Text><Text style={styles.metaValue}>{wo.assignedTo?.name || "Unassigned"}</Text></View>
+            <View style={styles.metaLine}><Text style={styles.metaLabel}>Arrival</Text><Text style={styles.metaValue}>{fmtDateTime(wo.arrivalAt)}</Text></View>
+            <View style={styles.metaLine}><Text style={styles.metaLabel}>Departure</Text><Text style={styles.metaValue}>{fmtDateTime(wo.departureAt)}</Text></View>
           </View>
         </View>
 
-        <Text style={styles.title}>{wo.title}</Text>
         <View style={styles.badgeRow}>
           <Text style={[styles.badge, { backgroundColor: statusColor(wo.status) }]}>{wo.status.replace("_", " ")}</Text>
           <Text style={[styles.badge, { backgroundColor: priorityColor(wo.priority) }]}>{wo.priority}</Text>
@@ -71,29 +101,26 @@ export function WorkOrderReportDocument({ wo }: { wo: any }) {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Details</Text>
-          <View style={styles.metaGrid}>
-            <View style={styles.metaItem}><Text style={styles.metaLabel}>Site</Text><Text style={styles.metaValue}>{wo.site?.name || "—"}</Text></View>
-            <View style={styles.metaItem}><Text style={styles.metaLabel}>Team</Text><Text style={styles.metaValue}>{wo.team?.name || "—"}</Text></View>
-            <View style={styles.metaItem}><Text style={styles.metaLabel}>Asset</Text><Text style={styles.metaValue}>{wo.asset?.name || "—"}</Text></View>
-            <View style={styles.metaItem}><Text style={styles.metaLabel}>Requested by</Text><Text style={styles.metaValue}>{wo.requestedBy?.name || "—"}</Text></View>
-            <View style={styles.metaItem}><Text style={styles.metaLabel}>Assigned to</Text><Text style={styles.metaValue}>{wo.assignedTo?.name || "Unassigned"}</Text></View>
-            <View style={styles.metaItem}><Text style={styles.metaLabel}>Created</Text><Text style={styles.metaValue}>{new Date(wo.createdAt).toLocaleDateString()}</Text></View>
-            {wo.completedAt && <View style={styles.metaItem}><Text style={styles.metaLabel}>Completed</Text><Text style={styles.metaValue}>{new Date(wo.completedAt).toLocaleDateString()}</Text></View>}
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Description</Text>
+          <Text style={styles.sectionTitle}>{wo.title}</Text>
           <Text style={styles.bodyText}>{wo.description}</Text>
         </View>
 
         {wo.partsNeeded && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Parts Needed</Text>
+            <Text style={styles.sectionTitle}>Parts Supplied / Needed</Text>
             <Text style={styles.bodyText}>{wo.partsNeeded}</Text>
           </View>
         )}
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Problem Fixed Upon Departure</Text>
+          <View style={styles.fixedRow}>
+            <Text style={styles.fixedLabel}>{wo.problemFixed === true ? "☑ Yes    ☐ No" : wo.problemFixed === false ? "☐ Yes    ☑ No" : "☐ Yes    ☐ No"}</Text>
+          </View>
+          {wo.problemFixed === false && wo.problemNotFixedReason && (
+            <Text style={[styles.bodyText, { marginTop: 4 }]}>Reason: {wo.problemNotFixedReason}</Text>
+          )}
+        </View>
 
         {wo.warrantyClaim && (
           <View style={styles.warrantyBox}>
@@ -127,8 +154,35 @@ export function WorkOrderReportDocument({ wo }: { wo: any }) {
           </View>
         )}
 
+        <View style={styles.signRow}>
+          <View style={styles.signCol}>
+            <Text style={styles.signTitle}>ADTECH Technician</Text>
+            <Text style={styles.signLine}>Name: {wo.assignedTo?.name || ""}</Text>
+            <Text style={styles.signLine}>Signature: ___________________</Text>
+            <Text style={styles.signLine}>Date: ___________________</Text>
+          </View>
+          <View style={styles.signCol}>
+            <Text style={styles.signTitle}>Checked By</Text>
+            <Text style={styles.signLine}>Name: ___________________</Text>
+            <Text style={styles.signLine}>Signature: ___________________</Text>
+            <Text style={styles.signLine}>Date: ___________________</Text>
+          </View>
+          <View style={styles.signCol}>
+            <Text style={styles.signTitle}>Approved By</Text>
+            <Text style={styles.signLine}>Name: ___________________</Text>
+            <Text style={styles.signLine}>Signature: ___________________</Text>
+            <Text style={styles.signLine}>Date: ___________________</Text>
+          </View>
+          <View style={styles.signCol}>
+            <Text style={styles.signTitle}>Customer</Text>
+            <Text style={styles.signLine}>Name / Position: ___________________</Text>
+            <Text style={styles.signLine}>Signature: ___________________</Text>
+            <Text style={styles.signLine}>Date: ___________________</Text>
+          </View>
+        </View>
+
         <Text style={styles.footer} fixed>
-          ADTECH Maintenance Work Order System · This report was generated automatically.
+          ADTECH Maintenance Work Order System · Generated {new Date().toLocaleString()} · No.69, Street 103, Phum 8, Sangkat Beong Trabek, Khan Chamkarnom, Phnom Penh, Cambodia · Hotline +855 99 415 189
         </Text>
       </Page>
     </Document>

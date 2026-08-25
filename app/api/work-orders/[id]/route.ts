@@ -83,6 +83,13 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (typeof body.archived === "boolean" && (session.user.role === "MANAGER" || session.user.role === "ADMIN")) data.archived = body.archived;
   if (body.partsNeeded !== undefined) data.partsNeeded = body.partsNeeded || null;
   if (typeof body.warrantyClaim === "boolean") data.warrantyClaim = body.warrantyClaim;
+  if (body.serviceType !== undefined) data.serviceType = body.serviceType || null;
+  if (body.discipline !== undefined) data.discipline = body.discipline || null;
+  if (body.soNumber !== undefined) data.soNumber = body.soNumber || null;
+  if (typeof body.problemFixed === "boolean" || body.problemFixed === null) data.problemFixed = body.problemFixed;
+  if (body.problemNotFixedReason !== undefined) data.problemNotFixedReason = body.problemNotFixedReason || null;
+  if (body.arrivalAt !== undefined) data.arrivalAt = body.arrivalAt ? new Date(body.arrivalAt) : null;
+  if (body.departureAt !== undefined) data.departureAt = body.departureAt ? new Date(body.departureAt) : null;
   if (body.teamId !== undefined) {
     data.teamId = body.teamId || null;
     if (body.teamId) {

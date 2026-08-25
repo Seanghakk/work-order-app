@@ -3,6 +3,17 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 
+const SERVICE_TYPES = ["REPAIR", "TROUBLESHOOTING", "WARRANTY", "EMERGENCY_OT", "MAINTENANCE", "INSTALLATION", "OTHER"];
+const SERVICE_TYPE_LABEL: Record<string, string> = {
+  REPAIR: "Repair", TROUBLESHOOTING: "Troubleshooting (minor repair)", WARRANTY: "Warranty",
+  EMERGENCY_OT: "Emergency on duty (OT)", MAINTENANCE: "Maintenance", INSTALLATION: "Installation", OTHER: "Other",
+};
+const DISCIPLINES = ["FAS", "BMS", "FSS", "ACS", "CCTV", "PA", "OTHER"];
+const DISCIPLINE_LABEL: Record<string, string> = {
+  FAS: "FAS (Fire Alarm)", BMS: "BMS", FSS: "FSS (Fire Suppression)", ACS: "ACS (Access Control)",
+  CCTV: "CCTV", PA: "PA (Public Address)", OTHER: "Other",
+};
+
 export default function WorkOrderDetail() {
   const { id } = useParams<{ id: string }>();
   const { data: session } = useSession();
@@ -13,12 +24,18 @@ export default function WorkOrderDetail() {
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
   const [partsNeeded, setPartsNeeded] = useState("");
+  const [soNumber, setSoNumber] = useState("");
+  const [problemNotFixedReason, setProblemNotFixedReason] = useState("");
 
   async function load() {
     const res = await fetch(`/api/work-orders/${id}`);
     const data = await res.json();
     setWo(data);
-    if (data && !data.error) setPartsNeeded(data.partsNeeded || "");
+    if (data && !data.error) {
+      setPartsNeeded(data.partsNeeded || "");
+      setSoNumber(data.soNumber || "");
+      setProblemNotFixedReason(data.problemNotFixedReason || "");
+    }
   }
    useEffect(() => { load(); }, [id]);
   useEffect(() => {
@@ -152,6 +169,67 @@ export default function WorkOrderDetail() {
               {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
             </select>
           </div>
+        </div>
+      )}
+
+      {canEdit && (
+        <div className="card" style={{ marginBottom: 16 }}>
+          <h3 style={{ marginTop: 0 }}>Service Report Details</h3>
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
+            <div>
+              <label>Service type</label>
+              <select value={wo.serviceType || ""} onChange={(e) => updateField({ serviceType: e.target.value || null })}>
+                <option value="">Not set</option>
+                {SERVICE_TYPES.map((s) => <option key={s} value={s}>{SERVICE_TYPE_LABEL[s]}</option>)}
+              </select>
+            </div>
+            <div>
+              <label>Discipline</label>
+              <select value={wo.discipline || ""} onChange={(e) => updateField({ discipline: e.target.value || null })}>
+                <option value="">Not set</option>
+                {DISCIPLINES.map((d) => <option key={d} value={d}>{DISCIPLINE_LABEL[d]}</option>)}
+              </select>
+            </div>
+            <div>
+              <label>S.O. number (optional)</label>
+              <input value={soNumber} onChange={(e) => setSoNumber(e.target.value)} onBlur={() => updateField({ soNumber })} placeholder="e.g. SO-2026-0142" />
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
+            <div>
+              <label>Arrival</label>
+              <input type="datetime-local" value={wo.arrivalAt ? wo.arrivalAt.slice(0, 16) : ""} onChange={(e) => updateField({ arrivalAt: e.target.value || null })} />
+            </div>
+            <div>
+              <label>Departure</label>
+              <input type="datetime-local" value={wo.departureAt ? wo.departureAt.slice(0, 16) : ""} onChange={(e) => updateField({ departureAt: e.target.value || null })} />
+            </div>
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <label>Problem fixed upon departure?</label>
+            <div style={{ display: "flex", gap: 16 }}>
+              <label style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: "normal" }}>
+                <input type="radio" checked={wo.problemFixed === true} onChange={() => updateField({ problemFixed: true, problemNotFixedReason: null })} />
+                Yes
+              </label>
+              <label style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: "normal" }}>
+                <input type="radio" checked={wo.problemFixed === false} onChange={() => updateField({ problemFixed: false })} />
+                No
+              </label>
+            </div>
+          </div>
+          {wo.problemFixed === false && (
+            <div>
+              <label>If not, why?</label>
+              <textarea
+                value={problemNotFixedReason}
+                onChange={(e) => setProblemNotFixedReason(e.target.value)}
+                onBlur={() => updateField({ problemNotFixedReason })}
+                rows={2}
+                style={{ width: "100%" }}
+              />
+            </div>
+          )}
         </div>
       )}
 
