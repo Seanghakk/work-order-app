@@ -33,6 +33,10 @@ const styles = StyleSheet.create({
   tCell: { fontSize: 7, padding: 4 },
   cItem: { width: "5%" }, cPart: { width: "12%" }, cDesc: { width: "18%" }, cBrand: { width: "10%" },
   cUnit: { width: "8%" }, cQty: { width: "7%" }, cDefect: { width: "25%" }, cPhoto: { width: "15%" },
+  photoGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  photoBox: { width: 140, marginBottom: 10 },
+  photo: { width: 140, height: 100, objectFit: "cover", borderRadius: 3, border: `1 solid ${BORDER}` },
+  photoCaption: { fontSize: 7, color: TEXT_MUTED, marginTop: 3 },
   signRow: { flexDirection: "row", marginTop: 16, borderTop: `1 solid ${BORDER}`, paddingTop: 10 },
   signCol: { flex: 1, paddingRight: 8 },
   signRoleTitle: { fontSize: 8, fontFamily: "Helvetica-Bold", marginBottom: 6 },
@@ -115,6 +119,19 @@ export function DefectReportDocument({ report }: { report: any }) {
           </View>
         )}
 
+        {report.allPhotos && report.allPhotos.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Photos ({report.allPhotos.length})</Text>
+            <View style={styles.photoGrid}>
+              {report.allPhotos.map((p: any) => (
+                <View key={p.id} style={styles.photoBox}>
+                  {p.dataUri && <Image src={p.dataUri} style={styles.photo} />}
+                  <Text style={styles.photoCaption}>{p.caption}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
         <View style={styles.signRow}>
           <SignatureBlock role="Prepared By" />
           <SignatureBlock role="Checked By" />
@@ -130,6 +147,32 @@ export function DefectReportDocument({ report }: { report: any }) {
   );
 }
 
+async function toDataUri(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const arrayBuffer = await res.arrayBuffer();
+    // Normalize every photo to PNG — pdfkit (the engine behind @react-pdf/renderer)
+    // only supports JPEG and PNG natively, and phone photos are often WebP/HEIC.
+    const sharp = (await import("sharp")).default;
+    const pngBuffer = await sharp(Buffer.from(arrayBuffer)).png().toBuffer();
+    const base64 = pngBuffer.toString("base64");
+    return `data:image/png;base64,${base64}`;
+  } catch (err) {
+    console.error("Failed to fetch/convert photo for PDF:", err);
+    return null;
+  }
+}
+
 export async function generateDefectReportPdf(report: any): Promise<Buffer> {
-  return renderToBuffer(<DefectReportDocument report={report} />);
+  const itemPhotos = (report.items || []).flatMap((it: any) =>
+    (it.photos || []).map((p: any) => ({ ...p, caption: `Item ${it.itemNo}` }))
+  );
+  const generalPhotos = (report.photos || []).map((p: any) => ({ ...p, caption: "General" }));
+  const rawPhotos = [...itemPhotos, ...generalPhotos];
+  const allPhotos = await Promise.all(
+    rawPhotos.map(async (p: any) => ({ ...p, dataUri: await toDataUri(p.url) }))
+  );
+  const reportWithPhotos = { ...report, allPhotos };
+  return renderToBuffer(<DefectReportDocument report={reportWithPhotos} />);
 }

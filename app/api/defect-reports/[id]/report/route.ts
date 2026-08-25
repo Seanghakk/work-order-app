@@ -13,7 +13,11 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   }
   const report = await prisma.defectReport.findUnique({
     where: { id: params.id },
-    include: { createdBy: true, site: true, workOrder: true, items: { orderBy: { itemNo: "asc" } } },
+    include: {
+      createdBy: true, site: true, workOrder: true,
+      items: { orderBy: { itemNo: "asc" }, include: { photos: true } },
+      photos: { where: { itemId: null } },
+    },
   });
   if (!report) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
