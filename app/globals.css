@@ -123,10 +123,32 @@ body:has(.login-shell) { padding-top: 0; }
 .badge-low { background: rgba(91, 107, 122, 0.10); color: var(--text-muted); border-color: var(--border); }
 
 .nav-dropdown-wrap { position: relative; display: inline-block; }
-.nav-dropdown-trigger { background: none; border: none; font-size: 17px; font-weight: 600; color: var(--text-muted); cursor: pointer; padding: 0; font-family: inherit; }
+.nav-dropdown-trigger { background: none; border: none; font-size: 17px; font-weight: 600; color: var(--text-muted); cursor: pointer; padding: 0; font-family: inherit; display: inline-flex; align-items: center; gap: 4px; }
 .nav-dropdown-trigger:hover, .nav-dropdown-trigger.active { color: var(--navy); }
-.nav-dropdown-panel { position: absolute; top: 28px; left: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 8px 24px rgba(16, 40, 60, 0.12); min-width: 180px; z-index: 20; padding: 6px; }
-.nav-dropdown-panel a { display: block; padding: 8px 10px; border-radius: 6px; font-size: 14px; font-weight: 500; color: var(--text); }
+.nav-dropdown-trigger .chevron { font-size: 10px; display: inline-block; transition: transform 0.15s ease; }
+.nav-dropdown-trigger.active .chevron { transform: rotate(180deg); }
+
+/* Stack panel: replaces the old single flat bordered box with a vertical stack of
+   individually-cased cards that slides/fades in under its trigger, one gap-separated
+   card per link instead of plain rows inside one plane. */
+.nav-dropdown-panel { position: absolute; top: 32px; left: 0; display: flex; flex-direction: column; gap: 6px; min-width: 200px; z-index: 20; animation: nav-stack-in 0.16s ease-out; }
+.nav-dropdown-panel a {
+  display: block;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  box-shadow: 0 2px 8px rgba(16, 40, 60, 0.08);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+}
+.nav-dropdown-panel a:hover { border-color: var(--navy); box-shadow: 0 6px 16px rgba(16, 40, 60, 0.14); transform: translateX(3px); text-decoration: none; }
+@keyframes nav-stack-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 .notif-bell { position: relative; background: none; border: none; padding: 6px; }
 .notif-dot { position: absolute; top: 2px; right: 2px; background: var(--accent); color: white; font-size: 10px; font-weight: 700; border-radius: 999px; min-width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; padding: 0 3px; }
 .notif-panel { position: absolute; right: 0; top: 36px; width: 320px; max-height: 400px; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 12px 32px rgba(16, 40, 60, 0.18); z-index: 20; }
