@@ -2,14 +2,14 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getUserSiteIds, siteWhere, canAccessWorkOrders } from "@/lib/permissions";
+import { getUserSiteIds, canAccessWorkOrders, buildAssetWhere } from "@/lib/permissions";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session || !canAccessWorkOrders(session.user.role)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const siteIds = await getUserSiteIds(session.user.id, session.user.role);
+  const where = await buildAssetWhere(session.user.id, session.user.role);
   const assets = await prisma.asset.findMany({
-    where: siteWhere(siteIds),
+    where,
     include: { site: true },
     orderBy: { name: "asc" },
   });

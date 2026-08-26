@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import Logo from "./Logo";
+import SearchBar from "./SearchBar";
 import { canAccessSaleOrders, canAccessWorkOrders, canAccessServiceRequests } from "@/lib/permissions";
 
 export default function NavBar() {
@@ -171,6 +172,7 @@ export default function NavBar() {
           {canAccessServiceRequests(role) && <Link href="/service-requests" onClick={closeMenuAndPanels}>Service Requests</Link>}
           <p className="nav-mobile-note">For full features, open on a desktop browser.</p>
         </div>
+        <SearchBar />
         <div className="nav-user">
           <span style={{ position: "relative" }}>
             <button className="notif-bell" onClick={handleBellClick} aria-label="Notifications">

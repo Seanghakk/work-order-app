@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getUserSiteIds, siteWhere, canAccessWorkOrders, getLeaderTeamId } from "@/lib/permissions";
+import { getUserSiteIds, canAccessWorkOrders, buildWorkOrderWhere } from "@/lib/permissions";
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
@@ -10,22 +10,7 @@ export async function GET(req: Request) {
   const role = session.user.role;
   const showArchived = new URL(req.url).searchParams.get("showArchived") === "1";
 
-  const roleOr: any[] =
-    role === "MAINTENANCE_TECHNICIAN" ? [{ assignedToId: session.user.id }, { requestedById: session.user.id }] :
-    role === "REQUESTER" ? [{ requestedById: session.user.id }] :
-    [];
-  const isManagerOrAdmin = role === "MANAGER" || role === "ADMIN";
-
-  const [leaderTeamId, siteIds] = await Promise.all([
-    isManagerOrAdmin ? Promise.resolve(null) : getLeaderTeamId(session.user.id),
-    getUserSiteIds(session.user.id, role),
-  ]);
-  if (leaderTeamId) roleOr.push({ teamId: leaderTeamId });
-
-  const baseWhere = { ...siteWhere(siteIds), archived: showArchived };
-  const where = isManagerOrAdmin || roleOr.length === 0
-    ? baseWhere
-    : { ...baseWhere, OR: roleOr };
+  const where = await buildWorkOrderWhere(session.user.id, role, { archived: showArchived });
 
   const workOrders = await prisma.workOrder.findMany({
     where,

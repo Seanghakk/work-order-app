@@ -30,6 +30,12 @@ export function canAccessServiceRequests(role?: string | null): boolean {
   ].includes(role || "");
 }
 
+// Was inlined separately in app/api/defect-reports/route.ts; hoisted here so the
+// search endpoint can reuse the exact same rule instead of redefining it.
+export function canAccessDefectReports(role?: string | null): boolean {
+  return !!role && role !== "REQUESTER";
+}
+
 // Returns "ALL" for admins (no site restriction), or the list of site IDs this user is assigned to.
 export async function getUserSiteIds(userId: string, role: string): Promise<string[] | "ALL"> {
   if (role === "ADMIN") return "ALL";
@@ -46,4 +52,38 @@ export function siteWhere(siteIds: string[] | "ALL") {
 export async function getLeaderTeamId(userId: string): Promise<string | null> {
   const team = await prisma.team.findFirst({ where: { teamLeaderId: userId }, select: { id: true } });
   return team?.id || null;
+}
+
+// Builds the same site/role/team-leader scoping Prisma "where" fragment used by
+// GET /api/work-orders (see that route for the canonical shape this was extracted
+// from). `extra` is merged into the base (site-scoped) where fragment — e.g. pass
+// { archived: showArchived } — before the role-based OR (if any) is layered on top.
+// Callers that need to AND this together with other conditions (e.g. a text search)
+// should nest it as `{ AND: [scopingWhere, otherWhere] }` rather than spreading both
+// into one object, since both may independently contain a top-level `OR` key.
+export async function buildWorkOrderWhere(
+  userId: string,
+  role: string,
+  extra: Record<string, any> = {}
+) {
+  const roleOr: any[] =
+    role === "MAINTENANCE_TECHNICIAN" ? [{ assignedToId: userId }, { requestedById: userId }] :
+    role === "REQUESTER" ? [{ requestedById: userId }] :
+    [];
+  const isManagerOrAdmin = role === "MANAGER" || role === "ADMIN";
+
+  const [leaderTeamId, siteIds] = await Promise.all([
+    isManagerOrAdmin ? Promise.resolve(null) : getLeaderTeamId(userId),
+    getUserSiteIds(userId, role),
+  ]);
+  if (leaderTeamId) roleOr.push({ teamId: leaderTeamId });
+
+  const baseWhere: Record<string, any> = { ...siteWhere(siteIds), ...extra };
+  return isManagerOrAdmin || roleOr.length === 0 ? baseWhere : { ...baseWhere, OR: roleOr };
+}
+
+// Builds the same site-scoping Prisma "where" fragment used by GET /api/assets.
+export async function buildAssetWhere(userId: string, role: string, extra: Record<string, any> = {}) {
+  const siteIds = await getUserSiteIds(userId, role);
+  return { ...siteWhere(siteIds), ...extra };
 }
