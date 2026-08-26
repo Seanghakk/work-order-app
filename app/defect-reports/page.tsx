@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
@@ -19,7 +19,7 @@ export default function DefectReportsPage() {
         <Link href="/defect-reports/new"><button className="primary">New defect report</button></Link>
       </div>
       {loading ? (
-        <p>Loadingâ€¦</p>
+        <p>Loading…</p>
       ) : reports.length === 0 ? (
         <p style={{ color: "var(--text-muted)" }}>No defect reports yet.</p>
       ) : (
@@ -31,8 +31,8 @@ export default function DefectReportsPage() {
               <tr key={r.id}>
                 <td><Link href={`/defect-reports/${r.id}`}>{r.dfNumber || r.id.slice(-8).toUpperCase()}</Link></td>
                 <td>{r.projectName}</td>
-                <td>{r.site?.name || "â€”"}</td>
-                <td>{r.discipline || "â€”"}</td>
+                <td>{r.site?.name || "—"}</td>
+                <td>{r.discipline || "—"}</td>
                 <td>{r.items?.length || 0}</td>
                 <td><span className="badge badge-medium">{r.status}</span></td>
                 <td>{new Date(r.date).toLocaleDateString()}</td>

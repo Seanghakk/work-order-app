@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
@@ -58,7 +58,7 @@ export default function SaleOrdersPage() {
         Show archived
       </label>
       {loading ? (
-        <p>Loadingâ€¦</p>
+        <p>Loading…</p>
       ) : orders.length === 0 ? (
         <p style={{ color: "var(--text-muted)" }}>{showArchived ? "No archived sale orders." : "No sale orders yet."}</p>
       ) : (
@@ -71,9 +71,9 @@ export default function SaleOrdersPage() {
                 <td><Link href={`/sale-orders/${o.id}`}>{o.title}</Link></td>
                 <td>{o.customerName}</td>
                 <td>{o.isCorporatePartner ? "Corporate" : "General"}</td>
-                <td>{o.team?.name || "â€”"}</td>
+                <td>{o.team?.name || "—"}</td>
                 <td><span className="badge badge-medium">{STATUS_LABEL[o.status]}</span></td>
-                <td>{o.value ? `$${Number(o.value).toLocaleString()}` : "â€”"}</td>
+                <td>{o.value ? `$${Number(o.value).toLocaleString()}` : "—"}</td>
                 <td>{o.assignedTo?.name || "Unassigned"}</td>
                 <td>{new Date(o.updatedAt).toLocaleDateString()}</td>
                 {canManage && (

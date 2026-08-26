@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
@@ -21,7 +21,7 @@ export default function MaterialRequisitionsPage() {
         <Link href="/material-requisitions/new"><button className="primary">New requisition</button></Link>
       </div>
       {loading ? (
-        <p>Loadingâ€¦</p>
+        <p>Loading…</p>
       ) : requisitions.length === 0 ? (
         <p style={{ color: "var(--text-muted)" }}>No requisitions yet.</p>
       ) : (
@@ -33,8 +33,8 @@ export default function MaterialRequisitionsPage() {
               <tr key={r.id}>
                 <td><Link href={`/material-requisitions/${r.id}`}>{r.referenceNo || r.id.slice(-8).toUpperCase()}</Link></td>
                 <td>{TYPE_LABEL[r.requisitionType] || r.requisitionType}</td>
-                <td>{r.projectName || "â€”"}</td>
-                <td>{r.applicantName || "â€”"}</td>
+                <td>{r.projectName || "—"}</td>
+                <td>{r.applicantName || "—"}</td>
                 <td>{r.items?.length || 0}</td>
                 <td><span className="badge badge-medium">{r.status}</span></td>
                 <td>{new Date(r.date).toLocaleDateString()}</td>

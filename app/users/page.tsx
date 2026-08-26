@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useEffect, useState } from "react";
 
 const ROLES = [
@@ -196,7 +196,7 @@ export default function UsersPage() {
       {error && <p style={{ color: "var(--danger)", fontSize: 13 }}>{error}</p>}
 
       <div className="field" style={{ maxWidth: 320 }}>
-        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name, email, or usernameâ€¦" style={{ width: "100%" }} />
+        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name, email, or username…" style={{ width: "100%" }} />
       </div>
 
       <div className="table-scroll">
@@ -215,7 +215,7 @@ export default function UsersPage() {
                 <>
                   <td>{u.name}</td>
                   <td>{u.email}</td>
-                  <td>{u.username || "â€”"}</td>
+                  <td>{u.username || "—"}</td>
                 </>
               )}
               <td>

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
@@ -53,7 +53,7 @@ export default function WorkOrdersPage() {
         Show archived
       </label>
       {loading ? (
-        <p>Loadingâ€¦</p>
+        <p>Loading…</p>
       ) : orders.length === 0 ? (
         <p style={{ color: "var(--text-muted)" }}>{showArchived ? "No archived work orders." : "No work orders yet."}</p>
       ) : (
@@ -66,9 +66,9 @@ export default function WorkOrdersPage() {
             {orders.map((o) => (
               <tr key={o.id}>
                 <td><Link href={`/work-orders/${o.id}`}>{o.title}</Link></td>
-                <td>{o.site?.name || "â€”"}</td>
-                <td>{o.team?.name || "â€”"}</td>
-                <td>{o.asset?.name || "â€”"}</td>
+                <td>{o.site?.name || "—"}</td>
+                <td>{o.team?.name || "—"}</td>
+                <td>{o.asset?.name || "—"}</td>
                 <td><span className={`badge badge-${o.priority.toLowerCase()}`}>{o.priority}</span></td>
                 <td><span className={`badge badge-${o.status.toLowerCase()}`}>{o.status.replace("_", " ")}</span></td>
                 <td>{o.assignedTo?.name || "Unassigned"}</td>
@@ -77,7 +77,7 @@ export default function WorkOrdersPage() {
                     <span style={{ color: new Date(o.dueDate) < new Date() && o.status !== "COMPLETED" && o.status !== "CANCELED" ? "var(--danger)" : "inherit" }}>
                       {new Date(o.dueDate).toLocaleDateString()}
                     </span>
-                  ) : "â€”"}
+                  ) : "—"}
                 </td>
                 <td>{new Date(o.createdAt).toLocaleDateString()}</td>
                 {canManage && (

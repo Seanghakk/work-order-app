@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 
@@ -65,7 +65,7 @@ export default function AssetsPage() {
         <tbody>
           {assets.map((a) => (
             <tr key={a.id}>
-              <td>{a.name}</td><td>{a.tag}</td><td>{a.site?.name || "â€”"}</td><td>{a.location || "â€”"}</td><td>{a.category || "â€”"}</td><td>{a.status}</td>
+              <td>{a.name}</td><td>{a.tag}</td><td>{a.site?.name || "—"}</td><td>{a.location || "—"}</td><td>{a.category || "—"}</td><td>{a.status}</td>
               {canAdd && <td><button className="danger" onClick={() => removeAsset(a.id)}>Delete</button></td>}
             </tr>
           ))}
