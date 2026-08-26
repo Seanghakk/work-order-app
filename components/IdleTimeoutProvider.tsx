@@ -5,8 +5,8 @@ import { signOut, useSession } from "next-auth/react";
 // How long a user can be idle before we warn them, and how long the warning
 // stays up before we actually sign them out. Purely a client-side UX layer —
 // doesn't touch NextAuth's session/JWT maxAge.
-const IDLE_TIMEOUT_MS = 20 * 1000; // TEMP (testing): was 30 * 60 * 1000 (30 minutes)
-const WARNING_DURATION_MS = 10 * 1000; // TEMP (testing): was 60 * 1000 (1 minute)
+const IDLE_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
+const WARNING_DURATION_MS = 60 * 1000; // 1 minute
 
 const ACTIVITY_EVENTS = ["mousemove", "click", "keydown", "scroll", "touchstart"] as const;
 
