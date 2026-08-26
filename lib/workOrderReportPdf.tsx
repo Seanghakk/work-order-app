@@ -48,6 +48,7 @@ const styles = StyleSheet.create({
   signCol: { flex: 1, paddingRight: 8 },
   signRoleTitle: { fontSize: 8, fontFamily: "Helvetica-Bold", marginBottom: 6 },
   signatureArea: { height: 44, borderBottom: `1 solid ${BORDER}`, marginBottom: 6 },
+  signatureBlockImage: { width: "100%", height: 40, objectFit: "contain" },
   signLine: { fontSize: 8, color: TEXT_MUTED, marginBottom: 8 },
   footer: { position: "absolute", bottom: 20, left: 32, right: 32, fontSize: 6, color: TEXT_MUTED, textAlign: "center", borderTop: `1 solid ${BORDER}`, paddingTop: 5 },
 });
@@ -156,9 +157,9 @@ export function WorkOrderReportDocument({ wo }: { wo: any }) {
         )}
 
         <View style={styles.signRow}>
-          <SignatureBlock role="ADTECH Technician" name={wo.assignedTo?.name} />
-          <SignatureBlock role="Checked By" />
-          <SignatureBlock role="Approved By" />
+          <SignatureBlock role="Prepared by" name={wo.requestedBy?.name} position={wo.requestedBy?.position} signatureDataUri={wo.requestedBySignatureDataUri} />
+          <SignatureBlock role="Checked by" name={wo.approvedBy?.name} position={wo.approvedBy?.position} signatureDataUri={wo.approvedBySignatureDataUri} />
+          <SignatureBlock role="Approved by" name={wo.completedBy?.name} position={wo.completedBy?.position} signatureDataUri={wo.completedBySignatureDataUri} />
           <SignatureBlock role="Customer" />
         </View>
 
@@ -170,13 +171,15 @@ export function WorkOrderReportDocument({ wo }: { wo: any }) {
   );
 }
 
-function SignatureBlock({ role, name }: { role: string; name?: string }) {
+function SignatureBlock({ role, name, position, signatureDataUri }: { role: string; name?: string; position?: string; signatureDataUri?: string | null }) {
   return (
     <View style={styles.signCol}>
       <Text style={styles.signRoleTitle}>{role}</Text>
-      <View style={styles.signatureArea} />
+      <View style={styles.signatureArea}>
+        {signatureDataUri && <Image src={signatureDataUri} style={styles.signatureBlockImage} />}
+      </View>
       <Text style={styles.signLine}>Name: {name || "____________"}</Text>
-      <Text style={styles.signLine}>Position: ____________</Text>
+      <Text style={styles.signLine}>Position: {position || "____________"}</Text>
       <Text style={styles.signLine}>Date: ____________</Text>
     </View>
   );
@@ -208,6 +211,17 @@ export async function generateWorkOrderReportPdf(wo: any): Promise<Buffer> {
   const photosWithData = await Promise.all(
     (wo.photos || []).map(async (p: any) => ({ ...p, dataUri: await toDataUri(p.url) }))
   );
-  const woWithPhotoData = { ...wo, photos: photosWithData };
-  return renderToBuffer(<WorkOrderReportDocument wo={woWithPhotoData} />);
+  const [requesterSig, approverSig, completerSig] = await Promise.all([
+    wo.requestedBy?.signatureUrl ? toDataUri(wo.requestedBy.signatureUrl) : Promise.resolve(null),
+    wo.approvedBy?.signatureUrl ? toDataUri(wo.approvedBy.signatureUrl) : Promise.resolve(null),
+    wo.completedBy?.signatureUrl ? toDataUri(wo.completedBy.signatureUrl) : Promise.resolve(null),
+  ]);
+  const woWithData = {
+    ...wo,
+    photos: photosWithData,
+    requestedBySignatureDataUri: requesterSig,
+    approvedBySignatureDataUri: approverSig,
+    completedBySignatureDataUri: completerSig,
+  };
+  return renderToBuffer(<WorkOrderReportDocument wo={woWithData} />);
 }

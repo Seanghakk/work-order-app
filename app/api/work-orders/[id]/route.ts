@@ -40,6 +40,8 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
       asset: true,
       assignedTo: true,
       requestedBy: true,
+      approvedBy: true,
+      completedBy: true,
       site: true,
       team: true,
       comments: { include: { author: true }, orderBy: { createdAt: "asc" } },
@@ -103,6 +105,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     }
     data.status = transition.to;
     if (transition.to === "COMPLETED") data.completedAt = new Date();
+    if (body.action === "approve") data.approvedById = session.user.id;
+    if (body.action === "signoff") data.completedById = session.user.id;
     if (transition.label && body.reason?.trim()) {
       commentBody = `${transition.label}: ${body.reason.trim()}`;
     }
@@ -204,7 +208,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       const full = await prisma.workOrder.findUnique({
         where: { id: params.id },
         include: {
-          asset: true, assignedTo: true, requestedBy: true, site: true, team: true,
+          asset: true, assignedTo: true, requestedBy: true, approvedBy: true, completedBy: true, site: true, team: true,
           comments: { include: { author: true }, orderBy: { createdAt: "asc" } },
           photos: { include: { uploadedBy: true }, orderBy: { createdAt: "asc" } },
         },

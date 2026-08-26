@@ -84,12 +84,16 @@ model User {
   active        Boolean      @default(true)
   pendingApproval Boolean    @default(false)
   telegramChatId String?
+  position      String?
+  signatureUrl  String?
   teamId       String?
   team         Team?    @relation("TeamMembers", fields: [teamId], references: [id])
   leadingTeams Team[]   @relation("TeamLeader")
   createdAt     DateTime     @default(now())
   requested     WorkOrder[]  @relation("requestedBy")
   assigned      WorkOrder[]  @relation("assignedTo")
+  approvedWorkOrders  WorkOrder[] @relation("workOrderApprovedBy")
+  completedWorkOrders WorkOrder[] @relation("workOrderCompletedBy")
   comments      Comment[]
   workOrderPhotos WorkOrderPhoto[]
   defectReportsCreated  DefectReport[]  @relation("defectReportCreatedBy")
@@ -159,6 +163,10 @@ model WorkOrder {
   requestedById String
   assignedTo    User?           @relation("assignedTo", fields: [assignedToId], references: [id])
   assignedToId  String?
+  approvedBy    User?           @relation("workOrderApprovedBy", fields: [approvedById], references: [id])
+  approvedById  String?
+  completedBy   User?           @relation("workOrderCompletedBy", fields: [completedById], references: [id])
+  completedById String?
   pmSchedule    PMSchedule?     @relation(fields: [pmScheduleId], references: [id])
   pmScheduleId  String?
   createdAt     DateTime        @default(now())
@@ -186,6 +194,8 @@ model WorkOrder {
   @@index([teamId])
   @@index([assignedToId])
   @@index([requestedById])
+  @@index([approvedById])
+  @@index([completedById])
 }
 model WorkOrderPhoto {
   id          String    @id @default(cuid())

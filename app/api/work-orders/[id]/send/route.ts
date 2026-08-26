@@ -22,7 +22,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   const wo = await prisma.workOrder.findUnique({
     where: { id: params.id },
     include: {
-      asset: true, assignedTo: true, requestedBy: true, site: true, team: true,
+      asset: true, assignedTo: true, requestedBy: true, approvedBy: true, completedBy: true, site: true, team: true,
       comments: { include: { author: true }, orderBy: { createdAt: "asc" } },
       photos: { include: { uploadedBy: true }, orderBy: { createdAt: "asc" } },
     },

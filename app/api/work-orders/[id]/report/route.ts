@@ -19,6 +19,8 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
       asset: true,
       assignedTo: true,
       requestedBy: true,
+      approvedBy: true,
+      completedBy: true,
       site: true,
       team: true,
       comments: { include: { author: true }, orderBy: { createdAt: "asc" } },
