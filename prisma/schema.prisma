@@ -89,7 +89,8 @@ model User {
   assigned      WorkOrder[]  @relation("assignedTo")
   comments      Comment[]
   workOrderPhotos WorkOrderPhoto[]
-  defectReportsCreated DefectReport[]
+  defectReportsCreated  DefectReport[]  @relation("defectReportCreatedBy")
+  defectReportsAssigned DefectReport[]  @relation("defectReportAssignedTo")
   defectReportPhotos DefectReportPhoto[]
   materialRequisitionsCreated MaterialRequisition[]
   saleOrdersCreated  SaleOrder[]        @relation("saleOrderCreatedBy")
@@ -306,11 +307,18 @@ model DefectReport {
   siteId              String?
   site                Site?              @relation(fields: [siteId], references: [id])
   createdById         String
-  createdBy           User               @relation(fields: [createdById], references: [id])
+  createdBy           User               @relation("defectReportCreatedBy", fields: [createdById], references: [id])
+  assignedToId        String?
+  assignedTo          User?              @relation("defectReportAssignedTo", fields: [assignedToId], references: [id])
+  teamId              String?
+  team                Team?              @relation(fields: [teamId], references: [id])
   items               DefectReportItem[]
   photos              DefectReportPhoto[]
   createdAt           DateTime           @default(now())
   updatedAt           DateTime           @updatedAt
+
+  @@index([teamId])
+  @@index([assignedToId])
 }
 model DefectReportPhoto {
   id             String       @id @default(cuid())
@@ -383,6 +391,7 @@ model Team {
   workOrders      WorkOrder[]
   saleOrders      SaleOrder[]
   serviceRequests ServiceRequest[]
+  defectReports   DefectReport[]
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
 }

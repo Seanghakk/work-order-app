@@ -48,6 +48,8 @@ export async function POST(req: Request) {
       workOrderId: body.workOrderId || null,
       siteId: body.siteId || null,
       createdById: session.user.id,
+      assignedToId: body.assignedToId || null,
+      teamId: body.teamId || null,
       items: {
         create: items.map((it: any, i: number) => ({
           itemNo: i + 1,

@@ -24,6 +24,10 @@ export default function NewDefectReport() {
   const [otherDisciplineText, setOtherDisciplineText] = useState("");
   const [siteId, setSiteId] = useState("");
   const [sites, setSites] = useState<any[]>([]);
+  const [assignedToId, setAssignedToId] = useState("");
+  const [people, setPeople] = useState<any[]>([]);
+  const [teamId, setTeamId] = useState("");
+  const [teams, setTeams] = useState<any[]>([]);
   const [remark, setRemark] = useState("");
   const [items, setItems] = useState<Item[]>([emptyItem()]);
   const [error, setError] = useState("");
@@ -31,6 +35,8 @@ export default function NewDefectReport() {
 
   useEffect(() => {
     fetch("/api/sites").then((r) => r.json()).then((data) => Array.isArray(data) && setSites(data));
+    fetch("/api/users/assignable").then((r) => r.json()).then((data) => Array.isArray(data) && setPeople(data));
+    fetch("/api/teams").then((r) => r.json()).then((data) => Array.isArray(data) && setTeams(data));
   }, []);
 
   function updateItem(i: number, field: keyof Item, value: string) {
@@ -56,7 +62,7 @@ export default function NewDefectReport() {
         dfNumber: dfNumber || null, projectName, mainContractor: mainContractor || null,
         subContractor, date, section: section || null, discipline: discipline || null,
         otherDisciplineText: discipline === "OTHER" ? otherDisciplineText : null,
-        siteId: siteId || null, remark: remark || null,
+        siteId: siteId || null, assignedToId: assignedToId || null, teamId: teamId || null, remark: remark || null,
         items: items.filter((it) => it.description.trim() || it.defectDescription.trim()),
       }),
     });
@@ -107,6 +113,25 @@ export default function NewDefectReport() {
             </select>
           </div>
         </div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <label>Assigned to (optional)</label>
+            <select value={assignedToId} onChange={(e) => setAssignedToId(e.target.value)} style={{ width: "100%" }}>
+              <option value="">Unassigned</option>
+              {people.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.role})</option>)}
+            </select>
+          </div>
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <label>Team (optional)</label>
+            <select value={teamId} onChange={(e) => setTeamId(e.target.value)} style={{ width: "100%" }}>
+              <option value="">No team</option>
+              {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+            </select>
+          </div>
+        </div>
+        <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: -8, marginBottom: 12 }}>
+          Setting an assignee or team lets that person (or team leader) edit status, assignment, and line items later — otherwise only you or a manager can.
+        </p>
 
         <h3>Items</h3>
         <div className="table-scroll" style={{ marginBottom: 12 }}>

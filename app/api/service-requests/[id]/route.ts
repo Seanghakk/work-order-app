@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { canAccessServiceRequests } from "@/lib/permissions";
+import { canAccessServiceRequests, canEditWorkflowFields } from "@/lib/permissions";
 import { sendEmail, serviceRequestAssignedEmail, serviceRequestStatusChangedEmail, serviceRequestNewCommentEmail } from "@/lib/email";
 import { isValidHttpUrl } from "@/lib/url";
 import { notifyUser } from "@/lib/notifications";
@@ -38,6 +38,16 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (!before) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const body = await req.json();
+
+  // Workflow fields (status/assignedToId/teamId/dueDate) are locked to the creator,
+  // current assignee, the record's team leader, or MANAGER/ADMIN — everything else
+  // (title, customer info, description, etc.) stays open to anyone who passed the
+  // canAccessServiceRequests check above. See lib/permissions.ts#canEditWorkflowFields.
+  const touchesWorkflow = body.status !== undefined || body.assignedToId !== undefined || body.teamId !== undefined || body.dueDate !== undefined;
+  if (touchesWorkflow && !(await canEditWorkflowFields(session.user.id, session.user.role, before))) {
+    return NextResponse.json({ error: "Only the creator, assignee, team leader, or a manager can change status, assignment, team, or due date." }, { status: 403 });
+  }
+
   const data: any = {};
   if (body.status) data.status = body.status;
   if (body.assignedToId !== undefined) data.assignedToId = body.assignedToId || null;

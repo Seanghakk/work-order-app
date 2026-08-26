@@ -21,10 +21,12 @@ export default function DefectReportDetail() {
   const [report, setReport] = useState<any>(null);
   const [sites, setSites] = useState<any[]>([]);
   const [people, setPeople] = useState<any[]>([]);
+  const [teams, setTeams] = useState<any[]>([]);
   const [error, setError] = useState("");
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<any>({});
   const [items, setItems] = useState<Item[]>([]);
+  const [originalItemsJson, setOriginalItemsJson] = useState("");
   const [uploadingKey, setUploadingKey] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [showSend, setShowSend] = useState(false);
@@ -41,6 +43,7 @@ export default function DefectReportDetail() {
   useEffect(() => {
     fetch("/api/sites").then((r) => r.json()).then((data) => Array.isArray(data) && setSites(data));
     fetch("/api/users/assignable").then((r) => r.json()).then((data) => Array.isArray(data) && setPeople(data));
+    fetch("/api/teams").then((r) => r.json()).then((data) => Array.isArray(data) && setTeams(data));
   }, []);
 
   async function updateField(data: any) {
@@ -74,15 +77,16 @@ export default function DefectReportDetail() {
       siteId: report.siteId || "",
       remark: report.remark || "",
     });
-    setItems(
+    const mappedItems =
       report.items.length > 0
         ? report.items.map((it: any) => ({
             id: it.id, partNumber: it.partNumber || "", description: it.description || "", brand: it.brand || "",
             unit: it.unit || "", qty: it.qty != null ? String(it.qty) : "", defectDescription: it.defectDescription || "",
             photoReference: it.photoReference || "",
           }))
-        : [emptyItem()]
-    );
+        : [emptyItem()];
+    setItems(mappedItems);
+    setOriginalItemsJson(JSON.stringify(mappedItems));
     setEditing(true);
   }
 
@@ -98,11 +102,18 @@ export default function DefectReportDetail() {
 
   async function saveEdit() {
     if (!form.projectName.trim()) { setError("Project name can't be empty."); return; }
-    await updateField({
+    const payload: any = {
       ...form,
       otherDisciplineText: form.discipline === "OTHER" ? form.otherDisciplineText : null,
-      items: items.filter((it) => it.description.trim() || it.defectDescription.trim()),
-    });
+    };
+    // Only include items in the request if they actually changed — items are gated by
+    // the same creator/assignee/leader/manager check as workflow fields (see the API
+    // route), so resending an unmodified items array on every content-only save would
+    // wrongly block a legitimate content edit for someone who can't touch items.
+    if (JSON.stringify(items) !== originalItemsJson) {
+      payload.items = items.filter((it) => it.description.trim() || it.defectDescription.trim());
+    }
+    await updateField(payload);
     setEditing(false);
   }
 
@@ -177,6 +188,20 @@ export default function DefectReportDetail() {
           <select value={report.status} onChange={(e) => updateField({ status: e.target.value })}>
             <option value="OPEN">Open</option>
             <option value="RESOLVED">Resolved</option>
+          </select>
+        </div>
+        <div>
+          <label>Assigned to</label>
+          <select value={report.assignedToId || ""} onChange={(e) => updateField({ assignedToId: e.target.value || null })}>
+            <option value="">Unassigned</option>
+            {people.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.role})</option>)}
+          </select>
+        </div>
+        <div>
+          <label>Team</label>
+          <select value={report.teamId || ""} onChange={(e) => updateField({ teamId: e.target.value || null })}>
+            <option value="">No team</option>
+            {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
           </select>
         </div>
       </div>

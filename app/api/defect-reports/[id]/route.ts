@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { canAccessDefectReports, getUserSiteIds } from "@/lib/permissions";
+import { canAccessDefectReports, getUserSiteIds, canEditWorkflowFields } from "@/lib/permissions";
 
 function canManage(role?: string) {
   return role === "MANAGER" || role === "ADMIN";
@@ -25,7 +25,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   const report = await prisma.defectReport.findUnique({
     where: { id: params.id },
     include: {
-      createdBy: true, site: true, workOrder: true,
+      createdBy: true, site: true, workOrder: true, assignedTo: true, team: true,
       items: { orderBy: { itemNo: "asc" }, include: { photos: { include: { uploadedBy: true }, orderBy: { createdAt: "asc" } } } },
       photos: { where: { itemId: null }, include: { uploadedBy: true }, orderBy: { createdAt: "asc" } },
     },
@@ -49,6 +49,17 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   }
 
   const body = await req.json();
+
+  // Workflow fields (status/assignedToId/teamId) and line items are locked to the
+  // creator, current assignee, the record's team leader, or MANAGER/ADMIN — everything
+  // else (project details, contractor info, remark, etc.) stays open to anyone who
+  // passed the canAccessDefectReports check above. See lib/permissions.ts#canEditWorkflowFields.
+  const touchesWorkflow = body.status !== undefined || body.assignedToId !== undefined || body.teamId !== undefined;
+  const touchesItems = Array.isArray(body.items);
+  if ((touchesWorkflow || touchesItems) && !(await canEditWorkflowFields(session.user.id, session.user.role, before))) {
+    return NextResponse.json({ error: "Only the creator, assignee, team leader, or a manager can change status, assignment, team, or line items." }, { status: 403 });
+  }
+
   const data: any = {};
   if (body.dfNumber !== undefined) data.dfNumber = body.dfNumber || null;
   if (body.projectName?.trim()) data.projectName = body.projectName;
@@ -60,6 +71,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (body.otherDisciplineText !== undefined) data.otherDisciplineText = body.otherDisciplineText || null;
   if (body.remark !== undefined) data.remark = body.remark || null;
   if (body.status) data.status = body.status;
+  if (body.assignedToId !== undefined) data.assignedToId = body.assignedToId || null;
+  if (body.teamId !== undefined) data.teamId = body.teamId || null;
   if (body.workOrderId !== undefined) data.workOrderId = body.workOrderId || null;
   if (body.siteId !== undefined) {
     if (body.siteId && body.siteId !== before.siteId) {

@@ -101,3 +101,25 @@ export async function buildDefectReportWhere(userId: string, role: string, extra
   if (siteIds === "ALL") return extra;
   return { ...extra, OR: [{ siteId: null }, { siteId: { in: siteIds } }] };
 }
+
+// Returns true if this user may edit "workflow" fields (status/assignedToId/teamId, plus
+// dueDate on ServiceRequest) — or, for DefectReport, its items[] — on the given record.
+// Allowed: the record's creator, its current assignee, a leader of its team (reusing
+// getLeaderTeamId — same helper buildWorkOrderWhere already uses for team-leader
+// visibility), or MANAGER/ADMIN. Shared by both modules' PATCH routes rather than
+// duplicated, since the rule is identical for both. Content fields are NOT gated by
+// this — they stay open to anyone who passes the module's base access check.
+export async function canEditWorkflowFields(
+  userId: string,
+  role: string,
+  record: { createdById: string; assignedToId?: string | null; teamId?: string | null }
+): Promise<boolean> {
+  if (role === "MANAGER" || role === "ADMIN") return true;
+  if (record.createdById === userId) return true;
+  if (record.assignedToId && record.assignedToId === userId) return true;
+  if (record.teamId) {
+    const leaderTeamId = await getLeaderTeamId(userId);
+    if (leaderTeamId && leaderTeamId === record.teamId) return true;
+  }
+  return false;
+}
