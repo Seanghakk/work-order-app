@@ -62,7 +62,7 @@ export async function GET(req: Request) {
 
     // Reused from GET /api/service-requests (app/api/service-requests/route.ts):
     // canAccessServiceRequests as the permission gate, and `{ archived: false }` as
-    // the only where-scoping that route applies (it does not site/team-scope).
+    // the only where-scoping that route applies.
     canAccessServiceRequests(role)
       ? prisma.serviceRequest.findMany({
           where: {
@@ -71,7 +71,7 @@ export async function GET(req: Request) {
               { OR: [{ title: { contains: q, ...ci } }, { soNumber: { contains: q, ...ci } }] },
             ],
           },
-          select: { id: true, title: true, soNumber: true, status: true, customerName: true },
+          select: { id: true, title: true, soNumber: true, status: true, customerName: true, site: { select: { name: true } } },
           orderBy: { createdAt: "desc" },
           take: limit,
         })
@@ -127,6 +127,7 @@ export async function GET(req: Request) {
       soNumber: s.soNumber,
       status: s.status,
       customerName: s.customerName,
+      site: s.site?.name || null,
       href: `/service-requests/${s.id}`,
     })),
     defectReports: defectReports.map((d) => ({

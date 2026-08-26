@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { canAccessServiceRequests, canEditWorkflowFields } from "@/lib/permissions";
+import { canAccessServiceRequests, canEditWorkflowFields, getUserSiteIds } from "@/lib/permissions";
 import { sendEmail, serviceRequestAssignedEmail, serviceRequestStatusChangedEmail, serviceRequestNewCommentEmail } from "@/lib/email";
 import { isValidHttpUrl } from "@/lib/url";
 import { notifyUser } from "@/lib/notifications";
@@ -19,6 +19,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
       createdBy: true,
       assignedTo: true,
       team: true,
+      site: true,
       comments: { include: { author: true }, orderBy: { createdAt: "asc" } },
     },
   });
@@ -71,6 +72,16 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       const team = await prisma.team.findUnique({ where: { id: body.teamId }, select: { category: true } });
       data.category = team?.category || null;
     }
+  }
+  if (body.siteId !== undefined) {
+    if (!body.siteId) {
+      return NextResponse.json({ error: "Site is required." }, { status: 400 });
+    }
+    const siteIds = await getUserSiteIds(session.user.id, session.user.role);
+    if (siteIds !== "ALL" && !siteIds.includes(body.siteId)) {
+      return NextResponse.json({ error: "You don't have access to that site." }, { status: 403 });
+    }
+    data.siteId = body.siteId;
   }
 
   const serviceRequest = await prisma.serviceRequest.update({ where: { id: params.id }, data });

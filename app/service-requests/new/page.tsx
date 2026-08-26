@@ -17,12 +17,20 @@ export default function NewServiceRequest() {
   const [people, setPeople] = useState<any[]>([]);
   const [teams, setTeams] = useState<any[]>([]);
   const [teamId, setTeamId] = useState("");
+  const [sites, setSites] = useState<any[]>([]);
+  const [siteId, setSiteId] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
 
   useEffect(() => {
     fetch("/api/users/assignable").then((r) => r.json()).then((data) => Array.isArray(data) && setPeople(data));
     fetch("/api/teams").then((r) => r.json()).then((data) => Array.isArray(data) && setTeams(data));
+    fetch("/api/sites").then((r) => r.json()).then((data) => {
+      if (Array.isArray(data)) {
+        setSites(data);
+        if (data.length === 1) setSiteId(data[0].id);
+      }
+    });
   }, []);
 
   function handleCustomerTypeChange(type: "GENERAL" | "CORPORATE") {
@@ -32,8 +40,8 @@ export default function NewServiceRequest() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!title.trim() || !customerName.trim()) {
-      setError("Title and customer name are required.");
+    if (!title.trim() || !customerName.trim() || !siteId) {
+      setError("Title, customer name, and site are required.");
       return;
     }
     const trimmedDocumentControlUrl = documentControlUrl.trim();
@@ -48,7 +56,7 @@ export default function NewServiceRequest() {
         title, customerName, description, dueDate: dueDate || null, assignedToId: assignedToId || null,
         isCorporatePartner: customerType === "CORPORATE", soNumber: soNumber || null,
         documentControlUrl: trimmedDocumentControlUrl || null,
-        teamId: teamId || null,
+        teamId: teamId || null, siteId,
       }),
     });
     if (!res.ok) {
@@ -63,6 +71,13 @@ export default function NewServiceRequest() {
     <div className="container" style={{ maxWidth: 560 }}>
       <h1>New service request</h1>
       <form onSubmit={handleSubmit} className="card">
+        <div className="field">
+          <label>Site</label>
+          <select value={siteId} onChange={(e) => setSiteId(e.target.value)} style={{ width: "100%" }}>
+            <option value="">Select</option>
+            {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
+        </div>
         <div className="field">
           <label>Title</label>
           <input value={title} onChange={(e) => setTitle(e.target.value)} style={{ width: "100%" }} placeholder="CCTV not recording — floor 3" />

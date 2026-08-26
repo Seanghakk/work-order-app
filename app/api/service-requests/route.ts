@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { canAccessServiceRequests } from "@/lib/permissions";
+import { canAccessServiceRequests, getUserSiteIds } from "@/lib/permissions";
 import { isValidHttpUrl } from "@/lib/url";
 
 export async function GET(req: Request) {
@@ -13,7 +13,7 @@ export async function GET(req: Request) {
   const showArchived = new URL(req.url).searchParams.get("showArchived") === "1";
   const serviceRequests = await prisma.serviceRequest.findMany({
     where: { archived: showArchived },
-    include: { createdBy: true, assignedTo: true, team: true },
+    include: { createdBy: true, assignedTo: true, team: true, site: true },
     orderBy: { createdAt: "desc" },
   });
   return NextResponse.json(serviceRequests);
@@ -25,8 +25,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const body = await req.json();
-  if (!body.title?.trim() || !body.customerName?.trim()) {
-    return NextResponse.json({ error: "Title and customer name are required." }, { status: 400 });
+  if (!body.title?.trim() || !body.customerName?.trim() || !body.siteId) {
+    return NextResponse.json({ error: "Title, customer name, and site are required." }, { status: 400 });
+  }
+  const siteIds = await getUserSiteIds(session.user.id, session.user.role);
+  if (siteIds !== "ALL" && !siteIds.includes(body.siteId)) {
+    return NextResponse.json({ error: "You don't have access to that site." }, { status: 403 });
   }
   let category: string | null = "MAINTENANCE";
   if (body.teamId) {
@@ -51,6 +55,7 @@ export async function POST(req: Request) {
       createdById: session.user.id,
       assignedToId: body.assignedToId || null,
       teamId: body.teamId || null,
+      siteId: body.siteId,
       category: category as any,
     },
   });

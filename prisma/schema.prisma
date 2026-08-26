@@ -120,6 +120,7 @@ model Site {
   assets     Asset[]
   workOrders WorkOrder[]
   defectReports DefectReport[]
+  serviceRequests ServiceRequest[]
 }
 
 model UserSite {
@@ -285,6 +286,8 @@ model ServiceRequest {
   category      TeamCategory?         @default(MAINTENANCE)
   teamId        String?
   team          Team?                 @relation(fields: [teamId], references: [id])
+  siteId        String?
+  site          Site?                 @relation(fields: [siteId], references: [id])
   createdBy     User                  @relation("serviceRequestCreatedBy", fields: [createdById], references: [id])
   createdById   String
   assignedTo    User?                 @relation("serviceRequestAssignedTo", fields: [assignedToId], references: [id])
@@ -292,6 +295,8 @@ model ServiceRequest {
   createdAt     DateTime              @default(now())
   updatedAt     DateTime              @updatedAt
   comments      ServiceRequestComment[]
+
+  @@index([siteId, archived])
 }
 
 model ServiceRequestComment {
