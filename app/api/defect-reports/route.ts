@@ -9,7 +9,11 @@ export async function GET() {
   if (!session || !canAccessDefectReports(session.user.role)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  // TEMPORARY DEBUG — remove after diagnosing the site-scoping issue.
+  console.log("[DEBUG defect-reports GET] session.user.id =", session.user.id, "session.user.role =", session.user.role);
   const where = await buildDefectReportWhere(session.user.id, session.user.role);
+  // TEMPORARY DEBUG — remove after diagnosing the site-scoping issue.
+  console.log("[DEBUG defect-reports GET] where =", JSON.stringify(where));
   const reports = await prisma.defectReport.findMany({
     where,
     include: { createdBy: true, site: true, workOrder: true, items: true },
