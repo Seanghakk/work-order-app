@@ -2,17 +2,24 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { canAccessDefectReports, getUserSiteIds } from "@/lib/permissions";
 
-function canAccess(role?: string) {
-  return role && role !== "REQUESTER";
-}
 function canManage(role?: string) {
   return role === "MANAGER" || role === "ADMIN";
 }
 
+// A null siteId is treated as accessible to everyone with base module access —
+// see buildDefectReportWhere in lib/permissions.ts for why (site is optional on
+// a defect report, so an un-sited report isn't restricted to anyone in particular).
+async function checkSiteAccess(userId: string, role: string, siteId: string | null) {
+  if (!siteId) return true;
+  const siteIds = await getUserSiteIds(userId, role);
+  return siteIds === "ALL" || siteIds.includes(siteId);
+}
+
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
-  if (!session || !canAccess(session.user.role)) {
+  if (!session || !canAccessDefectReports(session.user.role)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const report = await prisma.defectReport.findUnique({
@@ -24,14 +31,23 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     },
   });
   if (!report) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!(await checkSiteAccess(session.user.id, session.user.role, report.siteId))) {
+    return NextResponse.json({ error: "You don't have access to that site." }, { status: 403 });
+  }
   return NextResponse.json(report);
 }
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
-  if (!session || !canAccess(session.user.role)) {
+  if (!session || !canAccessDefectReports(session.user.role)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const before = await prisma.defectReport.findUnique({ where: { id: params.id } });
+  if (!before) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!(await checkSiteAccess(session.user.id, session.user.role, before.siteId))) {
+    return NextResponse.json({ error: "You don't have access to that site." }, { status: 403 });
+  }
+
   const body = await req.json();
   const data: any = {};
   if (body.dfNumber !== undefined) data.dfNumber = body.dfNumber || null;
@@ -45,7 +61,15 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (body.remark !== undefined) data.remark = body.remark || null;
   if (body.status) data.status = body.status;
   if (body.workOrderId !== undefined) data.workOrderId = body.workOrderId || null;
-  if (body.siteId !== undefined) data.siteId = body.siteId || null;
+  if (body.siteId !== undefined) {
+    if (body.siteId && body.siteId !== before.siteId) {
+      const siteIds = await getUserSiteIds(session.user.id, session.user.role);
+      if (siteIds !== "ALL" && !siteIds.includes(body.siteId)) {
+        return NextResponse.json({ error: "You don't have access to that site." }, { status: 403 });
+      }
+    }
+    data.siteId = body.siteId || null;
+  }
 
   const report = await prisma.defectReport.update({
     where: { id: params.id },
@@ -91,6 +115,11 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
   const session = await getServerSession(authOptions);
   if (!session || !canManage(session.user.role)) {
     return NextResponse.json({ error: "Only managers can remove defect reports." }, { status: 401 });
+  }
+  const report = await prisma.defectReport.findUnique({ where: { id: params.id } });
+  if (!report) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!(await checkSiteAccess(session.user.id, session.user.role, report.siteId))) {
+    return NextResponse.json({ error: "You don't have access to that site." }, { status: 403 });
   }
   await prisma.defectReport.delete({ where: { id: params.id } });
   return NextResponse.json({ ok: true });

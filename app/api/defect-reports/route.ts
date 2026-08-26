@@ -2,14 +2,16 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { canAccessDefectReports } from "@/lib/permissions";
+import { canAccessDefectReports, buildDefectReportWhere, getUserSiteIds } from "@/lib/permissions";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session || !canAccessDefectReports(session.user.role)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const where = await buildDefectReportWhere(session.user.id, session.user.role);
   const reports = await prisma.defectReport.findMany({
+    where,
     include: { createdBy: true, site: true, workOrder: true, items: true },
     orderBy: { createdAt: "desc" },
   });
@@ -24,6 +26,12 @@ export async function POST(req: Request) {
   const body = await req.json();
   if (!body.projectName?.trim()) {
     return NextResponse.json({ error: "Project name is required." }, { status: 400 });
+  }
+  if (body.siteId) {
+    const siteIds = await getUserSiteIds(session.user.id, session.user.role);
+    if (siteIds !== "ALL" && !siteIds.includes(body.siteId)) {
+      return NextResponse.json({ error: "You don't have access to that site." }, { status: 403 });
+    }
   }
   const items = Array.isArray(body.items) ? body.items : [];
   const report = await prisma.defectReport.create({

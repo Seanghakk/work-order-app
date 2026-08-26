@@ -7,6 +7,7 @@ import {
   canAccessServiceRequests,
   canAccessDefectReports,
   buildWorkOrderWhere,
+  buildDefectReportWhere,
   buildAssetWhere,
 } from "@/lib/permissions";
 
@@ -77,14 +78,15 @@ export async function GET(req: Request) {
       : Promise.resolve([]),
 
     // Reused from GET /api/defect-reports (app/api/defect-reports/route.ts):
-    // canAccessDefectReports as the permission gate (hoisted from that file's local
-    // `canAccess`). That route applies no where-scoping at all beyond the gate, so
-    // search mirrors that exactly — see summary for the pre-existing gap this
-    // surfaces (no site-scoping despite DefectReport having a siteId).
+    // canAccessDefectReports as the permission gate, and buildDefectReportWhere as
+    // the site-scoping where — same shape as the Work Orders/Assets branches above.
     canAccessDefectReports(role)
       ? prisma.defectReport.findMany({
           where: {
-            OR: [{ projectName: { contains: q, ...ci } }, { dfNumber: { contains: q, ...ci } }],
+            AND: [
+              await buildDefectReportWhere(userId, role),
+              { OR: [{ projectName: { contains: q, ...ci } }, { dfNumber: { contains: q, ...ci } }] },
+            ],
           },
           select: { id: true, projectName: true, dfNumber: true, status: true, site: { select: { name: true } } },
           orderBy: { createdAt: "desc" },

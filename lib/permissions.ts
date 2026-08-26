@@ -87,3 +87,17 @@ export async function buildAssetWhere(userId: string, role: string, extra: Recor
   const siteIds = await getUserSiteIds(userId, role);
   return { ...siteWhere(siteIds), ...extra };
 }
+
+// Builds the same site-scoping Prisma "where" fragment used by GET /api/defect-reports.
+// DefectReport has no teamId/assignedToId, so unlike buildWorkOrderWhere there's no
+// role-based OR to layer on — just site scoping. Unlike WorkOrder/Asset, DefectReport's
+// siteId is nullable (site is optional on a report), so a report with no site set stays
+// visible to every non-admin role too rather than disappearing for everyone but ADMIN —
+// only `{ siteId: { in: siteIds } }` on its own would silently exclude those rows.
+// Kept as its own named function (rather than reusing buildAssetWhere) so it can
+// diverge independently if DefectReport later grows an assignee/team concept.
+export async function buildDefectReportWhere(userId: string, role: string, extra: Record<string, any> = {}) {
+  const siteIds = await getUserSiteIds(userId, role);
+  if (siteIds === "ALL") return extra;
+  return { ...extra, OR: [{ siteId: null }, { siteId: { in: siteIds } }] };
+}
