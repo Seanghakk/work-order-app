@@ -105,7 +105,7 @@ export default function NavBar() {
       {(canAccessWorkOrders(role) || canAccessServiceRequests(role)) && (
         <span className="nav-dropdown-wrap">
         <button className={`nav-dropdown-trigger ${maintenanceOpen ? "active" : ""}`} onClick={toggleMaintenance}>
-          Maintenance v
+          Maintenance <span className="chevron">▾</span>
         </button>
         {maintenanceOpen && (
           <div className="nav-dropdown-panel">
@@ -122,7 +122,7 @@ export default function NavBar() {
       {(canAccessSaleOrders(role) || canSeeMaintenanceContracts) && (
         <span className="nav-dropdown-wrap">
           <button className={`nav-dropdown-trigger ${salesOpen ? "active" : ""}`} onClick={toggleSales}>
-            Sales v
+            Sales <span className="chevron">▾</span>
           </button>
           {salesOpen && (
             <div className="nav-dropdown-panel">
@@ -137,7 +137,7 @@ export default function NavBar() {
       {role !== "REQUESTER" && (
         <span className="nav-dropdown-wrap">
           <button className={`nav-dropdown-trigger ${projectOpen ? "active" : ""}`} onClick={toggleProject}>
-            Project v
+            Project <span className="chevron">▾</span>
           </button>
           {projectOpen && (
             <div className="nav-dropdown-panel">

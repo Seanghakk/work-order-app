@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { put } from "@vercel/blob";
+import { checkSiteAccess } from "@/lib/permissions";
 
 const CAN_UPLOAD = ["MANAGER", "ADMIN", "MAINTENANCE_LEADER", "MAINTENANCE_TECHNICIAN"];
 
@@ -13,6 +14,9 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   }
   const workOrder = await prisma.workOrder.findUnique({ where: { id: params.id } });
   if (!workOrder) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!(await checkSiteAccess(session.user.id, session.user.role, workOrder.siteId))) {
+    return NextResponse.json({ error: "You don't have access to that site." }, { status: 403 });
+  }
 
   const formData = await req.formData();
   const file = formData.get("file") as File | null;
