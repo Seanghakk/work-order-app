@@ -200,7 +200,7 @@ model WorkOrder {
 }
 model WorkOrderPhoto {
   id          String    @id @default(cuid())
-  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id])
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
   workOrderId String
   url         String
   fileName    String
@@ -233,7 +233,7 @@ model PMSchedule {
 }
 model Notification {
   id          String    @id @default(cuid())
-  user        User      @relation(fields: [userId], references: [id])
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId      String
   message     String
   workOrderId String?
