@@ -34,9 +34,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "A user with that email already exists." }, { status: 400 });
   }
   if (body.username?.trim()) {
-    const existingUsername = await prisma.user.findFirst({
-      where: { username: { equals: body.username.trim(), mode: "insensitive" } },
-    });
+    const existingUsername = await prisma.user.findUnique({ where: { username: body.username.trim() } });
     if (existingUsername) {
       return NextResponse.json({ error: "That username is already taken." }, { status: 400 });
     }

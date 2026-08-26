@@ -1,11 +1,13 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  directUrl  = env("DIRECT_URL")
+  extensions = [citext]
 }
 
 enum Role {
@@ -73,7 +75,7 @@ model User {
   id            String       @id @default(cuid())
   name          String
   email         String       @unique
-  username      String?      @unique
+  username      String?      @unique @db.Citext
   passwordHash  String
   role          Role         @default(REQUESTER)
   active        Boolean      @default(true)

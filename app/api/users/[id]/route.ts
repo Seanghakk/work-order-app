@@ -25,9 +25,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (body.username !== undefined) {
     const trimmed = body.username?.trim() || null;
     if (trimmed) {
-      const existingUsername = await prisma.user.findFirst({
-        where: { username: { equals: trimmed, mode: "insensitive" } },
-      });
+      const existingUsername = await prisma.user.findUnique({ where: { username: trimmed } });
       if (existingUsername && existingUsername.id !== params.id) {
         return NextResponse.json({ error: "That username is already taken." }, { status: 400 });
       }
