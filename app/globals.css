@@ -72,6 +72,13 @@ button.primary:hover { background: var(--navy-deep); }
 button.danger { background: transparent; color: var(--danger); border-color: rgba(220, 38, 38, 0.35); }
 button.danger:hover { background: rgba(220, 38, 38, 0.08); }
 
+/* Shared layout for a row of action buttons (e.g. a detail page's utility/workflow
+   button rows) — wraps onto a new line instead of squeezing button labels into
+   internal text-wrap, and gives short-label buttons a shared minimum width so they
+   don't look arbitrarily undersized next to longer ones. */
+.action-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.action-row button { white-space: nowrap; min-width: 110px; }
+
 table { width: 100%; border-collapse: collapse; background: var(--surface); }
 th, td { text-align: left; padding: 11px 12px; border-bottom: 1px solid var(--border); font-size: 14px; }
 th { color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; position: sticky; top: 0; background: var(--surface); z-index: 5; }

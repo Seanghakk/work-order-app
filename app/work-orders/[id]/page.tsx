@@ -58,6 +58,9 @@ export default function WorkOrderDetail() {
   const [sendUserIds, setSendUserIds] = useState<string[]>([]);
   const [sendMessage, setSendMessage] = useState("");
   const [sendResult, setSendResult] = useState("");
+  const [editingDetails, setEditingDetails] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
 
   async function load() {
     const res = await fetch(`/api/work-orders/${id}`);
@@ -89,6 +92,24 @@ export default function WorkOrderDetail() {
   const isApprover =
     role === "MANAGER" || role === "ADMIN" ||
     (!!wo?.teamId && teams.find((t) => t.id === wo.teamId)?.teamLeader?.id === session?.user?.id);
+  // Client-side mirror of canEditWorkflowFields (creator/assignee/leader/manager),
+  // purely to show/hide the Edit details button — the backend re-checks independently.
+  const canEditContent =
+    role === "MANAGER" || role === "ADMIN" ||
+    wo?.requestedById === session?.user?.id ||
+    wo?.assignedToId === session?.user?.id ||
+    (!!wo?.teamId && teams.find((t) => t.id === wo.teamId)?.teamLeader?.id === session?.user?.id);
+
+  function startEditDetails() {
+    setEditTitle(wo.title);
+    setEditDescription(wo.description);
+    setEditingDetails(true);
+  }
+  async function saveDetails() {
+    if (!editTitle.trim() || !editDescription.trim()) { setError("Title and description can't be empty."); return; }
+    await updateField({ title: editTitle, description: editDescription });
+    setEditingDetails(false);
+  }
 
   async function doAction(action: string, reason?: string) {
     await updateField({ action, reason });
@@ -217,71 +238,38 @@ export default function WorkOrderDetail() {
   return (
     <div className="container" style={{ maxWidth: 720 }}>
       <h1>{wo.title}</h1>
-      <div style={{ display: "flex", gap: 8, marginBottom: 16, alignItems: "center" }}>
+      <div style={{ display: "flex", gap: 8, marginBottom: 16, alignItems: "center", flexWrap: "wrap" }}>
         <span className={`badge badge-${wo.status.toLowerCase()}`}>{STATUS_LABEL[wo.status] || wo.status}</span>
         <span className={`badge badge-${wo.priority.toLowerCase()}`}>{wo.priority}</span>
         {wo.warrantyClaim && <span className="badge badge-urgent">Warranty claim</span>}
         {wo.archived && <span className="badge badge-on_hold">Archived</span>}
-        <a href={`/api/work-orders/${id}/report`} target="_blank" rel="noopener noreferrer">
-          <button>Download report</button>
-        </a>
-        {wo.documentControlUrl && (
-          <a href={wo.documentControlUrl} target="_blank" rel="noopener noreferrer">
-            <button>Open in Document Control ↗</button>
-          </a>
-        )}
-        {canEdit && <button onClick={() => setShowSend((v) => !v)}>Send report</button>}
-        {canManage && <button onClick={toggleArchived}>{wo.archived ? "Unarchive" : "Archive"}</button>}
       </div>
 
-      {isApprover && (wo.status === "PENDING_APPROVAL" || wo.status === "PENDING_SIGNOFF" || wo.status === "OPEN") && (
-        <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-          {wo.status === "PENDING_APPROVAL" && (
-            <>
-              <button className="primary" onClick={handleApprove}>Approve</button>
-              <button className="danger" onClick={handleReject}>Reject</button>
-            </>
-          )}
-          {wo.status === "PENDING_SIGNOFF" && (
-            <>
-              <button className="primary" onClick={handleSignoff}>Sign off</button>
-              <button onClick={handleSendBack}>Send back to In Progress</button>
-            </>
-          )}
-          {wo.status === "OPEN" && (
-            <button className="primary" onClick={handleResubmit}>Resubmit for approval</button>
-          )}
-        </div>
-      )}
-
-      {showSend && (
-        <div className="card" style={{ marginBottom: 16 }}>
-          <h3 style={{ marginTop: 0 }}>Send report</h3>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 12, maxHeight: 160, overflowY: "auto" }}>
-            {people.map((p) => (
-              <label key={p.id} style={{ display: "flex", alignItems: "center", gap: 5, fontWeight: "normal", fontSize: 13 }}>
-                <input type="checkbox" checked={sendUserIds.includes(p.id)} onChange={() => toggleSendUser(p.id)} />
-                {p.name} ({p.role})
-              </label>
-            ))}
-          </div>
-          <div className="field" style={{ marginBottom: 12 }}>
-            <label>Message (optional)</label>
-            <textarea value={sendMessage} onChange={(e) => setSendMessage(e.target.value)} rows={2} style={{ width: "100%" }} />
-          </div>
-          {sendResult && <p style={{ color: "var(--success)", fontSize: 13 }}>{sendResult}</p>}
-          <div style={{ display: "flex", gap: 8 }}>
-            <button className="primary" onClick={sendReport} disabled={sending}>{sending ? "Sending…" : "Send"}</button>
-            <button onClick={() => setShowSend(false)}>Cancel</button>
-          </div>
-        </div>
-      )}
-
       <div className="card" style={{ marginBottom: 16 }}>
-        <p>{wo.description}</p>
-        <p style={{ fontSize: 13, color: "var(--text-muted)" }}>
-          Site: {wo.site?.name || "—"} · Team: {wo.team?.name || "—"} · Asset: {wo.asset?.name || "—"} · Requested by {wo.requestedBy?.name} · Created {new Date(wo.createdAt).toLocaleString()}
-        </p>
+        {editingDetails ? (
+          <>
+            <div className="field">
+              <label>Title</label>
+              <input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} style={{ width: "100%" }} />
+            </div>
+            <div className="field">
+              <label>Description</label>
+              <textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)} rows={4} style={{ width: "100%" }} />
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button className="primary" onClick={saveDetails}>Save</button>
+              <button onClick={() => setEditingDetails(false)}>Cancel</button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p>{wo.description}</p>
+            <p style={{ fontSize: 13, color: "var(--text-muted)" }}>
+              Site: {wo.site?.name || "—"} · Team: {wo.team?.name || "—"} · Asset: {wo.asset?.name || "—"} · Requested by {wo.requestedBy?.name} · Created {new Date(wo.createdAt).toLocaleString()}
+            </p>
+            {canEditContent && <button onClick={startEditDetails}>Edit details</button>}
+          </>
+        )}
       </div>
 
       {canEdit && (
@@ -439,7 +427,63 @@ export default function WorkOrderDetail() {
         )}
       </div>
 
+      {showSend && (
+        <div className="card" style={{ marginBottom: 16 }}>
+          <h3 style={{ marginTop: 0 }}>Send report</h3>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 12, maxHeight: 160, overflowY: "auto" }}>
+            {people.map((p) => (
+              <label key={p.id} style={{ display: "flex", alignItems: "center", gap: 5, fontWeight: "normal", fontSize: 13 }}>
+                <input type="checkbox" checked={sendUserIds.includes(p.id)} onChange={() => toggleSendUser(p.id)} />
+                {p.name} ({p.role})
+              </label>
+            ))}
+          </div>
+          <div className="field" style={{ marginBottom: 12 }}>
+            <label>Message (optional)</label>
+            <textarea value={sendMessage} onChange={(e) => setSendMessage(e.target.value)} rows={2} style={{ width: "100%" }} />
+          </div>
+          {sendResult && <p style={{ color: "var(--success)", fontSize: 13 }}>{sendResult}</p>}
+          <div style={{ display: "flex", gap: 8 }}>
+            <button className="primary" onClick={sendReport} disabled={sending}>{sending ? "Sending…" : "Send"}</button>
+            <button onClick={() => setShowSend(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
+
       {error && <p style={{ color: "var(--danger)", fontSize: 13 }}>{error}</p>}
+
+      {isApprover && (wo.status === "PENDING_APPROVAL" || wo.status === "PENDING_SIGNOFF" || wo.status === "OPEN") && (
+        <div className="action-row" style={{ marginBottom: 16 }}>
+          {wo.status === "PENDING_APPROVAL" && (
+            <>
+              <button className="primary" onClick={handleApprove}>Approve</button>
+              <button className="danger" onClick={handleReject}>Reject</button>
+            </>
+          )}
+          {wo.status === "PENDING_SIGNOFF" && (
+            <>
+              <button className="primary" onClick={handleSignoff}>Sign off</button>
+              <button onClick={handleSendBack}>Send back to In Progress</button>
+            </>
+          )}
+          {wo.status === "OPEN" && (
+            <button className="primary" onClick={handleResubmit}>Resubmit for approval</button>
+          )}
+        </div>
+      )}
+
+      <div className="action-row" style={{ marginBottom: 16 }}>
+        <a href={`/api/work-orders/${id}/report`} target="_blank" rel="noopener noreferrer">
+          <button>Download report</button>
+        </a>
+        {wo.documentControlUrl && (
+          <a href={wo.documentControlUrl} target="_blank" rel="noopener noreferrer">
+            <button>Open in Document Control ↗</button>
+          </a>
+        )}
+        {canEdit && <button onClick={() => setShowSend((v) => !v)}>Send report</button>}
+        {canManage && <button onClick={toggleArchived}>{wo.archived ? "Unarchive" : "Archive"}</button>}
+      </div>
 
       <h3>Activity</h3>
       <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>

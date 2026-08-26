@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { sendEmail, sendEmailWithAttachment, workOrderAssignedEmail, statusChangedEmail, newCommentEmail } from "@/lib/email";
 import { notifyUser } from "@/lib/notifications";
 import { sendTelegramMessage } from "@/lib/telegram";
-import { getUserSiteIds, canAccessWorkOrders, canApproveOrSignOff } from "@/lib/permissions";
+import { getUserSiteIds, canAccessWorkOrders, canApproveOrSignOff, canEditWorkflowFields } from "@/lib/permissions";
 import { generateWorkOrderReportPdf } from "@/lib/workOrderReportPdf";
 import { isValidHttpUrl } from "@/lib/url";
 
@@ -121,6 +121,24 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     }
     if (body.status) data.status = body.status;
   }
+
+  // Title/description are content fields, gated the same way DefectReport/ServiceRequest's
+  // workflow fields are — creator, assignee, team leader, or MANAGER/ADMIN. WorkOrder's
+  // creator field is named requestedById (not createdById), so it's mapped here rather
+  // than renamed, matching the approach used elsewhere this helper is reused.
+  const touchesContent = body.title !== undefined || body.description !== undefined;
+  if (touchesContent) {
+    const allowed = await canEditWorkflowFields(session.user.id, session.user.role, {
+      createdById: before.requestedById,
+      assignedToId: before.assignedToId,
+      teamId: before.teamId,
+    });
+    if (!allowed) {
+      return NextResponse.json({ error: "Only the creator, assignee, team leader, or a manager can edit the title or description." }, { status: 403 });
+    }
+  }
+  if (body.title?.trim()) data.title = body.title;
+  if (body.description?.trim()) data.description = body.description;
 
   if (body.assignedToId !== undefined) data.assignedToId = body.assignedToId || null;
   if (body.priority) data.priority = body.priority;
