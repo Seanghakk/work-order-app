@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { isValidHttpUrl } from "@/lib/url";
 
 const CORPORATE_PARTNERS = ["SCE", "DBD", "PITTA", "CE&P", "ESD", "CAIC", "LGT", "ACT", "ET&S", "GGEAR", "LBL"];
 const STAGES = ["REQUEST", "CHECK", "REPORT", "CLOSE"];
@@ -23,6 +24,7 @@ export default function ServiceRequestDetail() {
   const [editCustomerType, setEditCustomerType] = useState<"GENERAL" | "CORPORATE">("GENERAL");
   const [editCustomerName, setEditCustomerName] = useState("");
   const [editSoNumber, setEditSoNumber] = useState("");
+  const [editDocumentControlUrl, setEditDocumentControlUrl] = useState("");
   const [editDescription, setEditDescription] = useState("");
 
   async function load() {
@@ -73,17 +75,24 @@ export default function ServiceRequestDetail() {
     setEditCustomerType(item.isCorporatePartner ? "CORPORATE" : "GENERAL");
     setEditCustomerName(item.customerName);
     setEditSoNumber(item.soNumber || "");
+    setEditDocumentControlUrl(item.documentControlUrl || "");
     setEditDescription(item.description || "");
     setEditingDetails(true);
   }
 
   async function saveDetails() {
     if (!editTitle.trim() || !editCustomerName.trim()) { setError("Title and customer name can't be empty."); return; }
+    const trimmedDocumentControlUrl = editDocumentControlUrl.trim();
+    if (trimmedDocumentControlUrl && !isValidHttpUrl(trimmedDocumentControlUrl)) {
+      setError("Document Control link must be a valid http(s) URL.");
+      return;
+    }
     await updateField({
       title: editTitle,
       customerName: editCustomerName,
       isCorporatePartner: editCustomerType === "CORPORATE",
       soNumber: editSoNumber || null,
+      documentControlUrl: trimmedDocumentControlUrl || null,
       description: editDescription,
     });
     setEditingDetails(false);
@@ -170,6 +179,10 @@ export default function ServiceRequestDetail() {
               <input value={editSoNumber} onChange={(e) => setEditSoNumber(e.target.value)} style={{ width: "100%" }} />
             </div>
             <div className="field">
+              <label>Document Control link (optional)</label>
+              <input value={editDocumentControlUrl} onChange={(e) => setEditDocumentControlUrl(e.target.value)} style={{ width: "100%" }} placeholder="https://..." />
+            </div>
+            <div className="field">
               <label>Description</label>
               <textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)} rows={4} style={{ width: "100%" }} />
             </div>
@@ -182,6 +195,11 @@ export default function ServiceRequestDetail() {
           <>
             <p><strong>Customer:</strong> {item.customerName} ({item.isCorporatePartner ? "Corporate partner" : "General customer"})</p>
             {item.soNumber && <p><strong>S.O. Number:</strong> {item.soNumber}</p>}
+            {item.documentControlUrl && (
+              <p>
+                <a href={item.documentControlUrl} target="_blank" rel="noopener noreferrer">Open in Document Control ↗</a>
+              </p>
+            )}
             {item.description && <p>{item.description}</p>}
             <p style={{ fontSize: 13, color: "var(--text-muted)" }}>
               Team: {item.team?.name || "—"} · Created by {item.createdBy?.name} · {new Date(item.createdAt).toLocaleString()}

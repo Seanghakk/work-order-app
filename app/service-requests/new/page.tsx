@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { isValidHttpUrl } from "@/lib/url";
 
 const CORPORATE_PARTNERS = ["SCE", "DBD", "PITTA", "CE&P", "ESD", "CAIC", "LGT", "ACT", "ET&S", "GGEAR", "LBL"];
 
@@ -9,6 +10,7 @@ export default function NewServiceRequest() {
   const [customerType, setCustomerType] = useState<"GENERAL" | "CORPORATE">("GENERAL");
   const [customerName, setCustomerName] = useState("");
   const [soNumber, setSoNumber] = useState("");
+  const [documentControlUrl, setDocumentControlUrl] = useState("");
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [assignedToId, setAssignedToId] = useState("");
@@ -34,12 +36,18 @@ export default function NewServiceRequest() {
       setError("Title and customer name are required.");
       return;
     }
+    const trimmedDocumentControlUrl = documentControlUrl.trim();
+    if (trimmedDocumentControlUrl && !isValidHttpUrl(trimmedDocumentControlUrl)) {
+      setError("Document Control link must be a valid http(s) URL.");
+      return;
+    }
     const res = await fetch("/api/service-requests", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         title, customerName, description, dueDate: dueDate || null, assignedToId: assignedToId || null,
         isCorporatePartner: customerType === "CORPORATE", soNumber: soNumber || null,
+        documentControlUrl: trimmedDocumentControlUrl || null,
         teamId: teamId || null,
       }),
     });
@@ -86,6 +94,10 @@ export default function NewServiceRequest() {
         <div className="field">
           <label>Sale Order (S.O. Number) (optional)</label>
           <input value={soNumber} onChange={(e) => setSoNumber(e.target.value)} style={{ width: "100%" }} placeholder="e.g. SO-2026-0142" />
+        </div>
+        <div className="field">
+          <label>Document Control link (optional)</label>
+          <input value={documentControlUrl} onChange={(e) => setDocumentControlUrl(e.target.value)} style={{ width: "100%" }} placeholder="https://..." />
         </div>
         <div className="field">
           <label>Description (optional)</label>

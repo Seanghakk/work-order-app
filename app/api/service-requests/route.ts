@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { canAccessServiceRequests } from "@/lib/permissions";
+import { isValidHttpUrl } from "@/lib/url";
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
@@ -33,12 +34,18 @@ export async function POST(req: Request) {
     category = team?.category || "MAINTENANCE";
   }
 
+  const documentControlUrl = (body.documentControlUrl || "").trim();
+  if (documentControlUrl && !isValidHttpUrl(documentControlUrl)) {
+    return NextResponse.json({ error: "Document Control link must be a valid http(s) URL." }, { status: 400 });
+  }
+
   const serviceRequest = await prisma.serviceRequest.create({
     data: {
       title: body.title,
       customerName: body.customerName,
       isCorporatePartner: !!body.isCorporatePartner,
       soNumber: body.soNumber || null,
+      documentControlUrl: documentControlUrl || null,
       description: body.description || null,
       dueDate: body.dueDate ? new Date(body.dueDate) : null,
       createdById: session.user.id,

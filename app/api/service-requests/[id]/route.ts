@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { canAccessServiceRequests } from "@/lib/permissions";
 import { sendEmail, serviceRequestAssignedEmail, serviceRequestStatusChangedEmail, serviceRequestNewCommentEmail } from "@/lib/email";
+import { isValidHttpUrl } from "@/lib/url";
 import { notifyUser } from "@/lib/notifications";
 import { sendTelegramMessage } from "@/lib/telegram";
 
@@ -46,6 +47,13 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (body.customerName?.trim()) data.customerName = body.customerName;
   if (body.isCorporatePartner !== undefined) data.isCorporatePartner = !!body.isCorporatePartner;
   if (body.soNumber !== undefined) data.soNumber = body.soNumber || null;
+  if (body.documentControlUrl !== undefined) {
+    const trimmed = (body.documentControlUrl || "").trim();
+    if (trimmed && !isValidHttpUrl(trimmed)) {
+      return NextResponse.json({ error: "Document Control link must be a valid http(s) URL." }, { status: 400 });
+    }
+    data.documentControlUrl = trimmed || null;
+  }
   if (typeof body.archived === "boolean" && (session.user.role === "MANAGER" || session.user.role === "ADMIN")) data.archived = body.archived;
   if (body.teamId !== undefined) {
     data.teamId = body.teamId || null;

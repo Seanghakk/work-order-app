@@ -7,6 +7,7 @@ import { notifyUser } from "@/lib/notifications";
 import { sendTelegramMessage } from "@/lib/telegram";
 import { getUserSiteIds, canAccessWorkOrders } from "@/lib/permissions";
 import { generateWorkOrderReportPdf } from "@/lib/workOrderReportPdf";
+import { isValidHttpUrl } from "@/lib/url";
 
 async function checkSiteAccess(userId: string, role: string, siteId: string) {
   const siteIds = await getUserSiteIds(userId, role);
@@ -86,6 +87,13 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (body.serviceType !== undefined) data.serviceType = body.serviceType || null;
   if (body.discipline !== undefined) data.discipline = body.discipline || null;
   if (body.soNumber !== undefined) data.soNumber = body.soNumber || null;
+  if (body.documentControlUrl !== undefined) {
+    const trimmed = (body.documentControlUrl || "").trim();
+    if (trimmed && !isValidHttpUrl(trimmed)) {
+      return NextResponse.json({ error: "Document Control link must be a valid http(s) URL." }, { status: 400 });
+    }
+    data.documentControlUrl = trimmed || null;
+  }
   if (typeof body.problemFixed === "boolean" || body.problemFixed === null) data.problemFixed = body.problemFixed;
   if (body.problemNotFixedReason !== undefined) data.problemNotFixedReason = body.problemNotFixedReason || null;
   if (body.arrivalAt !== undefined) data.arrivalAt = body.arrivalAt ? new Date(body.arrivalAt) : null;

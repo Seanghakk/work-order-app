@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { isValidHttpUrl } from "@/lib/url";
 
 const SERVICE_TYPES = ["REPAIR", "TROUBLESHOOTING", "WARRANTY", "EMERGENCY_OT", "MAINTENANCE", "INSTALLATION", "OTHER"];
 const SERVICE_TYPE_LABEL: Record<string, string> = {
@@ -26,6 +27,7 @@ export default function WorkOrderDetail() {
   const [uploading, setUploading] = useState(false);
   const [partsNeeded, setPartsNeeded] = useState("");
   const [soNumber, setSoNumber] = useState("");
+  const [documentControlUrl, setDocumentControlUrl] = useState("");
   const [problemNotFixedReason, setProblemNotFixedReason] = useState("");
   const [sending, setSending] = useState(false);
   const [showSend, setShowSend] = useState(false);
@@ -40,6 +42,7 @@ export default function WorkOrderDetail() {
     if (data && !data.error) {
       setPartsNeeded(data.partsNeeded || "");
       setSoNumber(data.soNumber || "");
+      setDocumentControlUrl(data.documentControlUrl || "");
       setProblemNotFixedReason(data.problemNotFixedReason || "");
     }
   }
@@ -82,6 +85,15 @@ export default function WorkOrderDetail() {
     }
     setError("");
     load();
+  }
+
+  function saveDocumentControlUrl() {
+    const trimmed = documentControlUrl.trim();
+    if (trimmed && !isValidHttpUrl(trimmed)) {
+      setError("Document Control link must be a valid http(s) URL.");
+      return;
+    }
+    updateField({ documentControlUrl: trimmed || null });
   }
 
   async function submitComment(e: React.FormEvent) {
@@ -159,6 +171,11 @@ export default function WorkOrderDetail() {
         <a href={`/api/work-orders/${id}/report`} target="_blank" rel="noopener noreferrer">
           <button>Download report</button>
         </a>
+        {wo.documentControlUrl && (
+          <a href={wo.documentControlUrl} target="_blank" rel="noopener noreferrer">
+            <button>Open in Document Control ↗</button>
+          </a>
+        )}
         {canEdit && <button onClick={() => setShowSend((v) => !v)}>Send report</button>}
         {canManage && <button onClick={toggleArchived}>{wo.archived ? "Unarchive" : "Archive"}</button>}
       </div>
@@ -251,6 +268,16 @@ export default function WorkOrderDetail() {
             <div>
               <label>S.O. number (optional)</label>
               <input value={soNumber} onChange={(e) => setSoNumber(e.target.value)} onBlur={() => updateField({ soNumber })} placeholder="e.g. SO-2026-0142" />
+            </div>
+            <div>
+              <label>Document Control link (optional)</label>
+              <input
+                value={documentControlUrl}
+                onChange={(e) => setDocumentControlUrl(e.target.value)}
+                onBlur={saveDocumentControlUrl}
+                placeholder="https://..."
+                style={{ minWidth: 260 }}
+              />
             </div>
           </div>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>

@@ -173,6 +173,7 @@ model WorkOrder {
   problemNotFixedReason String?
   arrivalAt     DateTime?
   departureAt   DateTime?
+  documentControlUrl String?
   comments      Comment[]
   photos        WorkOrderPhoto[]
   defectReports DefectReport[]
@@ -266,6 +267,7 @@ model ServiceRequest {
   archived      Boolean               @default(false)
   isCorporatePartner Boolean          @default(false)
   soNumber      String?
+  documentControlUrl String?
   category      TeamCategory?         @default(MAINTENANCE)
   teamId        String?
   team          Team?                 @relation(fields: [teamId], references: [id])
