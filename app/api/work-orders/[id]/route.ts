@@ -112,12 +112,26 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     }
   } else {
     // === Existing generic field-update path ===
-    const tryingToEditFields = body.status || body.assignedToId !== undefined || body.priority || body.dueDate !== undefined;
-    if (session.user.role === "REQUESTER" && tryingToEditFields) {
-      return NextResponse.json({ error: "Requesters can't change status, priority, or assignment." }, { status: 403 });
-    }
     if (body.status && ACTION_ONLY_STATUSES.includes(body.status)) {
       return NextResponse.json({ error: `"${body.status}" can only be reached through the approve/reject/sign-off/resubmit actions, not set directly.` }, { status: 400 });
+    }
+    // Workflow fields (status/assignedToId/teamId/dueDate) are locked to the creator,
+    // current assignee, the record's team leader, or MANAGER/ADMIN — replacing the old
+    // REQUESTER-only block entirely. priority is deliberately excluded — it stays open
+    // to anyone with base module access, no ownership check. Only applies here, in the
+    // generic path — the action branch above already has its own, narrower
+    // canApproveOrSignOff gate for the status changes it makes. Applies uniformly to
+    // every status target, including ON_HOLD/CANCELED — no exemption.
+    const touchesWorkflow = body.status !== undefined || body.assignedToId !== undefined || body.teamId !== undefined || body.dueDate !== undefined;
+    if (touchesWorkflow) {
+      const allowed = await canEditWorkflowFields(session.user.id, session.user.role, {
+        createdById: before.requestedById,
+        assignedToId: before.assignedToId,
+        teamId: before.teamId,
+      });
+      if (!allowed) {
+        return NextResponse.json({ error: "Only the creator, assignee, team leader, or a manager can change status, assignment, team, or due date." }, { status: 403 });
+      }
     }
     if (body.status) data.status = body.status;
   }

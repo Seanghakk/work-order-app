@@ -99,6 +99,14 @@ export default function WorkOrderDetail() {
     wo?.requestedById === session?.user?.id ||
     wo?.assignedToId === session?.user?.id ||
     (!!wo?.teamId && teams.find((t) => t.id === wo.teamId)?.teamLeader?.id === session?.user?.id);
+  // Same canEditWorkflowFields mirror as canEditContent, kept as its own named boolean
+  // (matching the PATCH route's separate touchesContent/touchesWorkflow checks) to gate
+  // the Status/Assigned to/Team/Due date controls specifically.
+  const canEditWorkflow =
+    role === "MANAGER" || role === "ADMIN" ||
+    wo?.requestedById === session?.user?.id ||
+    wo?.assignedToId === session?.user?.id ||
+    (!!wo?.teamId && teams.find((t) => t.id === wo.teamId)?.teamLeader?.id === session?.user?.id);
 
   function startEditDetails() {
     setEditTitle(wo.title);
@@ -273,39 +281,46 @@ export default function WorkOrderDetail() {
       </div>
 
       {canEdit && (
-        <div className="card" style={{ marginBottom: 16, display: "flex", gap: 12, flexWrap: "wrap" }}>
-          <div>
-            <label>Status</label>
-            <select value={wo.status} onChange={(e) => updateField({ status: e.target.value })}>
-              {Array.from(new Set([wo.status, ...(DROPDOWN_OPTIONS[wo.status] || [])])).map((s) => (
-                <option key={s} value={s}>{STATUS_LABEL[s] || s}</option>
-              ))}
-            </select>
+        <div className="card" style={{ marginBottom: 16 }}>
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+            <div>
+              <label>Status</label>
+              <select value={wo.status} disabled={!canEditWorkflow} onChange={(e) => updateField({ status: e.target.value })}>
+                {Array.from(new Set([wo.status, ...(DROPDOWN_OPTIONS[wo.status] || [])])).map((s) => (
+                  <option key={s} value={s}>{STATUS_LABEL[s] || s}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label>Priority</label>
+              <select value={wo.priority} onChange={(e) => updateField({ priority: e.target.value })}>
+                {["LOW", "MEDIUM", "HIGH", "URGENT"].map((p) => <option key={p} value={p}>{p}</option>)}
+              </select>
+            </div>
+            <div>
+              <label>Assigned to</label>
+              <select value={wo.assignedToId || ""} disabled={!canEditWorkflow} onChange={(e) => updateField({ assignedToId: e.target.value || null })}>
+                <option value="">Unassigned</option>
+                {technicians.map((t) => <option key={t.id} value={t.id}>{t.name} ({t.role})</option>)}
+              </select>
+            </div>
+            <div>
+              <label>Due date</label>
+              <input type="date" value={wo.dueDate ? wo.dueDate.slice(0, 10) : ""} disabled={!canEditWorkflow} onChange={(e) => updateField({ dueDate: e.target.value || null })} />
+            </div>
+            <div>
+              <label>Team</label>
+              <select value={wo.teamId || ""} disabled={!canEditWorkflow} onChange={(e) => updateField({ teamId: e.target.value || null })}>
+                <option value="">No team</option>
+                {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+              </select>
+            </div>
           </div>
-                    <div>
-            <label>Priority</label>
-            <select value={wo.priority} onChange={(e) => updateField({ priority: e.target.value })}>
-              {["LOW", "MEDIUM", "HIGH", "URGENT"].map((p) => <option key={p} value={p}>{p}</option>)}
-            </select>
-          </div>
-                    <div>
-            <label>Assigned to</label>
-            <select value={wo.assignedToId || ""} onChange={(e) => updateField({ assignedToId: e.target.value || null })}>
-              <option value="">Unassigned</option>
-              {technicians.map((t) => <option key={t.id} value={t.id}>{t.name} ({t.role})</option>)}
-            </select>
-          </div>
-          <div>
-            <label>Due date</label>
-            <input type="date" value={wo.dueDate ? wo.dueDate.slice(0, 10) : ""} onChange={(e) => updateField({ dueDate: e.target.value || null })} />
-          </div>
-          <div>
-            <label>Team</label>
-            <select value={wo.teamId || ""} onChange={(e) => updateField({ teamId: e.target.value || null })}>
-              <option value="">No team</option>
-              {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-            </select>
-          </div>
+          {!canEditWorkflow && (
+            <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 8, marginBottom: 0 }}>
+              Only the creator, assignee, team leader, or a manager can change status, assignment, team, or due date.
+            </p>
+          )}
         </div>
       )}
 
