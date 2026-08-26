@@ -106,6 +106,28 @@ export async function buildDefectReportWhere(userId: string, role: string, extra
   return { ...extra, OR: [{ siteId: null }, { siteId: { in: siteIds } }] };
 }
 
+// Builds the same site-scoping Prisma "where" fragment used by GET /api/service-requests.
+// ServiceRequest's siteId is nullable exactly like DefectReport's (site is optional on a
+// request), so a request with no site set stays visible to every allowed role rather than
+// disappearing for everyone but ADMIN. Previously this route had no site scoping at all —
+// every role passing canAccessServiceRequests saw every site's requests.
+export async function buildServiceRequestWhere(userId: string, role: string, extra: Record<string, any> = {}) {
+  const siteIds = await getUserSiteIds(userId, role);
+  if (siteIds === "ALL") return extra;
+  return { ...extra, OR: [{ siteId: null }, { siteId: { in: siteIds } }] };
+}
+
+// Returns true if this user may access the given record's site — "ALL" (admin) or the site
+// is in their assigned list. A null siteId (a record with no site set, e.g. a ServiceRequest
+// or DefectReport created without one) is always accessible, matching buildServiceRequestWhere
+// / buildDefectReportWhere's treatment of unset sites. Shared by the WorkOrder, ServiceRequest,
+// and photo-upload single-record routes rather than duplicated per file.
+export async function checkSiteAccess(userId: string, role: string, siteId: string | null): Promise<boolean> {
+  if (!siteId) return true;
+  const siteIds = await getUserSiteIds(userId, role);
+  return siteIds === "ALL" || siteIds.includes(siteId);
+}
+
 // Returns true if this user may edit "workflow" fields (status/assignedToId/teamId, plus
 // dueDate on ServiceRequest) — or, for DefectReport, its items[] — on the given record.
 // Allowed: the record's creator, its current assignee, a leader of its team (via

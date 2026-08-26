@@ -5,14 +5,9 @@ import { prisma } from "@/lib/prisma";
 import { sendEmail, sendEmailWithAttachment, workOrderAssignedEmail, statusChangedEmail, newCommentEmail } from "@/lib/email";
 import { notifyUser } from "@/lib/notifications";
 import { sendTelegramMessage } from "@/lib/telegram";
-import { getUserSiteIds, canAccessWorkOrders, canApproveOrSignOff, canEditWorkflowFields } from "@/lib/permissions";
+import { canAccessWorkOrders, canApproveOrSignOff, canEditWorkflowFields, checkSiteAccess } from "@/lib/permissions";
 import { generateWorkOrderReportPdf } from "@/lib/workOrderReportPdf";
 import { isValidHttpUrl } from "@/lib/url";
-
-async function checkSiteAccess(userId: string, role: string, siteId: string) {
-  const siteIds = await getUserSiteIds(userId, role);
-  return siteIds === "ALL" || siteIds.includes(siteId);
-}
 
 // The five gated transitions in the approval workflow. All five require the same
 // canApproveOrSignOff gate (team leader or MANAGER/ADMIN — deliberately excludes the

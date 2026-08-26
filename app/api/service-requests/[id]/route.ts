@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { canAccessServiceRequests, canEditWorkflowFields, getUserSiteIds } from "@/lib/permissions";
+import { canAccessServiceRequests, canEditWorkflowFields, checkSiteAccess, getUserSiteIds } from "@/lib/permissions";
 import { sendEmail, serviceRequestAssignedEmail, serviceRequestStatusChangedEmail, serviceRequestNewCommentEmail } from "@/lib/email";
 import { isValidHttpUrl } from "@/lib/url";
 import { notifyUser } from "@/lib/notifications";
@@ -24,6 +24,9 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     },
   });
   if (!serviceRequest) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!(await checkSiteAccess(session.user.id, session.user.role, serviceRequest.siteId))) {
+    return NextResponse.json({ error: "You don't have access to that site." }, { status: 403 });
+  }
   return NextResponse.json(serviceRequest);
 }
 
@@ -37,6 +40,9 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     include: { createdBy: true, assignedTo: true },
   });
   if (!before) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!(await checkSiteAccess(session.user.id, session.user.role, before.siteId))) {
+    return NextResponse.json({ error: "You don't have access to that site." }, { status: 403 });
+  }
 
   const body = await req.json();
 
@@ -159,6 +165,9 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
   }
   const serviceRequest = await prisma.serviceRequest.findUnique({ where: { id: params.id } });
   if (!serviceRequest) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!(await checkSiteAccess(session.user.id, session.user.role, serviceRequest.siteId))) {
+    return NextResponse.json({ error: "You don't have access to that site." }, { status: 403 });
+  }
   if (serviceRequest.status !== "CLOSE") {
     return NextResponse.json({ error: "Only closed service requests can be archived." }, { status: 400 });
   }

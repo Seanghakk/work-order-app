@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { canAccessServiceRequests, getUserSiteIds } from "@/lib/permissions";
+import { buildServiceRequestWhere, canAccessServiceRequests, getUserSiteIds } from "@/lib/permissions";
 import { isValidHttpUrl } from "@/lib/url";
 
 export async function GET(req: Request) {
@@ -11,8 +11,9 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const showArchived = new URL(req.url).searchParams.get("showArchived") === "1";
+  const where = await buildServiceRequestWhere(session.user.id, session.user.role, { archived: showArchived });
   const serviceRequests = await prisma.serviceRequest.findMany({
-    where: { archived: showArchived },
+    where,
     include: { createdBy: true, assignedTo: true, team: true, site: true },
     orderBy: { createdAt: "desc" },
   });
