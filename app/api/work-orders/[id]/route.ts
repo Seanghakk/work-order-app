@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { sendEmail, sendEmailWithAttachment, workOrderAssignedEmail, statusChangedEmail, newCommentEmail } from "@/lib/email";
 import { notifyUser } from "@/lib/notifications";
 import { sendTelegramMessage } from "@/lib/telegram";
-import { getUserSiteIds, canAccessWorkOrders } from "@/lib/permissions";
+import { getUserSiteIds, canAccessWorkOrders, canApproveOrSignOff } from "@/lib/permissions";
 import { generateWorkOrderReportPdf } from "@/lib/workOrderReportPdf";
 import { isValidHttpUrl } from "@/lib/url";
 
@@ -13,6 +13,22 @@ async function checkSiteAccess(userId: string, role: string, siteId: string) {
   const siteIds = await getUserSiteIds(userId, role);
   return siteIds === "ALL" || siteIds.includes(siteId);
 }
+
+// The five gated transitions in the approval workflow. All five require the same
+// canApproveOrSignOff gate (team leader or MANAGER/ADMIN — deliberately excludes the
+// record's own requester/assignee, including for resubmit).
+const ACTION_TRANSITIONS: Record<string, { from: string; to: string; requiresReason?: boolean; label?: string }> = {
+  approve:  { from: "PENDING_APPROVAL", to: "APPROVED" },
+  reject:   { from: "PENDING_APPROVAL", to: "OPEN", requiresReason: true, label: "Rejected" },
+  signoff:  { from: "PENDING_SIGNOFF",  to: "COMPLETED" },
+  sendback: { from: "PENDING_SIGNOFF",  to: "IN_PROGRESS", label: "Sent back to In Progress" },
+  resubmit: { from: "OPEN",             to: "PENDING_APPROVAL" },
+};
+
+// Statuses that can ONLY be reached through the named actions above — rejecting a
+// direct PATCH { status: ... } attempt at any of these closes the loophole where
+// someone with canEdit could bypass the approve/reject/sign-off/resubmit gate entirely.
+const ACTION_ONLY_STATUSES = ["PENDING_APPROVAL", "APPROVED", "COMPLETED", "OPEN"];
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
@@ -59,10 +75,6 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (!session || !canAccessWorkOrders(session.user.role)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
-  const tryingToEditFields = body.status || body.assignedToId !== undefined || body.priority || body.dueDate !== undefined;
-  if (session.user.role === "REQUESTER" && tryingToEditFields) {
-    return NextResponse.json({ error: "Requesters can't change status, priority, or assignment." }, { status: 403 });
-  }
 
   const before = await prisma.workOrder.findUnique({
     where: { id: params.id },
@@ -74,10 +86,38 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   }
 
   const data: any = {};
-  if (body.status) {
-    data.status = body.status;
-    if (body.status === "COMPLETED") data.completedAt = new Date();
+  let commentBody: string | null = body.comment || null;
+
+  if (typeof body.action === "string") {
+    // === Gated approval-workflow actions ===
+    const transition = ACTION_TRANSITIONS[body.action];
+    if (!transition) return NextResponse.json({ error: "Unknown action." }, { status: 400 });
+    if (before.status !== transition.from) {
+      return NextResponse.json({ error: `This work order isn't in a state where "${body.action}" applies.` }, { status: 409 });
+    }
+    if (!(await canApproveOrSignOff(session.user.id, session.user.role, before.teamId))) {
+      return NextResponse.json({ error: "Only the team leader or a manager can do this." }, { status: 403 });
+    }
+    if (transition.requiresReason && !body.reason?.trim()) {
+      return NextResponse.json({ error: "A reason is required." }, { status: 400 });
+    }
+    data.status = transition.to;
+    if (transition.to === "COMPLETED") data.completedAt = new Date();
+    if (transition.label && body.reason?.trim()) {
+      commentBody = `${transition.label}: ${body.reason.trim()}`;
+    }
+  } else {
+    // === Existing generic field-update path ===
+    const tryingToEditFields = body.status || body.assignedToId !== undefined || body.priority || body.dueDate !== undefined;
+    if (session.user.role === "REQUESTER" && tryingToEditFields) {
+      return NextResponse.json({ error: "Requesters can't change status, priority, or assignment." }, { status: 403 });
+    }
+    if (body.status && ACTION_ONLY_STATUSES.includes(body.status)) {
+      return NextResponse.json({ error: `"${body.status}" can only be reached through the approve/reject/sign-off/resubmit actions, not set directly.` }, { status: 400 });
+    }
+    if (body.status) data.status = body.status;
   }
+
   if (body.assignedToId !== undefined) data.assignedToId = body.assignedToId || null;
   if (body.priority) data.priority = body.priority;
   if (body.dueDate !== undefined) data.dueDate = body.dueDate ? new Date(body.dueDate) : null;
@@ -111,9 +151,9 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   const workOrder = await prisma.workOrder.update({ where: { id: params.id }, data });
 
   let newComment: { body: string } | null = null;
-  if (body.comment) {
+  if (commentBody) {
     newComment = await prisma.comment.create({
-      data: { workOrderId: params.id, authorId: session.user.id, body: body.comment },
+      data: { workOrderId: params.id, authorId: session.user.id, body: commentBody },
     });
   }
 

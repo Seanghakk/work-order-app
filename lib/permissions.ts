@@ -123,3 +123,14 @@ export async function canEditWorkflowFields(
   }
   return false;
 }
+
+// Narrower than canEditWorkflowFields on purpose: used for the Work Order approval
+// workflow's gated transitions (approve/reject/sign-off/send-back/resubmit), which
+// deliberately exclude the record's own creator/assignee — only a team leader or
+// MANAGER/ADMIN may gate these, so nobody can approve or sign off their own work order.
+export async function canApproveOrSignOff(userId: string, role: string, teamId: string | null): Promise<boolean> {
+  if (role === "MANAGER" || role === "ADMIN") return true;
+  if (!teamId) return false;
+  const leaderTeamId = await getLeaderTeamId(userId);
+  return leaderTeamId === teamId;
+}

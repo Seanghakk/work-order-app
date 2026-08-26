@@ -43,6 +43,9 @@ export async function POST(req: Request) {
       title: body.title,
       description: body.description,
       priority: body.priority || "MEDIUM",
+      // Every new work order now starts in the approval workflow rather than the legacy
+      // OPEN default — OPEN stays the schema default only for the pre-approval-era rows.
+      status: "PENDING_APPROVAL",
       assetId: body.assetId || null,
       requestedById: session.user.id,
       dueDate: body.dueDate ? new Date(body.dueDate) : null,

@@ -15,6 +15,30 @@ const DISCIPLINE_LABEL: Record<string, string> = {
   CCTV: "CCTV", PA: "PA (Public Address)", OTHER: "Other",
 };
 
+const STATUS_LABEL: Record<string, string> = {
+  OPEN: "Requested", PENDING_APPROVAL: "Pending approval", APPROVED: "Approved",
+  ASSIGNED: "Assigned", IN_PROGRESS: "In progress", PENDING_SIGNOFF: "Pending sign-off",
+  COMPLETED: "Completed", ON_HOLD: "On hold", CANCELED: "Canceled",
+};
+
+// The status dropdown only ever offers the "still open" transitions — the approval-
+// workflow's gated moves (Requested→Pending approval, Pending approval→Approved/
+// Rejected, Pending sign-off→Completed/In progress) go through the dedicated
+// Approve/Reject/Sign-off/Send-back/Resubmit buttons below instead. ON_HOLD/CANCELED
+// stay reachable from (and back out to OPEN/IN_PROGRESS from) anywhere, unchanged from
+// today's behavior — they're explicitly out of scope for this workflow.
+const DROPDOWN_OPTIONS: Record<string, string[]> = {
+  OPEN: ["ON_HOLD", "CANCELED"],
+  PENDING_APPROVAL: ["ON_HOLD", "CANCELED"],
+  APPROVED: ["IN_PROGRESS", "ON_HOLD", "CANCELED"],
+  ASSIGNED: ["IN_PROGRESS", "ON_HOLD", "CANCELED"],
+  IN_PROGRESS: ["PENDING_SIGNOFF", "ON_HOLD", "CANCELED"],
+  PENDING_SIGNOFF: ["ON_HOLD", "CANCELED"],
+  COMPLETED: ["ON_HOLD", "CANCELED"],
+  ON_HOLD: ["OPEN", "IN_PROGRESS", "CANCELED"],
+  CANCELED: ["OPEN", "IN_PROGRESS", "ON_HOLD"],
+};
+
 export default function WorkOrderDetail() {
   const { id } = useParams<{ id: string }>();
   const { data: session } = useSession();
@@ -59,6 +83,36 @@ export default function WorkOrderDetail() {
   const role = session?.user?.role;
   const canEdit = role === "MANAGER" || role === "ADMIN" || role === "MAINTENANCE_LEADER" || role === "MAINTENANCE_TECHNICIAN";
   const canManage = role === "MANAGER" || role === "ADMIN";
+  // Client-side mirror of canApproveOrSignOff, purely to show/hide the workflow buttons —
+  // the backend re-checks this independently, same defense-in-depth pattern used
+  // everywhere else in this app (client-side hiding never substitutes for the API check).
+  const isApprover =
+    role === "MANAGER" || role === "ADMIN" ||
+    (!!wo?.teamId && teams.find((t) => t.id === wo.teamId)?.teamLeader?.id === session?.user?.id);
+
+  async function doAction(action: string, reason?: string) {
+    await updateField({ action, reason });
+  }
+  async function handleApprove() {
+    await doAction("approve");
+  }
+  async function handleReject() {
+    const reason = window.prompt("Why is this work order being rejected? A reason is required.");
+    if (reason === null) return;
+    if (!reason.trim()) { setError("A reason is required to reject."); return; }
+    await doAction("reject", reason.trim());
+  }
+  async function handleSignoff() {
+    await doAction("signoff");
+  }
+  async function handleSendBack() {
+    const reason = window.prompt("Reason for sending this back to In Progress (optional):");
+    if (reason === null) return;
+    await doAction("sendback", reason.trim() || undefined);
+  }
+  async function handleResubmit() {
+    await doAction("resubmit");
+  }
 
   async function toggleArchived() {
     if (wo.archived) {
@@ -164,7 +218,7 @@ export default function WorkOrderDetail() {
     <div className="container" style={{ maxWidth: 720 }}>
       <h1>{wo.title}</h1>
       <div style={{ display: "flex", gap: 8, marginBottom: 16, alignItems: "center" }}>
-        <span className={`badge badge-${wo.status.toLowerCase()}`}>{wo.status.replace("_", " ")}</span>
+        <span className={`badge badge-${wo.status.toLowerCase()}`}>{STATUS_LABEL[wo.status] || wo.status}</span>
         <span className={`badge badge-${wo.priority.toLowerCase()}`}>{wo.priority}</span>
         {wo.warrantyClaim && <span className="badge badge-urgent">Warranty claim</span>}
         {wo.archived && <span className="badge badge-on_hold">Archived</span>}
@@ -179,6 +233,26 @@ export default function WorkOrderDetail() {
         {canEdit && <button onClick={() => setShowSend((v) => !v)}>Send report</button>}
         {canManage && <button onClick={toggleArchived}>{wo.archived ? "Unarchive" : "Archive"}</button>}
       </div>
+
+      {isApprover && (wo.status === "PENDING_APPROVAL" || wo.status === "PENDING_SIGNOFF" || wo.status === "OPEN") && (
+        <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+          {wo.status === "PENDING_APPROVAL" && (
+            <>
+              <button className="primary" onClick={handleApprove}>Approve</button>
+              <button className="danger" onClick={handleReject}>Reject</button>
+            </>
+          )}
+          {wo.status === "PENDING_SIGNOFF" && (
+            <>
+              <button className="primary" onClick={handleSignoff}>Sign off</button>
+              <button onClick={handleSendBack}>Send back to In Progress</button>
+            </>
+          )}
+          {wo.status === "OPEN" && (
+            <button className="primary" onClick={handleResubmit}>Resubmit for approval</button>
+          )}
+        </div>
+      )}
 
       {showSend && (
         <div className="card" style={{ marginBottom: 16 }}>
@@ -215,8 +289,8 @@ export default function WorkOrderDetail() {
           <div>
             <label>Status</label>
             <select value={wo.status} onChange={(e) => updateField({ status: e.target.value })}>
-              {["OPEN", "ASSIGNED", "IN_PROGRESS", "ON_HOLD", "COMPLETED", "CANCELED"].map((s) => (
-                <option key={s} value={s}>{s.replace("_", " ")}</option>
+              {Array.from(new Set([wo.status, ...(DROPDOWN_OPTIONS[wo.status] || [])])).map((s) => (
+                <option key={s} value={s}>{STATUS_LABEL[s] || s}</option>
               ))}
             </select>
           </div>

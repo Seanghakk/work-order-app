@@ -107,6 +107,9 @@ body:has(.login-shell) { padding-top: 0; }
 .badge-on_hold { background: rgba(91, 107, 122, 0.10); color: var(--text-muted); border-color: var(--border); }
 .badge-completed { background: rgba(22, 163, 74, 0.10); color: var(--success); border-color: rgba(22, 163, 74, 0.25); }
 .badge-canceled { background: rgba(220, 38, 38, 0.10); color: var(--danger); border-color: rgba(220, 38, 38, 0.25); }
+.badge-pending_approval { background: rgba(217, 119, 6, 0.10); color: var(--warning); border-color: rgba(217, 119, 6, 0.25); }
+.badge-approved { background: rgba(8, 145, 178, 0.10); color: #0891b2; border-color: rgba(8, 145, 178, 0.25); }
+.badge-pending_signoff { background: rgba(234, 88, 12, 0.10); color: #ea580c; border-color: rgba(234, 88, 12, 0.25); }
 .badge-urgent { background: rgba(220, 38, 38, 0.10); color: var(--danger); border-color: rgba(220, 38, 38, 0.25); }
 .badge-high { background: rgba(217, 119, 6, 0.10); color: var(--warning); border-color: rgba(217, 119, 6, 0.25); }
 .badge-medium { background: rgba(14, 92, 134, 0.10); color: var(--navy); border-color: rgba(14, 92, 134, 0.25); }

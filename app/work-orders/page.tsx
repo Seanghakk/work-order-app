@@ -3,6 +3,12 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 
+const STATUS_LABEL: Record<string, string> = {
+  OPEN: "Requested", PENDING_APPROVAL: "Pending approval", APPROVED: "Approved",
+  ASSIGNED: "Assigned", IN_PROGRESS: "In progress", PENDING_SIGNOFF: "Pending sign-off",
+  COMPLETED: "Completed", ON_HOLD: "On hold", CANCELED: "Canceled",
+};
+
 export default function WorkOrdersPage() {
   const { data: session } = useSession();
   const [orders, setOrders] = useState<any[]>([]);
@@ -70,7 +76,7 @@ export default function WorkOrdersPage() {
                 <td>{o.team?.name || "—"}</td>
                 <td>{o.asset?.name || "—"}</td>
                 <td><span className={`badge badge-${o.priority.toLowerCase()}`}>{o.priority}</span></td>
-                <td><span className={`badge badge-${o.status.toLowerCase()}`}>{o.status.replace("_", " ")}</span></td>
+                <td><span className={`badge badge-${o.status.toLowerCase()}`}>{STATUS_LABEL[o.status] || o.status}</span></td>
                 <td>{o.assignedTo?.name || "Unassigned"}</td>
                 <td>
                   {o.dueDate ? (
