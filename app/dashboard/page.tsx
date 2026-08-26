@@ -29,9 +29,9 @@ const SO_STATUS_COLOR: Record<string, string> = {
 
 const SEVEN_DAYS_AGO = () => new Date(Date.now() - 7 * 86400000);
 
-function StatCard({ label, value }: { label: string; value: number }) {
+function StatCard({ label, value, style }: { label: string; value: number; style?: any }) {
   return (
-    <div className="card">
+    <div className="card" style={style}>
       <div style={{ fontSize: 13, color: "var(--text-muted)" }}>{label}</div>
       <div style={{ fontSize: 28, fontWeight: 600 }}>{value}</div>
     </div>
@@ -122,14 +122,22 @@ export default async function Dashboard() {
       {showSales && (
         <>
           <h3 style={{ marginTop: 40 }}>Sale Orders</h3>
-          <div className="stat-grid" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
-            <StatCard label="Open pipeline" value={soPipeline} />
-            <StatCard label="Closed this month" value={soClosedThisMonth} />
-            <div className="card"><div style={{ fontSize: 13, color: "var(--text-muted)" }}>Pipeline value</div><div style={{ fontSize: 28, fontWeight: 600 }}>${soPipelineValue.toLocaleString()}</div></div>
-          </div>
-          <div className="card" style={{ marginBottom: 24 }}>
-            <h4 style={{ marginTop: 0 }}>By stage</h4>
-            {soStageChart.length > 0 ? <DonutChart data={soStageChart} /> : <p style={{ color: "var(--text-muted)", fontSize: 13 }}>No sale orders yet.</p>}
+          {/* Stat cards stack into a narrow left rail instead of stretching across a
+              third of the row each, freeing width for "By stage" beside them instead
+              of underneath in its own row. */}
+          <div style={{ display: "flex", gap: 16, marginBottom: 24, flexWrap: "wrap", alignItems: "stretch" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16, flex: "1 1 220px" }}>
+              <StatCard label="Open pipeline" value={soPipeline} style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }} />
+              <StatCard label="Closed this month" value={soClosedThisMonth} style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }} />
+              <div className="card" style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                <div style={{ fontSize: 13, color: "var(--text-muted)" }}>Pipeline value</div>
+                <div style={{ fontSize: 28, fontWeight: 600 }}>${soPipelineValue.toLocaleString()}</div>
+              </div>
+            </div>
+            <div className="card" style={{ flex: "2 1 420px" }}>
+              <h4 style={{ marginTop: 0 }}>By stage</h4>
+              {soStageChart.length > 0 ? <DonutChart data={soStageChart} /> : <p style={{ color: "var(--text-muted)", fontSize: 13 }}>No sale orders yet.</p>}
+            </div>
           </div>
           <Link href="/sale-orders"><button className="primary">View sale orders</button></Link>
         </>
@@ -297,20 +305,27 @@ async function ManagerView({ siteFilter, siteIds }: { siteFilter: Record<string,
         <StatCard label="Overdue" value={overdue} />
         <StatCard label="Completed this week" value={completedThisWeek} />
       </div>
-      {trendChartData.length > 0 && (
-        <div className="card" style={{ marginBottom: 24 }}>
-          <h4 style={{ marginTop: 0 }}>Created - last 8 weeks</h4>
-          <TrendChart data={trendChartData} />
-        </div>
-      )}
-      <div className="report-grid" style={{ marginBottom: 24 }}>
-        <div className="card">
-          <h4 style={{ marginTop: 0 }}>By status</h4>
-          {woStatusChart.length > 0 ? <DonutChart data={woStatusChart} /> : <p style={{ color: "var(--text-muted)", fontSize: 13 }}>No work orders yet.</p>}
-        </div>
-        <div className="card">
-          <h4 style={{ marginTop: 0 }}>By priority</h4>
-          {woPriorityChart.length > 0 ? <DonutChart data={woPriorityChart} /> : <p style={{ color: "var(--text-muted)", fontSize: 13 }}>No work orders yet.</p>}
+      {/* Trend chart shares a row with the two donuts instead of each getting its own
+          full-width row underneath — trend drops to ~2/3 width (still plenty for a
+          weekly line) and the freed width absorbs both donuts stacked beside it. If
+          there's no trend data yet, the donut column is the row's only flex item and
+          grows to fill it, so the empty state still reads full-width. */}
+      <div style={{ display: "flex", gap: 16, marginBottom: 24, flexWrap: "wrap", alignItems: "stretch" }}>
+        {trendChartData.length > 0 && (
+          <div className="card" style={{ flex: "2 1 420px" }}>
+            <h4 style={{ marginTop: 0 }}>Created - last 8 weeks</h4>
+            <TrendChart data={trendChartData} />
+          </div>
+        )}
+        <div style={{ display: "flex", flexDirection: "column", gap: 16, flex: "1 1 260px" }}>
+          <div className="card" style={{ flex: 1 }}>
+            <h4 style={{ marginTop: 0 }}>By status</h4>
+            {woStatusChart.length > 0 ? <DonutChart data={woStatusChart} /> : <p style={{ color: "var(--text-muted)", fontSize: 13 }}>No work orders yet.</p>}
+          </div>
+          <div className="card" style={{ flex: 1 }}>
+            <h4 style={{ marginTop: 0 }}>By priority</h4>
+            {woPriorityChart.length > 0 ? <DonutChart data={woPriorityChart} /> : <p style={{ color: "var(--text-muted)", fontSize: 13 }}>No work orders yet.</p>}
+          </div>
         </div>
       </div>
     </>
