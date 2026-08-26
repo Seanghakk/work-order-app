@@ -67,8 +67,9 @@ Follow this pattern for any new site-scoped model/route rather than inventing a 
 
 **Teams**: `Team` has a `category` (`SALES` | `PROJECT` | `MAINTENANCE`) and an optional
 `teamLeaderId`. Work orders/sale orders/service requests can be attached to a team; a team's
-`category` gets copied onto the record at creation. A user leading a team (`getLeaderTeamId`)
-sees that team's records even outside their normal role-based visibility — this is `OR`'d
+`category` gets copied onto the record at creation. A user leading a team sees that team's
+records even outside their normal role-based visibility — a user can lead more than one team,
+so use `getLeaderTeamIds` (array-returning) rather than assuming a single team — this is `OR`'d
 into the Prisma `where` alongside the role-based and site-based filters (see
 `app/api/work-orders/route.ts` `GET` for the canonical shape: base site/archived filter,
 `AND`ed with an `OR` of role-specific conditions).

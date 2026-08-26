@@ -48,10 +48,14 @@ export function siteWhere(siteIds: string[] | "ALL") {
   return siteIds === "ALL" ? {} : { siteId: { in: siteIds } };
 }
 
-// Returns the id of the team this user leads, or null if they don't lead any team.
-export async function getLeaderTeamId(userId: string): Promise<string | null> {
-  const team = await prisma.team.findFirst({ where: { teamLeaderId: userId }, select: { id: true } });
-  return team?.id || null;
+// Returns the ids of every team this user leads (a user can lead more than one —
+// User.leadingTeams is an array, nothing in the schema limits it to one). Every
+// authorization-critical caller (canEditWorkflowFields, canApproveOrSignOff,
+// buildWorkOrderWhere) uses this rather than a single-team lookup, so a user leading
+// multiple teams is correctly authorized/scoped for all of them, not just one.
+export async function getLeaderTeamIds(userId: string): Promise<string[]> {
+  const teams = await prisma.team.findMany({ where: { teamLeaderId: userId }, select: { id: true } });
+  return teams.map((t) => t.id);
 }
 
 // Builds the same site/role/team-leader scoping Prisma "where" fragment used by
@@ -72,11 +76,11 @@ export async function buildWorkOrderWhere(
     [];
   const isManagerOrAdmin = role === "MANAGER" || role === "ADMIN";
 
-  const [leaderTeamId, siteIds] = await Promise.all([
-    isManagerOrAdmin ? Promise.resolve(null) : getLeaderTeamId(userId),
+  const [leaderTeamIds, siteIds] = await Promise.all([
+    isManagerOrAdmin ? Promise.resolve([]) : getLeaderTeamIds(userId),
     getUserSiteIds(userId, role),
   ]);
-  if (leaderTeamId) roleOr.push({ teamId: leaderTeamId });
+  if (leaderTeamIds.length > 0) roleOr.push({ teamId: { in: leaderTeamIds } });
 
   const baseWhere: Record<string, any> = { ...siteWhere(siteIds), ...extra };
   return isManagerOrAdmin || roleOr.length === 0 ? baseWhere : { ...baseWhere, OR: roleOr };
@@ -104,11 +108,11 @@ export async function buildDefectReportWhere(userId: string, role: string, extra
 
 // Returns true if this user may edit "workflow" fields (status/assignedToId/teamId, plus
 // dueDate on ServiceRequest) — or, for DefectReport, its items[] — on the given record.
-// Allowed: the record's creator, its current assignee, a leader of its team (reusing
-// getLeaderTeamId — same helper buildWorkOrderWhere already uses for team-leader
-// visibility), or MANAGER/ADMIN. Shared by both modules' PATCH routes rather than
-// duplicated, since the rule is identical for both. Content fields are NOT gated by
-// this — they stay open to anyone who passes the module's base access check.
+// Allowed: the record's creator, its current assignee, a leader of its team (via
+// getLeaderTeamIds, so this is correct for a user leading more than one team), or
+// MANAGER/ADMIN. Shared by both modules' PATCH routes rather than duplicated, since the
+// rule is identical for both. Content fields are NOT gated by this — they stay open to
+// anyone who passes the module's base access check.
 export async function canEditWorkflowFields(
   userId: string,
   role: string,
@@ -118,8 +122,8 @@ export async function canEditWorkflowFields(
   if (record.createdById === userId) return true;
   if (record.assignedToId && record.assignedToId === userId) return true;
   if (record.teamId) {
-    const leaderTeamId = await getLeaderTeamId(userId);
-    if (leaderTeamId && leaderTeamId === record.teamId) return true;
+    const leaderTeamIds = await getLeaderTeamIds(userId);
+    if (leaderTeamIds.includes(record.teamId)) return true;
   }
   return false;
 }
@@ -128,9 +132,11 @@ export async function canEditWorkflowFields(
 // workflow's gated transitions (approve/reject/sign-off/send-back/resubmit), which
 // deliberately exclude the record's own creator/assignee — only a team leader or
 // MANAGER/ADMIN may gate these, so nobody can approve or sign off their own work order.
+// Uses getLeaderTeamIds so a user leading more than one team is correctly authorized
+// for all of them, not just whichever one a single-team lookup happened to return.
 export async function canApproveOrSignOff(userId: string, role: string, teamId: string | null): Promise<boolean> {
   if (role === "MANAGER" || role === "ADMIN") return true;
   if (!teamId) return false;
-  const leaderTeamId = await getLeaderTeamId(userId);
-  return leaderTeamId === teamId;
+  const leaderTeamIds = await getLeaderTeamIds(userId);
+  return leaderTeamIds.includes(teamId);
 }
