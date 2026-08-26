@@ -39,6 +39,23 @@ const DROPDOWN_OPTIONS: Record<string, string[]> = {
   CANCELED: ["OPEN", "IN_PROGRESS", "ON_HOLD"],
 };
 
+// Which lifecycle stage's fields to show. Not a 1:1 mirror of wo.status — ON_HOLD (and a
+// rejected-back-to-OPEN that already has data recorded) don't map cleanly onto a single
+// status. Falls back to whichever fields already have data so a paused or reopened work
+// order never hides information that was already entered, even if its current status
+// alone would suggest an earlier stage than it's actually reached.
+function getStage(wo: any): "intake" | "inprogress" | "signoff" | "closed" {
+  if (wo.status === "COMPLETED" || wo.status === "CANCELED") return "closed";
+  const hasSignoffData = !!wo.departureAt || wo.problemFixed !== null;
+  if (wo.status === "PENDING_SIGNOFF" || hasSignoffData) return "signoff";
+  if (wo.status === "OPEN" || wo.status === "PENDING_APPROVAL") {
+    const hasInProgressData = !!(wo.serviceType || wo.discipline || wo.soNumber || wo.documentControlUrl || wo.arrivalAt || wo.partsNeeded || wo.warrantyClaim);
+    return hasInProgressData ? "inprogress" : "intake";
+  }
+  // APPROVED, ASSIGNED, IN_PROGRESS, ON_HOLD, or anything else in between.
+  return "inprogress";
+}
+
 export default function WorkOrderDetail() {
   const { id } = useParams<{ id: string }>();
   const { data: session } = useSession();
@@ -243,6 +260,8 @@ export default function WorkOrderDetail() {
 
   if (!wo || wo.error) return <div className="container"><p>{wo?.error || "Loading…"}</p></div>;
 
+  const stage = getStage(wo);
+
   return (
     <div className="container" style={{ maxWidth: 720 }}>
       <h1>{wo.title}</h1>
@@ -252,6 +271,10 @@ export default function WorkOrderDetail() {
         {wo.warrantyClaim && <span className="badge badge-urgent">Warranty claim</span>}
         {wo.archived && <span className="badge badge-on_hold">Archived</span>}
       </div>
+
+      {stage === "closed" && (
+        <div className="closed-ribbon">✓ {STATUS_LABEL[wo.status] || wo.status} — shown as a read-only record. No open fields, nothing left to fill in.</div>
+      )}
 
       <div className="card" style={{ marginBottom: 16 }}>
         {editingDetails ? (
@@ -275,7 +298,7 @@ export default function WorkOrderDetail() {
             <p style={{ fontSize: 13, color: "var(--text-muted)" }}>
               Site: {wo.site?.name || "—"} · Team: {wo.team?.name || "—"} · Asset: {wo.asset?.name || "—"} · Requested by {wo.requestedBy?.name} · Created {new Date(wo.createdAt).toLocaleString()}
             </p>
-            {canEditContent && <button onClick={startEditDetails}>Edit details</button>}
+            {canEditContent && stage !== "closed" && <button onClick={startEditDetails}>Edit details</button>}
           </>
         )}
       </div>
@@ -324,7 +347,32 @@ export default function WorkOrderDetail() {
         </div>
       )}
 
-      {canEdit && (
+      {/* Approve/Reject/Resubmit sit right after the fields an approver needs to review
+          before deciding, rather than buried near the bottom past sections that don't
+          exist yet at this stage. Sign-off/Send-back get the same treatment further down,
+          positioned after Photos so the reviewer sees the evidence before deciding. */}
+      {isApprover && (wo.status === "PENDING_APPROVAL" || wo.status === "OPEN") && (
+        <div className="action-row" style={{ marginBottom: 16 }}>
+          {wo.status === "PENDING_APPROVAL" && (
+            <>
+              <button className="primary" onClick={handleApprove}>Approve</button>
+              <button className="danger" onClick={handleReject}>Reject</button>
+            </>
+          )}
+          {wo.status === "OPEN" && (
+            <button className="primary" onClick={handleResubmit}>Resubmit for approval</button>
+          )}
+        </div>
+      )}
+
+      {canEdit && stage === "intake" && (
+        <div className="hint-card">
+          <div className="hint-label">Unlocks after approval</div>
+          <p>Service type, discipline, S.O. number, arrival time, parts needed, and photo upload become available once this moves out of Pending approval.</p>
+        </div>
+      )}
+
+      {canEdit && stage !== "intake" && (
         <div className="card" style={{ marginBottom: 16 }}>
           <h3 style={{ marginTop: 0 }}>Service Report Details</h3>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
@@ -362,40 +410,53 @@ export default function WorkOrderDetail() {
               <label>Arrival</label>
               <input type="datetime-local" value={wo.arrivalAt ? wo.arrivalAt.slice(0, 16) : ""} onChange={(e) => updateField({ arrivalAt: e.target.value || null })} />
             </div>
-            <div>
-              <label>Departure</label>
-              <input type="datetime-local" value={wo.departureAt ? wo.departureAt.slice(0, 16) : ""} onChange={(e) => updateField({ departureAt: e.target.value || null })} />
-            </div>
+            {(stage === "signoff" || stage === "closed") && (
+              <div>
+                <label>Departure</label>
+                <input type="datetime-local" value={wo.departureAt ? wo.departureAt.slice(0, 16) : ""} onChange={(e) => updateField({ departureAt: e.target.value || null })} />
+              </div>
+            )}
           </div>
-          <div style={{ marginBottom: 12 }}>
-            <label>Problem fixed upon departure?</label>
-            <div style={{ display: "flex", gap: 16 }}>
-              <label style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: "normal" }}>
-                <input type="radio" checked={wo.problemFixed === true} onChange={() => updateField({ problemFixed: true, problemNotFixedReason: null })} />
-                Yes
-              </label>
-              <label style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: "normal" }}>
-                <input type="radio" checked={wo.problemFixed === false} onChange={() => updateField({ problemFixed: false })} />
-                No
-              </label>
-            </div>
-          </div>
-          {wo.problemFixed === false && (
-            <div>
-              <label>If not, why?</label>
-              <textarea
-                value={problemNotFixedReason}
-                onChange={(e) => setProblemNotFixedReason(e.target.value)}
-                onBlur={() => updateField({ problemNotFixedReason })}
-                rows={2}
-                style={{ width: "100%" }}
-              />
-            </div>
+          {(stage === "signoff" || stage === "closed") && (
+            <>
+              <div style={{ marginBottom: 12 }}>
+                <label>Problem fixed upon departure?</label>
+                <div style={{ display: "flex", gap: 16 }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: "normal" }}>
+                    <input type="radio" checked={wo.problemFixed === true} onChange={() => updateField({ problemFixed: true, problemNotFixedReason: null })} />
+                    Yes
+                  </label>
+                  <label style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: "normal" }}>
+                    <input type="radio" checked={wo.problemFixed === false} onChange={() => updateField({ problemFixed: false })} />
+                    No
+                  </label>
+                </div>
+              </div>
+              {wo.problemFixed === false && (
+                <div>
+                  <label>If not, why?</label>
+                  <textarea
+                    value={problemNotFixedReason}
+                    onChange={(e) => setProblemNotFixedReason(e.target.value)}
+                    onBlur={() => updateField({ problemNotFixedReason })}
+                    rows={2}
+                    style={{ width: "100%" }}
+                  />
+                </div>
+              )}
+            </>
           )}
         </div>
       )}
 
-      {canEdit && (
+      {canEdit && stage === "inprogress" && (
+        <div className="hint-card">
+          <div className="hint-label">Unlocks at sign-off</div>
+          <p>Departure time and "Problem fixed?" appear once this moves to Pending sign-off — no point asking before the visit is over.</p>
+        </div>
+      )}
+
+      {canEdit && stage !== "intake" && (
         <div className="card" style={{ marginBottom: 16 }}>
           <div style={{ marginBottom: 12 }}>
             <label>Parts needed (optional)</label>
@@ -434,13 +495,20 @@ export default function WorkOrderDetail() {
             ))}
           </div>
         )}
-        {canEdit && (
+        {canEdit && stage !== "closed" && (
           <div>
             <input type="file" accept="image/*" onChange={handlePhotoSelect} disabled={uploading} />
             {uploading && <p style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 6 }}>Uploading…</p>}
           </div>
         )}
       </div>
+
+      {isApprover && wo.status === "PENDING_SIGNOFF" && (
+        <div className="action-row" style={{ marginBottom: 16 }}>
+          <button className="primary" onClick={handleSignoff}>Sign off</button>
+          <button onClick={handleSendBack}>Send back to In Progress</button>
+        </div>
+      )}
 
       {showSend && (
         <div className="card" style={{ marginBottom: 16 }}>
@@ -467,37 +535,20 @@ export default function WorkOrderDetail() {
 
       {error && <p style={{ color: "var(--danger)", fontSize: 13 }}>{error}</p>}
 
-      {isApprover && (wo.status === "PENDING_APPROVAL" || wo.status === "PENDING_SIGNOFF" || wo.status === "OPEN") && (
-        <div className="action-row" style={{ marginBottom: 16 }}>
-          {wo.status === "PENDING_APPROVAL" && (
-            <>
-              <button className="primary" onClick={handleApprove}>Approve</button>
-              <button className="danger" onClick={handleReject}>Reject</button>
-            </>
-          )}
-          {wo.status === "PENDING_SIGNOFF" && (
-            <>
-              <button className="primary" onClick={handleSignoff}>Sign off</button>
-              <button onClick={handleSendBack}>Send back to In Progress</button>
-            </>
-          )}
-          {wo.status === "OPEN" && (
-            <button className="primary" onClick={handleResubmit}>Resubmit for approval</button>
-          )}
-        </div>
-      )}
+      {/* Approve/Reject/Resubmit and Sign-off/Send-back moved up to sit next to the
+          fields relevant to each decision — see the two action-rows above. */}
 
       <div className="action-row" style={{ marginBottom: 16 }}>
         <a href={`/api/work-orders/${id}/report`} target="_blank" rel="noopener noreferrer">
           <button>Download report</button>
         </a>
-        {wo.documentControlUrl && (
+        {stage !== "intake" && wo.documentControlUrl && (
           <a href={wo.documentControlUrl} target="_blank" rel="noopener noreferrer">
             <button>Open in Document Control ↗</button>
           </a>
         )}
-        {canEdit && <button onClick={() => setShowSend((v) => !v)}>Send report</button>}
-        {canManage && <button onClick={toggleArchived}>{wo.archived ? "Unarchive" : "Archive"}</button>}
+        {canEdit && stage !== "intake" && <button onClick={() => setShowSend((v) => !v)}>Send report</button>}
+        {canManage && stage === "closed" && <button onClick={toggleArchived}>{wo.archived ? "Unarchive" : "Archive"}</button>}
       </div>
 
       <h3>Activity</h3>
