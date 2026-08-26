@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import NavBar from "@/components/NavBar";
 import Footer from "@/components/Footer";
 import Providers from "@/components/Providers";
+import IdleTimeoutProvider from "@/components/IdleTimeoutProvider";
 
 export const metadata = { title: "ADTECH | Work Order System" };
 
@@ -20,7 +21,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       <body>
         <Providers session={session}>
           {session && <NavBar />}
-          {children}
+          {session ? <IdleTimeoutProvider>{children}</IdleTimeoutProvider> : children}
         </Providers>
       </body>
     </html>
