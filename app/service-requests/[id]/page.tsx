@@ -17,6 +17,7 @@ export default function ServiceRequestDetail() {
   const [item, setItem] = useState<any>(null);
   const [people, setPeople] = useState<any[]>([]);
   const [teams, setTeams] = useState<any[]>([]);
+  const [sites, setSites] = useState<any[]>([]);
   const [comment, setComment] = useState("");
   const [error, setError] = useState("");
   const [editingDetails, setEditingDetails] = useState(false);
@@ -35,6 +36,7 @@ export default function ServiceRequestDetail() {
   useEffect(() => {
     fetch("/api/users/assignable").then((r) => r.json()).then((data) => Array.isArray(data) && setPeople(data));
     fetch("/api/teams").then((r) => r.json()).then((data) => Array.isArray(data) && setTeams(data));
+    fetch("/api/sites").then((r) => r.json()).then((data) => Array.isArray(data) && setSites(data));
   }, []);
 
   async function updateField(data: any) {
@@ -202,7 +204,7 @@ export default function ServiceRequestDetail() {
             )}
             {item.description && <p>{item.description}</p>}
             <p style={{ fontSize: 13, color: "var(--text-muted)" }}>
-              Team: {item.team?.name || "—"} · Created by {item.createdBy?.name} · {new Date(item.createdAt).toLocaleString()}
+              Site: {item.site?.name || "—"} · Team: {item.team?.name || "—"} · Created by {item.createdBy?.name} · {new Date(item.createdAt).toLocaleString()}
             </p>
             {canManage && <button onClick={startEditDetails}>Edit details</button>}
           </>
@@ -232,6 +234,13 @@ export default function ServiceRequestDetail() {
           <select value={item.teamId || ""} onChange={(e) => updateField({ teamId: e.target.value || null })}>
             <option value="">No team</option>
             {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+          </select>
+        </div>
+        <div>
+          <label>Site</label>
+          <select value={item.siteId || ""} onChange={(e) => updateField({ siteId: e.target.value })}>
+            {!item.siteId && <option value="">Select</option>}
+            {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
         </div>
       </div>

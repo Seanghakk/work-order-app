@@ -63,11 +63,12 @@ export default function ServiceRequestsPage() {
       ) : (
         <div className="table-scroll">
         <table>
-          <thead><tr><th>Title</th><th>Customer</th><th>Type</th><th>S.O. Number</th><th>Team</th><th>Stage</th><th>Assigned to</th><th>Due</th><th>Updated</th>{canManage && <th></th>}</tr></thead>
+          <thead><tr><th>Title</th><th>Site</th><th>Customer</th><th>Type</th><th>S.O. Number</th><th>Team</th><th>Stage</th><th>Assigned to</th><th>Due</th><th>Updated</th>{canManage && <th></th>}</tr></thead>
           <tbody>
             {items.map((s) => (
               <tr key={s.id}>
                 <td><Link href={`/service-requests/${s.id}`}>{s.title}</Link></td>
+                <td>{s.site?.name || "—"}</td>
                 <td>{s.customerName}</td>
                 <td>{s.isCorporatePartner ? "Corporate" : "General"}</td>
                 <td>{s.soNumber || "—"}</td>
