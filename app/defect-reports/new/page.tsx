@@ -181,7 +181,7 @@ export default function NewDefectReport() {
   ];
 
   return (
-    <div className="container" style={{ maxWidth: 800 }}>
+    <div className="container wizard-container-wide">
       <h1>New defect report</h1>
       <Wizard steps={steps} step={step} setStep={setStep} onSubmit={handleSubmit} submitLabel="Create defect report" error={error} setError={setError} />
     </div>

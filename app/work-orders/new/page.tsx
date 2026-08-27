@@ -117,7 +117,7 @@ export default function NewWorkOrder() {
   ];
 
   return (
-    <div className="container" style={{ maxWidth: 560 }}>
+    <div className="container wizard-container">
       <h1>New work order</h1>
       <Wizard steps={steps} step={step} setStep={setStep} onSubmit={handleSubmit} submitLabel="Submit work order" error={error} setError={setError} />
     </div>

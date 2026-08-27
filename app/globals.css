@@ -152,6 +152,19 @@ body:has(.login-shell) { padding-top: 0; }
 .nav-logo-inline { margin-right: 8px; }
 .nav-user { margin-left: auto; font-size: 13px; color: var(--text-muted); display: flex; align-items: center; gap: 12px; white-space: nowrap; }
 .container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+/* Create-form wizard containers (Work Order/Sale Order/Defect Report) — replaces
+   what used to be an inline style={{maxWidth:...}} on .container, since inline
+   styles can't be overridden by a media query. Same numeric caps as before below
+   1400px (zero visual change on mobile/tablet); widens at the desktop tier so the
+   tablet .field-pair 2-column rows (and, for Defect Report, its existing 3-item
+   flex-wrap rows) get real breathing room instead of feeling cramped in a
+   560-800px card. */
+.wizard-container { max-width: 560px; }
+.wizard-container-wide { max-width: 800px; }
+@media (min-width: 1400px) {
+  .wizard-container { max-width: 900px; }
+  .wizard-container-wide { max-width: 1100px; }
+}
 .table-scroll { overflow-x: auto; overflow-y: auto; max-height: 65vh; border-radius: 10px; border: 1px solid var(--border); }
 /* Only re-centers on genuinely wide monitors (well past .container's 1400px cap
    plus padding) — ordinary 1280-1440px laptop widths are untouched, so the

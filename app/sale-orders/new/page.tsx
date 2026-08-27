@@ -131,7 +131,7 @@ export default function NewSaleOrder() {
   ];
 
   return (
-    <div className="container" style={{ maxWidth: 560 }}>
+    <div className="container wizard-container">
       <h1>New sale order</h1>
       <Wizard steps={steps} step={step} setStep={setStep} onSubmit={handleSubmit} submitLabel="Create sale order" error={error} setError={setError} />
     </div>
