@@ -43,6 +43,16 @@ h1 { font-size: 32px; font-weight: 700; letter-spacing: -0.3px; }
   color: var(--teal);
   margin-bottom: 4px;
 }
+/* Page-heading variant of .eyebrow for an urgent/needs-attention label instead
+   of the default teal — reuses the amber "needs attention" meaning already
+   established for pending/high-priority elsewhere in the app. */
+.eyebrow-warning { color: var(--warning); }
+
+/* Work Order vs. Work Order Request type label — deliberately plain text, not a
+   badge pill, so it reads as a different kind of information than the colored
+   status badge next to it, not a second status. */
+.type-tag { display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-muted); }
+.type-tag-request { color: var(--warning); }
 h2 { font-size: 24px; }
 h3 { font-size: 18px; }
 

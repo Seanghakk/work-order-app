@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { isRequestPhase, workOrderTypeLabel } from "@/lib/workOrderLabels";
 
 type SearchResult = {
   id: string;
@@ -11,6 +12,9 @@ type SearchResult = {
   site?: string | null;
   customerName?: string | null;
   href: string;
+  // Only present on workOrders results — Service Requests/Defect Reports/Assets
+  // have no approval-phase concept.
+  approvedById?: string | null;
 };
 
 type SearchResults = {
@@ -89,7 +93,17 @@ export default function SearchResults() {
                 <tbody>
                   {items.map((item) => (
                     <tr key={item.id}>
-                      <td><Link href={item.href}>{item.title}</Link></td>
+                      <td>
+                        {key === "workOrders" && (
+                          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                            <span className={`type-tag${isRequestPhase({ approvedById: item.approvedById ?? null }) ? " type-tag-request" : ""}`}>
+                              {workOrderTypeLabel({ approvedById: item.approvedById ?? null })}
+                            </span>
+                            <Link href={item.href}>{item.title}</Link>
+                          </div>
+                        )}
+                        {key !== "workOrders" && <Link href={item.href}>{item.title}</Link>}
+                      </td>
                       <td>{item.soNumber || "—"}</td>
                       <td>{(key === "serviceRequests" ? item.customerName : item.site) || "—"}</td>
                       <td>{item.status}</td>

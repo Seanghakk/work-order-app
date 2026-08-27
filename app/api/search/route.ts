@@ -54,7 +54,7 @@ export async function GET(req: Request) {
               { OR: [{ title: { contains: q, ...ci } }, { soNumber: { contains: q, ...ci } }] },
             ],
           },
-          select: { id: true, title: true, soNumber: true, status: true, site: { select: { name: true } } },
+          select: { id: true, title: true, soNumber: true, status: true, approvedById: true, site: { select: { name: true } } },
           orderBy: { createdAt: "desc" },
           take: limit,
         })
@@ -118,6 +118,7 @@ export async function GET(req: Request) {
       title: w.title,
       soNumber: w.soNumber,
       status: w.status,
+      approvedById: w.approvedById,
       site: w.site?.name || null,
       href: `/work-orders/${w.id}`,
     })),

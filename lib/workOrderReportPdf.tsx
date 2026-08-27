@@ -1,9 +1,11 @@
 import React from "react";
 import { Document, Page, View, Text, Image, StyleSheet, renderToBuffer } from "@react-pdf/renderer";
+import { isRequestPhase } from "@/lib/workOrderLabels";
 
 const NAVY = "#0e5c86";
 const NAVY_DEEP = "#0a3f5c";
 const RED = "#c62430";
+const WARNING = "#d97706";
 const TEXT_MUTED = "#5b6b7a";
 const BORDER = "#e1e5ea";
 const APP_URL = process.env.NEXTAUTH_URL || "";
@@ -77,7 +79,9 @@ export function WorkOrderReportDocument({ wo }: { wo: any }) {
           <Text style={styles.companyLine}>Hotline: +855 99 415 189 · Tel: (855) 23 990 001 · Fax: (855) 23 990 136</Text>
         </View>
 
-        <Text style={styles.reportBanner}>SERVICE REPORT</Text>
+        <Text style={[styles.reportBanner, isRequestPhase(wo) && { backgroundColor: WARNING }]}>
+          {isRequestPhase(wo) ? "WORK ORDER REQUEST" : "SERVICE REPORT"}
+        </Text>
 
         <View style={styles.metaRow}>
           <View style={styles.metaCol}>
