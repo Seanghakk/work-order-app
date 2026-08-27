@@ -1,4 +1,6 @@
-﻿:root {
+﻿@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap');
+
+:root {
   --bg: #f4f6f8;
   --bg-elevated: #ffffff;
   --surface: #ffffff;
@@ -17,48 +19,63 @@
   --warning: #d97706;
   --teal: #0f9488;
   --teal-glow: rgba(15, 148, 136, 0.14);
+
+  /* Modernist restyle tokens — flat, architectural. Structural/neutral only;
+     status colors still come from lib/workOrderColors.ts (mirrored by the
+     status vars above). */
+  --ink: #201e1d;            /* 2px solid rules between major regions, dark treatments */
+  --hairline: #eae7e7;       /* 1px rules between rows */
+  --ground: #f3f2f2;         /* dark-context ground, logo plate */
+  --surface-tint: #f8f4f4;   /* table header, selected rows, side panels */
+  --font-sans: 'Archivo', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
 }
 * { box-sizing: border-box; }
+
+/* Zero corner radius is a hard rule of this design — buttons, tags, inputs,
+   avatars, panels, everything. Enforced globally; literal border-radius values
+   elsewhere in this file are also zeroed so the source stays honest. */
+*, *::before, *::after { border-radius: 0 !important; }
+
 body {
   margin: 0;
   min-height: 100vh;
   background: var(--bg);
   color: var(--text);
-  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-  font-size: 16px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.6;
 }
 h1, h2, h3 {
-  font-family: 'Almarai', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-  font-weight: 700;
-  letter-spacing: 0.2px;
+  font-family: var(--font-sans);
+  font-weight: 800;
 }
-h1 { font-size: 32px; font-weight: 700; letter-spacing: -0.3px; }
+h1 { font-size: 32px; font-weight: 800; letter-spacing: -0.028em; line-height: 1; }
 .eyebrow {
   display: block;
-  font-family: 'Poppins', sans-serif;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 1.2px;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--teal);
-  margin-bottom: 4px;
+  color: var(--accent);
+  margin-bottom: 8px;
 }
 /* Page-heading variant of .eyebrow for an urgent/needs-attention label instead
-   of the default teal — reuses the amber "needs attention" meaning already
+   of the default brand red — reuses the amber "needs attention" meaning already
    established for pending/high-priority elsewhere in the app. */
 .eyebrow-warning { color: var(--warning); }
 
 /* Work Order vs. Work Order Request type label — deliberately plain text, not a
    badge pill, so it reads as a different kind of information than the colored
    status badge next to it, not a second status. */
-.type-tag { display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-muted); }
+.type-tag { display: inline-block; font-size: 9.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--navy); }
 .type-tag-request { color: var(--warning); }
 
 /* Multi-step create-form wizard (components/Wizard.tsx) — a thin progress bar
    under the step label/name, single column, naturally mobile-first since it's
    just block-stacked content inside the existing .card. */
 .wizard-progress { margin-bottom: 16px; }
-.wizard-progress-bar { height: 4px; background: var(--border); border-radius: 999px; overflow: hidden; }
+.wizard-progress-bar { height: 4px; background: var(--border); overflow: hidden; }
 .wizard-progress-fill { height: 100%; background: var(--navy); transition: width 0.2s ease; }
 /* Pairs two short .field blocks into one row starting at the tablet tier — block
    (single column) below 721px is identical to the plain stacked .field rendering
@@ -68,18 +85,18 @@ h1 { font-size: 32px; font-weight: 700; letter-spacing: -0.3px; }
   .field-pair { display: flex; gap: 16px; }
   .field-pair > .field { flex: 1; min-width: 0; }
 }
-h2 { font-size: 24px; }
-h3 { font-size: 18px; }
+h2 { font-size: 24px; letter-spacing: -0.02em; }
+h3 { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
 
 /* Page-section label: a small, uppercase, muted marker (e.g. "Work Orders",
    "Overview", "Needs your action") that sits below a page's <h1> without
    competing with it for visual weight — distinct from a card's own <h4> title. */
 .section-label {
   display: block;
-  font-family: 'Poppins', sans-serif;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.8px;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-muted);
   margin: 32px 0 12px;
@@ -89,24 +106,24 @@ h1 + .section-label { margin-top: 12px; }
 /* Compact collapsed-row treatment for a zero-item section (e.g. an action
    queue with nothing pending) — replaces a full-size .card that would
    otherwise just be padding and shadow around one muted sentence. */
-.empty-row { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 8px; background: var(--surface-hover); border: 1px solid var(--border); font-size: 13px; color: var(--text-muted); align-self: start; }
+.empty-row { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: var(--surface-hover); border: 1px solid var(--border); font-size: 13px; color: var(--text-muted); align-self: start; }
 .empty-row strong { color: var(--text); font-weight: 600; }
 a { color: var(--navy); text-decoration: none; }
 a:hover { text-decoration: underline; }
 input, select, textarea, button {
   font: inherit;
   border: 1px solid var(--border);
-  border-radius: 6px;
   padding: 9px 11px;
   background: var(--surface);
   color: var(--text);
 }
 input:focus, select:focus, textarea:focus {
-  outline: none;
-  border-color: var(--navy);
-  box-shadow: 0 0 0 3px var(--blue-glow);
+  outline: 2px solid var(--ink);
+  outline-offset: 0;
+  border-color: var(--ink);
+  box-shadow: none;
 }
-button { cursor: pointer; border-color: var(--border); background: var(--surface-hover); color: var(--text); transition: background 0.12s ease, box-shadow 0.15s ease; }
+button { cursor: pointer; border-color: var(--border); background: var(--surface-hover); color: var(--text); transition: background 0.12s ease; }
 button:hover { background: #e4e8ec; }
 button.primary {
   background: var(--navy);
@@ -121,7 +138,7 @@ button.danger:hover { background: rgba(220, 38, 38, 0.08); }
 /* Native <input type="file"> controls ignore most sizing CSS and render with bulky
    platform chrome (especially on mobile browsers) — this hides the raw input and
    triggers it from a normally-sized label styled like every other button instead. */
-.file-upload-label { display: inline-block; cursor: pointer; border: 1px solid var(--border); border-radius: 6px; padding: 9px 11px; background: var(--surface-hover); color: var(--text); font: inherit; }
+.file-upload-label { display: inline-block; cursor: pointer; border: 1px solid var(--border); padding: 9px 11px; background: var(--surface-hover); color: var(--text); font: inherit; }
 .file-upload-label:hover { background: #e4e8ec; }
 .file-upload-label.disabled { opacity: 0.6; cursor: not-allowed; }
 
@@ -133,8 +150,9 @@ button.danger:hover { background: rgba(220, 38, 38, 0.08); }
 .action-row button { white-space: nowrap; min-width: 110px; }
 
 table { width: 100%; border-collapse: collapse; background: var(--surface); }
-th, td { text-align: left; padding: 11px 12px; border-bottom: 1px solid var(--border); font-size: 14px; }
-th { color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; position: sticky; top: 0; background: var(--surface); z-index: 5; }
+th, td { text-align: left; padding: 11px 12px; font-size: 12px; }
+td { border-bottom: 1px solid var(--hairline); font-weight: 500; }
+th { color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 9.5px; letter-spacing: 0.11em; position: sticky; top: 0; background: var(--surface-tint); border-bottom: 2px solid var(--ink); z-index: 5; }
 /* Subtle alternate-row tint for scan-line readability on longer tables. Scoped
    to tbody (not the sticky thead) and given the same specificity as the hover
    rule below, declared first, so hovering a striped row still reliably wins. */
@@ -144,11 +162,9 @@ tbody tr:hover td { background: var(--surface-hover); }
 .card {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 12px;
     padding: 18px;
-    box-shadow: 0 2px 10px rgba(16, 40, 60, 0.06);
   }
-.nav { background: #ffffff; border-bottom: 1px solid var(--border); position: fixed; top: 0; left: 0; right: 0; z-index: 30; }
+.nav { background: #ffffff; border-bottom: 2px solid var(--ink); position: fixed; top: 0; left: 0; right: 0; z-index: 30; }
 body { padding-top: 64px; }
 body:has(.login-shell) { padding-top: 0; }
 .nav a { color: var(--text-muted); font-size: 17px; font-weight: 600; }
@@ -172,7 +188,7 @@ body:has(.login-shell) { padding-top: 0; }
   .wizard-container { max-width: 900px; }
   .wizard-container-wide { max-width: 1100px; }
 }
-.table-scroll { overflow-x: auto; overflow-y: auto; max-height: 65vh; border-radius: 10px; border: 1px solid var(--border); }
+.table-scroll { overflow-x: auto; overflow-y: auto; max-height: 65vh; border: 1px solid var(--border); }
 /* Only re-centers on genuinely wide monitors (well past .container's 1400px cap
    plus padding) — ordinary 1280-1440px laptop widths are untouched, so the
    widest existing table (Work Orders, 9 columns) never loses width it needs. */
@@ -198,26 +214,27 @@ body:has(.login-shell) { padding-top: 0; }
 .chart-split > * { min-width: 0; }
 .chart-stack { display: flex; flex-direction: column; gap: 16px; }
 
-/* Status pill colors follow the same unified palette as the dashboard charts
-   (see WO_STATUS_COLOR in app/dashboard/page.tsx) — a status resolves to the
-   same color everywhere in the app. Color is always paired with the pill's
-   text label, so reused colors across related statuses (e.g. amber for both
-   pending_approval and pending_signoff) stay distinguishable without relying
-   on color alone. */
-.badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; border: 1px solid transparent; }
-.badge-open { background: rgba(14, 92, 134, 0.10); color: var(--navy); border-color: rgba(14, 92, 134, 0.25); }
-.badge-assigned { background: rgba(15, 148, 136, 0.10); color: var(--teal); border-color: rgba(15, 148, 136, 0.25); }
-.badge-in_progress { background: rgba(10, 63, 92, 0.10); color: var(--navy-deep); border-color: rgba(10, 63, 92, 0.25); }
-.badge-on_hold { background: rgba(91, 107, 122, 0.10); color: var(--text-muted); border-color: var(--border); }
-.badge-completed { background: rgba(22, 163, 74, 0.10); color: var(--success); border-color: rgba(22, 163, 74, 0.25); }
-.badge-canceled { background: rgba(220, 38, 38, 0.10); color: var(--danger); border-color: rgba(220, 38, 38, 0.25); }
-.badge-pending_approval { background: rgba(217, 119, 6, 0.10); color: var(--warning); border-color: rgba(217, 119, 6, 0.25); }
-.badge-approved { background: rgba(15, 148, 136, 0.10); color: var(--teal); border-color: rgba(15, 148, 136, 0.25); }
-.badge-pending_signoff { background: rgba(217, 119, 6, 0.10); color: var(--warning); border-color: rgba(217, 119, 6, 0.25); }
-.badge-urgent { background: rgba(220, 38, 38, 0.10); color: var(--danger); border-color: rgba(220, 38, 38, 0.25); }
-.badge-high { background: rgba(217, 119, 6, 0.10); color: var(--warning); border-color: rgba(217, 119, 6, 0.25); }
-.badge-medium { background: rgba(14, 92, 134, 0.10); color: var(--navy); border-color: rgba(14, 92, 134, 0.25); }
-.badge-low { background: rgba(91, 107, 122, 0.10); color: var(--text-muted); border-color: var(--border); }
+/* Flat square tag. Colors follow the same unified palette as the dashboard
+   charts and the PDF (see WO_STATUS_COLOR / PRIORITY_COLOR in
+   lib/workOrderColors.ts) — a status resolves to the same color everywhere in
+   the app. No fill: white ground, 1px solid border and text both in the status
+   color, always paired with the text label, so reused colors across related
+   statuses (e.g. amber for both pending_approval and pending_signoff) stay
+   distinguishable without relying on color alone. */
+.badge { display: inline-block; padding: 3px 6px; font-size: 9.5px; line-height: 1.1; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; background: var(--surface); border: 1px solid transparent; }
+.badge-open { color: var(--navy); border-color: var(--navy); }
+.badge-assigned { color: var(--teal); border-color: var(--teal); }
+.badge-in_progress { color: var(--navy-deep); border-color: var(--navy-deep); }
+.badge-on_hold { color: var(--text-muted); border-color: var(--text-muted); }
+.badge-completed { color: var(--success); border-color: var(--success); }
+.badge-canceled { color: var(--danger); border-color: var(--danger); }
+.badge-pending_approval { color: var(--warning); border-color: var(--warning); }
+.badge-approved { color: var(--teal); border-color: var(--teal); }
+.badge-pending_signoff { color: var(--warning); border-color: var(--warning); }
+.badge-urgent { color: var(--danger); border-color: var(--danger); }
+.badge-high { color: var(--warning); border-color: var(--warning); }
+.badge-medium { color: var(--navy); border-color: var(--navy); }
+.badge-low { color: var(--text-muted); border-color: var(--text-muted); }
 
 .nav-dropdown-wrap { position: relative; display: inline-block; }
 .nav-dropdown-trigger { background: none; border: none; font-size: 17px; font-weight: 600; color: var(--text-muted); cursor: pointer; padding: 0; font-family: inherit; display: inline-flex; align-items: center; gap: 4px; }
@@ -233,30 +250,28 @@ body:has(.login-shell) { padding-top: 0; }
   display: block;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
   padding: 10px 12px;
   font-size: 14px;
   font-weight: 500;
   color: var(--text);
-  box-shadow: 0 8px 20px rgba(16, 40, 60, 0.16);
-  transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+  transition: transform 0.12s ease, border-color 0.12s ease;
 }
-.nav-dropdown-panel a:hover { border-color: var(--navy); box-shadow: 0 10px 24px rgba(16, 40, 60, 0.22); transform: translateX(3px); text-decoration: none; }
+.nav-dropdown-panel a:hover { border-color: var(--navy); transform: translateX(3px); text-decoration: none; }
 @keyframes nav-stack-in {
   from { opacity: 0; transform: translateY(-6px); }
   to { opacity: 1; transform: translateY(0); }
 }
 .notif-bell { position: relative; background: none; border: none; padding: 6px; }
-.notif-dot { position: absolute; top: 2px; right: 2px; background: var(--accent); color: white; font-size: 10px; font-weight: 700; border-radius: 999px; min-width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; padding: 0 3px; }
-.notif-panel { position: absolute; right: 0; top: 36px; width: 320px; max-height: 400px; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 12px 32px rgba(16, 40, 60, 0.18); z-index: 25; animation: nav-stack-in 0.16s ease-out; }
-.notif-item { display: block; width: 100%; text-align: left; padding: 12px 14px; border: none; border-bottom: 1px solid var(--border); background: none; font-size: 13px; }
+.notif-dot { position: absolute; top: 2px; right: 2px; background: var(--accent); color: white; font-size: 10px; font-weight: 700; min-width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; padding: 0 3px; }
+.notif-panel { position: absolute; right: 0; top: 36px; width: 320px; max-height: 400px; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); z-index: 25; animation: nav-stack-in 0.16s ease-out; }
+.notif-item { display: block; width: 100%; text-align: left; padding: 12px 14px; border: none; border-bottom: 1px solid var(--hairline); background: none; font-size: 13px; }
 .notif-item:last-child { border-bottom: none; }
 .notif-item.unread { background: rgba(14, 92, 134, 0.06); }
 .notif-empty { padding: 20px; text-align: center; color: var(--text-muted); font-size: 13px; }
 
 .search-bar-wrap { position: relative; width: 220px; }
 .search-bar-wrap input { width: 100%; padding: 7px 10px; font-size: 13px; }
-.search-results-panel { position: absolute; left: 0; top: 36px; width: 340px; max-height: 460px; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 12px 32px rgba(16, 40, 60, 0.18); z-index: 25; animation: nav-stack-in 0.16s ease-out; }
+.search-results-panel { position: absolute; left: 0; top: 36px; width: 340px; max-height: 460px; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); z-index: 25; animation: nav-stack-in 0.16s ease-out; }
 .search-group-label { padding: 8px 14px 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: var(--text-muted); }
 /* Qualified with the panel ancestor (not just .search-result-item alone) because
    this renders as a real <a> (Next.js Link) inside .nav, and the global `.nav a`
@@ -264,7 +279,7 @@ body:has(.login-shell) { padding-top: 0; }
    nav links) has higher specificity (class+element) than a bare single-class
    selector — it was silently winning and blowing up the result text to nav-link
    size/color. Two classes here beats it back. */
-.search-results-panel .search-result-item { display: block; padding: 8px 14px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text); }
+.search-results-panel .search-result-item { display: block; padding: 8px 14px; border-bottom: 1px solid var(--hairline); font-size: 13px; color: var(--text); }
 .search-results-panel .search-result-item:hover { background: var(--surface-hover); text-decoration: none; }
 .search-result-title { font-weight: 600; }
 .search-result-meta { color: var(--text-muted); font-size: 12px; margin-top: 2px; }
@@ -360,7 +375,7 @@ body:has(.login-shell) { padding-top: 0; }
   50% { opacity: 1; r: 6; }
 }
 .login-showcase-content { position: relative; z-index: 2; max-width: 400px; }
-.login-showcase-title { font-family: "Almarai", sans-serif; font-size: 28px; line-height: 1.3; margin: 0 0 32px; color: white; }
+.login-showcase-title { font-family: var(--font-sans); font-size: 28px; line-height: 1.3; margin: 0 0 32px; color: white; }
 .login-tip-stack { position: relative; min-height: 76px; }
 .login-tip {
   position: absolute; top: 0; left: 0; right: 0; display: flex; flex-direction: column; gap: 6px;
@@ -370,18 +385,19 @@ body:has(.login-shell) { padding-top: 0; }
 .login-tip-label { color: var(--login-teal); font-size: 13px; font-weight: 700; letter-spacing: 0.3px; }
 .login-tip-body { color: rgba(255, 255, 255, 0.75); font-size: 15px; line-height: 1.5; }
 .login-tip-dots { display: flex; gap: 8px; margin-top: 28px; }
-.login-tip-dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(255, 255, 255, 0.25); transition: background 0.4s ease; }
+.login-tip-dot { width: 7px; height: 7px; background: rgba(255, 255, 255, 0.25); transition: background 0.4s ease; }
 .login-tip-dot.active { background: var(--login-teal); }
 @media (max-width: 860px) {
   .login-showcase-side { display: none; }
 }
 
-/* ===== Global micro-interactions ===== */
+/* ===== Global micro-interactions =====
+   Flat design — no elevation. Shadows removed everywhere except the modal scrim
+   (which is a background wash, not a box-shadow). */
 button, .card, .nav-dropdown-panel, .notif-panel {
-  transition: box-shadow 0.2s ease, transform 0.15s ease, background 0.2s ease;
+  transition: transform 0.15s ease, background 0.2s ease;
 }
 button:hover:not(:disabled) { transform: translateY(-1px); }
-.card:hover { box-shadow: 0 4px 16px rgba(16, 40, 60, 0.08); }
 a { transition: color 0.15s ease; }
 
 
