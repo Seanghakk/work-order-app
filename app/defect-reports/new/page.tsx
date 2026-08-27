@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Wizard, { WizardStep } from "@/components/Wizard";
 
 const DISCIPLINES = ["LIGHTING", "AUTOMATION", "FIRE_ALARM", "PA_SYSTEM", "BMS", "ACCESS_CONTROL_INTRUSION", "CAR_PARKING", "CCTV", "DATA_TEL_TV", "OTHER"];
 const DISCIPLINE_LABEL: Record<string, string> = {
@@ -31,6 +32,7 @@ export default function NewDefectReport() {
   const [remark, setRemark] = useState("");
   const [items, setItems] = useState<Item[]>([emptyItem()]);
   const [error, setError] = useState("");
+  const [step, setStep] = useState(0);
   const router = useRouter();
 
   useEffect(() => {
@@ -74,95 +76,114 @@ export default function NewDefectReport() {
     router.push("/defect-reports");
   }
 
+  const steps: WizardStep[] = [
+    {
+      label: "Report Info",
+      validate: () => (!projectName.trim() ? "Project name is required." : null),
+      content: (
+        <>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+            <div style={{ flex: 1, minWidth: 180 }}><label>DF No. (optional)</label><input value={dfNumber} onChange={(e) => setDfNumber(e.target.value)} style={{ width: "100%" }} placeholder="DF-26-0004" /></div>
+            <div style={{ flex: 1, minWidth: 180 }}><label>Date</label><input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={{ width: "100%" }} /></div>
+            <div style={{ flex: 1, minWidth: 180 }}><label>Section (optional)</label><input value={section} onChange={(e) => setSection(e.target.value)} style={{ width: "100%" }} placeholder="Engineering" /></div>
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <label>Project name</label>
+            <input value={projectName} onChange={(e) => setProjectName(e.target.value)} style={{ width: "100%" }} />
+          </div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <div style={{ flex: 1, minWidth: 200 }}><label>Main contractor (optional)</label><input value={mainContractor} onChange={(e) => setMainContractor(e.target.value)} style={{ width: "100%" }} /></div>
+            <div style={{ flex: 1, minWidth: 200 }}><label>Sub contractor</label><input value={subContractor} onChange={(e) => setSubContractor(e.target.value)} style={{ width: "100%" }} /></div>
+          </div>
+        </>
+      ),
+    },
+    {
+      label: "Classification",
+      content: (
+        <>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <label>Discipline (optional)</label>
+              <select value={discipline} onChange={(e) => setDiscipline(e.target.value)} style={{ width: "100%" }}>
+                <option value="">Not set</option>
+                {DISCIPLINES.map((d) => <option key={d} value={d}>{DISCIPLINE_LABEL[d]}</option>)}
+              </select>
+            </div>
+            {discipline === "OTHER" && (
+              <div style={{ flex: 1, minWidth: 200 }}>
+                <label>Specify</label>
+                <input value={otherDisciplineText} onChange={(e) => setOtherDisciplineText(e.target.value)} style={{ width: "100%" }} />
+              </div>
+            )}
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <label>Site (optional)</label>
+              <select value={siteId} onChange={(e) => setSiteId(e.target.value)} style={{ width: "100%" }}>
+                <option value="">None</option>
+                {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <label>Assigned to (optional)</label>
+              <select value={assignedToId} onChange={(e) => setAssignedToId(e.target.value)} style={{ width: "100%" }}>
+                <option value="">Unassigned</option>
+                {people.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.role})</option>)}
+              </select>
+            </div>
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <label>Team (optional)</label>
+              <select value={teamId} onChange={(e) => setTeamId(e.target.value)} style={{ width: "100%" }}>
+                <option value="">No team</option>
+                {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+              </select>
+            </div>
+          </div>
+          <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 8, marginBottom: 0 }}>
+            Setting an assignee or team lets that person (or team leader) edit status, assignment, and line items later — otherwise only you or a manager can.
+          </p>
+        </>
+      ),
+    },
+    {
+      label: "Items",
+      content: (
+        <>
+          <div className="table-scroll" style={{ marginBottom: 12 }}>
+            <table>
+              <thead><tr><th>Part Number</th><th>Description</th><th>Brand</th><th>Unit</th><th>Qty</th><th>Defect Description</th><th>Photo Ref.</th><th></th></tr></thead>
+              <tbody>
+                {items.map((it, i) => (
+                  <tr key={i}>
+                    <td><input value={it.partNumber} onChange={(e) => updateItem(i, "partNumber", e.target.value)} style={{ width: 100 }} /></td>
+                    <td><input value={it.description} onChange={(e) => updateItem(i, "description", e.target.value)} style={{ width: 140 }} /></td>
+                    <td><input value={it.brand} onChange={(e) => updateItem(i, "brand", e.target.value)} style={{ width: 90 }} /></td>
+                    <td><input value={it.unit} onChange={(e) => updateItem(i, "unit", e.target.value)} style={{ width: 70 }} /></td>
+                    <td><input type="number" value={it.qty} onChange={(e) => updateItem(i, "qty", e.target.value)} style={{ width: 60 }} /></td>
+                    <td><input value={it.defectDescription} onChange={(e) => updateItem(i, "defectDescription", e.target.value)} style={{ width: 160 }} /></td>
+                    <td><input value={it.photoReference} onChange={(e) => updateItem(i, "photoReference", e.target.value)} style={{ width: 90 }} placeholder="e.g. Photo 1-2" /></td>
+                    <td>{items.length > 1 && <button type="button" className="danger" onClick={() => removeItem(i)}>Remove</button>}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <button type="button" onClick={addItem} style={{ marginBottom: 16 }}>+ Add item</button>
+
+          <div className="field">
+            <label>Remark (optional)</label>
+            <textarea value={remark} onChange={(e) => setRemark(e.target.value)} rows={3} style={{ width: "100%" }} />
+          </div>
+        </>
+      ),
+    },
+  ];
+
   return (
     <div className="container" style={{ maxWidth: 800 }}>
       <h1>New defect report</h1>
-      <form onSubmit={handleSubmit} className="card">
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
-          <div style={{ flex: 1, minWidth: 180 }}><label>DF No. (optional)</label><input value={dfNumber} onChange={(e) => setDfNumber(e.target.value)} style={{ width: "100%" }} placeholder="DF-26-0004" /></div>
-          <div style={{ flex: 1, minWidth: 180 }}><label>Date</label><input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={{ width: "100%" }} /></div>
-          <div style={{ flex: 1, minWidth: 180 }}><label>Section (optional)</label><input value={section} onChange={(e) => setSection(e.target.value)} style={{ width: "100%" }} placeholder="Engineering" /></div>
-        </div>
-        <div style={{ marginBottom: 12 }}>
-          <label>Project name</label>
-          <input value={projectName} onChange={(e) => setProjectName(e.target.value)} style={{ width: "100%" }} />
-        </div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
-          <div style={{ flex: 1, minWidth: 200 }}><label>Main contractor (optional)</label><input value={mainContractor} onChange={(e) => setMainContractor(e.target.value)} style={{ width: "100%" }} /></div>
-          <div style={{ flex: 1, minWidth: 200 }}><label>Sub contractor</label><input value={subContractor} onChange={(e) => setSubContractor(e.target.value)} style={{ width: "100%" }} /></div>
-        </div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
-          <div style={{ flex: 1, minWidth: 200 }}>
-            <label>Discipline (optional)</label>
-            <select value={discipline} onChange={(e) => setDiscipline(e.target.value)} style={{ width: "100%" }}>
-              <option value="">Not set</option>
-              {DISCIPLINES.map((d) => <option key={d} value={d}>{DISCIPLINE_LABEL[d]}</option>)}
-            </select>
-          </div>
-          {discipline === "OTHER" && (
-            <div style={{ flex: 1, minWidth: 200 }}>
-              <label>Specify</label>
-              <input value={otherDisciplineText} onChange={(e) => setOtherDisciplineText(e.target.value)} style={{ width: "100%" }} />
-            </div>
-          )}
-          <div style={{ flex: 1, minWidth: 200 }}>
-            <label>Site (optional)</label>
-            <select value={siteId} onChange={(e) => setSiteId(e.target.value)} style={{ width: "100%" }}>
-              <option value="">None</option>
-              {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
-          </div>
-        </div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
-          <div style={{ flex: 1, minWidth: 200 }}>
-            <label>Assigned to (optional)</label>
-            <select value={assignedToId} onChange={(e) => setAssignedToId(e.target.value)} style={{ width: "100%" }}>
-              <option value="">Unassigned</option>
-              {people.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.role})</option>)}
-            </select>
-          </div>
-          <div style={{ flex: 1, minWidth: 200 }}>
-            <label>Team (optional)</label>
-            <select value={teamId} onChange={(e) => setTeamId(e.target.value)} style={{ width: "100%" }}>
-              <option value="">No team</option>
-              {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-            </select>
-          </div>
-        </div>
-        <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: -8, marginBottom: 12 }}>
-          Setting an assignee or team lets that person (or team leader) edit status, assignment, and line items later — otherwise only you or a manager can.
-        </p>
-
-        <h3>Items</h3>
-        <div className="table-scroll" style={{ marginBottom: 12 }}>
-          <table>
-            <thead><tr><th>Part Number</th><th>Description</th><th>Brand</th><th>Unit</th><th>Qty</th><th>Defect Description</th><th>Photo Ref.</th><th></th></tr></thead>
-            <tbody>
-              {items.map((it, i) => (
-                <tr key={i}>
-                  <td><input value={it.partNumber} onChange={(e) => updateItem(i, "partNumber", e.target.value)} style={{ width: 100 }} /></td>
-                  <td><input value={it.description} onChange={(e) => updateItem(i, "description", e.target.value)} style={{ width: 140 }} /></td>
-                  <td><input value={it.brand} onChange={(e) => updateItem(i, "brand", e.target.value)} style={{ width: 90 }} /></td>
-                  <td><input value={it.unit} onChange={(e) => updateItem(i, "unit", e.target.value)} style={{ width: 70 }} /></td>
-                  <td><input type="number" value={it.qty} onChange={(e) => updateItem(i, "qty", e.target.value)} style={{ width: 60 }} /></td>
-                  <td><input value={it.defectDescription} onChange={(e) => updateItem(i, "defectDescription", e.target.value)} style={{ width: 160 }} /></td>
-                  <td><input value={it.photoReference} onChange={(e) => updateItem(i, "photoReference", e.target.value)} style={{ width: 90 }} placeholder="e.g. Photo 1-2" /></td>
-                  <td>{items.length > 1 && <button type="button" className="danger" onClick={() => removeItem(i)}>Remove</button>}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <button type="button" onClick={addItem} style={{ marginBottom: 16 }}>+ Add item</button>
-
-        <div style={{ marginBottom: 16 }}>
-          <label>Remark (optional)</label>
-          <textarea value={remark} onChange={(e) => setRemark(e.target.value)} rows={3} style={{ width: "100%" }} />
-        </div>
-
-        {error && <p style={{ color: "var(--danger)", fontSize: 13 }}>{error}</p>}
-        <button className="primary" type="submit">Create defect report</button>
-      </form>
+      <Wizard steps={steps} step={step} setStep={setStep} onSubmit={handleSubmit} submitLabel="Create defect report" error={error} setError={setError} />
     </div>
   );
 }

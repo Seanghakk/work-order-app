@@ -53,6 +53,21 @@ h1 { font-size: 32px; font-weight: 700; letter-spacing: -0.3px; }
    status badge next to it, not a second status. */
 .type-tag { display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-muted); }
 .type-tag-request { color: var(--warning); }
+
+/* Multi-step create-form wizard (components/Wizard.tsx) — a thin progress bar
+   under the step label/name, single column, naturally mobile-first since it's
+   just block-stacked content inside the existing .card. */
+.wizard-progress { margin-bottom: 16px; }
+.wizard-progress-bar { height: 4px; background: var(--border); border-radius: 999px; overflow: hidden; }
+.wizard-progress-fill { height: 100%; background: var(--navy); transition: width 0.2s ease; }
+/* Pairs two short .field blocks into one row starting at the tablet tier — block
+   (single column) below 721px is identical to the plain stacked .field rendering
+   already confirmed working on mobile; becomes a two-column flex row at 721px+. */
+.field-pair { display: block; }
+@media (min-width: 721px) {
+  .field-pair { display: flex; gap: 16px; }
+  .field-pair > .field { flex: 1; min-width: 0; }
+}
 h2 { font-size: 24px; }
 h3 { font-size: 18px; }
 
