@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { isRequestPhase, workOrderTypeLabel } from "@/lib/workOrderLabels";
 
 const STATUS_LABEL: Record<string, string> = {
   OPEN: "Requested", PENDING_APPROVAL: "Pending approval", APPROVED: "Approved",
@@ -71,7 +72,12 @@ export default function WorkOrdersPage() {
           <tbody>
             {orders.map((o) => (
               <tr key={o.id}>
-                <td><Link href={`/work-orders/${o.id}`}>{o.title}</Link></td>
+                <td>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                    <span className={`type-tag${isRequestPhase(o) ? " type-tag-request" : ""}`}>{workOrderTypeLabel(o)}</span>
+                    <Link href={`/work-orders/${o.id}`}>{o.title}</Link>
+                  </div>
+                </td>
                 <td>{o.site?.name || "—"}</td>
                 <td>{o.team?.name || "—"}</td>
                 <td>{o.asset?.name || "—"}</td>

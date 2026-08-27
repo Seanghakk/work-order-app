@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { isValidHttpUrl } from "@/lib/url";
+import { isRequestPhase, workOrderTypeLabel } from "@/lib/workOrderLabels";
 
 const SERVICE_TYPES = ["REPAIR", "TROUBLESHOOTING", "WARRANTY", "EMERGENCY_OT", "MAINTENANCE", "INSTALLATION", "OTHER"];
 const SERVICE_TYPE_LABEL: Record<string, string> = {
@@ -260,6 +261,7 @@ export default function WorkOrderDetail() {
 
   return (
     <div className="container" style={{ maxWidth: 720 }}>
+      <span className={`eyebrow${isRequestPhase(wo) ? " eyebrow-warning" : ""}`}>{workOrderTypeLabel(wo)}</span>
       <h1>{wo.title}</h1>
       <div style={{ display: "flex", gap: 8, marginBottom: 16, alignItems: "center", flexWrap: "wrap" }}>
         <span className={`badge badge-${wo.status.toLowerCase()}`}>{STATUS_LABEL[wo.status] || wo.status}</span>

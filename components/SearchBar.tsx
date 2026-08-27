@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { isRequestPhase, workOrderTypeLabel } from "@/lib/workOrderLabels";
 
 type SearchResult = {
   id: string;
@@ -11,6 +12,9 @@ type SearchResult = {
   site?: string | null;
   customerName?: string | null;
   href: string;
+  // Only present on workOrders results — Service Requests/Defect Reports/Assets
+  // have no approval-phase concept.
+  approvedById?: string | null;
 };
 
 type SearchResults = {
@@ -112,6 +116,11 @@ export default function SearchBar() {
                 <div className="search-group-label">{label}</div>
                 {items.map((item) => (
                   <Link key={item.id} href={item.href} className="search-result-item" onClick={() => setOpen(false)}>
+                    {key === "workOrders" && (
+                      <span className={`type-tag${isRequestPhase({ approvedById: item.approvedById ?? null }) ? " type-tag-request" : ""}`}>
+                        {workOrderTypeLabel({ approvedById: item.approvedById ?? null })}
+                      </span>
+                    )}
                     <div className="search-result-title">{item.title}</div>
                     <div className="search-result-meta">
                       {[item.soNumber, item.site || item.customerName, item.status].filter(Boolean).join(" · ")}

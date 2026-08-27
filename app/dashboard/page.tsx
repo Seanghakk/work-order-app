@@ -3,6 +3,8 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { canAccessSaleOrders, canAccessWorkOrders, getUserSiteIds, siteWhere, getLeaderTeamIds } from "@/lib/permissions";
+import { isRequestPhase, workOrderTypeLabel } from "@/lib/workOrderLabels";
+import { WO_STATUS_COLOR, PRIORITY_COLOR } from "@/lib/workOrderColors";
 import { DonutChart, TrendChart } from "@/components/DashboardCharts";
 import Link from "next/link";
 
@@ -11,19 +13,7 @@ const WO_STATUS_LABEL: Record<string, string> = {
   ASSIGNED: "Assigned", IN_PROGRESS: "In progress", PENDING_SIGNOFF: "Pending sign-off",
   COMPLETED: "Completed", ON_HOLD: "On hold", CANCELED: "Canceled",
 };
-// Unified status palette — reuses the app's existing theme colors (see :root in
-// globals.css) instead of one-off hexes, so a status means the same color
-// everywhere (dashboard charts, table badges): navy #0e5c86 = queued/info,
-// teal #0f9488 = active/moving, navy-deep #0a3f5c = underway, amber #d97706 =
-// needs action, slate #5b6b7a = neutral/paused/low, green #16a34a = done,
-// red #dc2626 = canceled/urgent (kept distinct from brand --accent #c62430).
-const WO_STATUS_COLOR: Record<string, string> = {
-  OPEN: "#0e5c86", PENDING_APPROVAL: "#d97706", APPROVED: "#0f9488",
-  ASSIGNED: "#0f9488", IN_PROGRESS: "#0a3f5c", PENDING_SIGNOFF: "#d97706",
-  ON_HOLD: "#5b6b7a", COMPLETED: "#16a34a", CANCELED: "#dc2626",
-};
 const PRIORITY_LABEL: Record<string, string> = { LOW: "Low", MEDIUM: "Medium", HIGH: "High", URGENT: "Urgent" };
-const PRIORITY_COLOR: Record<string, string> = { LOW: "#5b6b7a", MEDIUM: "#0e5c86", HIGH: "#d97706", URGENT: "#dc2626" };
 const SO_STATUS_LABEL: Record<string, string> = {
   INQUIRY: "Inquiry", DRAWING: "Drawing", BOQ: "BoQ", SUBMIT_TO_SALE: "Submit to Sale",
   CONFIRM_PO: "Confirm PO", CANCELLED: "Cancelled",
@@ -44,7 +34,7 @@ function StatCard({ label, value, style }: { label: string; value: number; style
   );
 }
 
-type ActionListRow = { id: string; title: string; site: string | null; person: string | null };
+type ActionListRow = { id: string; title: string; site: string | null; person: string | null; approvedById: string | null };
 
 function ActionQueueCard({ title, emptyLabel, count, rows, personLabel }: { title: string; emptyLabel: string; count: number; rows: ActionListRow[]; personLabel: string }) {
   if (count === 0) {
@@ -61,6 +51,7 @@ function ActionQueueCard({ title, emptyLabel, count, rows, personLabel }: { titl
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {rows.map((r) => (
           <Link key={r.id} href={`/work-orders/${r.id}`} style={{ display: "block" }}>
+            <span className={`type-tag${isRequestPhase(r) ? " type-tag-request" : ""}`}>{workOrderTypeLabel(r)}</span>
             <div style={{ fontWeight: 600, fontSize: 14 }}>{r.title}</div>
             <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
               {personLabel}: {r.person || "—"} · {r.site || "—"}
@@ -200,7 +191,7 @@ async function PersonalWorkView({ userId, siteFilter }: { userId: string; siteFi
 async function LeaderView({ userId, leaderTeamIds, siteFilter }: { userId: string; leaderTeamIds: string[]; siteFilter: Record<string, any> }) {
   const leaderWhere = { teamId: { in: leaderTeamIds }, ...siteFilter };
   const listSelect = {
-    id: true, title: true,
+    id: true, title: true, approvedById: true,
     site: { select: { name: true } },
     requestedBy: { select: { name: true } },
     assignedTo: { select: { name: true } },
@@ -221,14 +212,14 @@ async function LeaderView({ userId, leaderTeamIds, siteFilter }: { userId: strin
           title="Pending your approval"
           emptyLabel="Nothing waiting on your approval."
           count={pendingApprovalCount}
-          rows={pendingApprovalRows.map((r) => ({ id: r.id, title: r.title, site: r.site?.name || null, person: r.requestedBy?.name || null }))}
+          rows={pendingApprovalRows.map((r) => ({ id: r.id, title: r.title, site: r.site?.name || null, person: r.requestedBy?.name || null, approvedById: r.approvedById }))}
           personLabel="Requested by"
         />
         <ActionQueueCard
           title="Pending your sign-off"
           emptyLabel="Nothing waiting on your sign-off."
           count={pendingSignoffCount}
-          rows={pendingSignoffRows.map((r) => ({ id: r.id, title: r.title, site: r.site?.name || null, person: r.assignedTo?.name || null }))}
+          rows={pendingSignoffRows.map((r) => ({ id: r.id, title: r.title, site: r.site?.name || null, person: r.assignedTo?.name || null, approvedById: r.approvedById }))}
           personLabel="Assigned to"
         />
       </div>
@@ -247,7 +238,7 @@ async function LeaderView({ userId, leaderTeamIds, siteFilter }: { userId: strin
 // plus the existing full overview ===
 async function ManagerView({ siteFilter, siteIds }: { siteFilter: Record<string, any>; siteIds: string[] | "ALL" }) {
   const listSelect = {
-    id: true, title: true,
+    id: true, title: true, approvedById: true,
     site: { select: { name: true } },
     requestedBy: { select: { name: true } },
     assignedTo: { select: { name: true } },
@@ -294,14 +285,14 @@ async function ManagerView({ siteFilter, siteIds }: { siteFilter: Record<string,
           title="Pending approval"
           emptyLabel="Nothing waiting on approval."
           count={pendingApprovalCount}
-          rows={pendingApprovalRows.map((r) => ({ id: r.id, title: r.title, site: r.site?.name || null, person: r.requestedBy?.name || null }))}
+          rows={pendingApprovalRows.map((r) => ({ id: r.id, title: r.title, site: r.site?.name || null, person: r.requestedBy?.name || null, approvedById: r.approvedById }))}
           personLabel="Requested by"
         />
         <ActionQueueCard
           title="Pending sign-off"
           emptyLabel="Nothing waiting on sign-off."
           count={pendingSignoffCount}
-          rows={pendingSignoffRows.map((r) => ({ id: r.id, title: r.title, site: r.site?.name || null, person: r.assignedTo?.name || null }))}
+          rows={pendingSignoffRows.map((r) => ({ id: r.id, title: r.title, site: r.site?.name || null, person: r.assignedTo?.name || null, approvedById: r.approvedById }))}
           personLabel="Assigned to"
         />
       </div>
