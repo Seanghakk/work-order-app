@@ -248,6 +248,15 @@ body:has(.login-shell) { padding-top: 0; }
   .chart-split { grid-template-columns: 1fr; }
 }
 
+/* Base defaults for the desktop/mobile nav-link swap below — MUST stay before the
+   @media block that overrides them. Equal-specificity CSS rules resolve by source
+   order regardless of which one is behind a media query, so if these unconditional
+   defaults were declared after the override, they'd always win and the swap would
+   never engage at any viewport width (this happened once already — see git history
+   on this file if it happens again). */
+.nav-desktop-links { display: contents; }
+.nav-mobile-links { display: none; }
+
 /* Nav collapses to the hamburger/stacked-menu treatment starting at tablet widths,
    not just phone widths — .nav-links has no wrap and no overflow handling, so at
    any width narrower than the full desktop nav's total item width (search bar + 4
@@ -336,10 +345,6 @@ button, .card, .nav-dropdown-panel, .notif-panel {
 button:hover:not(:disabled) { transform: translateY(-1px); }
 .card:hover { box-shadow: 0 4px 16px rgba(16, 40, 60, 0.08); }
 a { transition: color 0.15s ease; }
-
-/* ===== Simplified mobile nav ===== */
-.nav-desktop-links { display: contents; }
-.nav-mobile-links { display: none; }
 
 
 
