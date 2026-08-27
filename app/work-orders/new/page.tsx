@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Wizard, { WizardStep } from "@/components/Wizard";
 
 export default function NewWorkOrder() {
   const [title, setTitle] = useState("");
@@ -14,6 +15,7 @@ export default function NewWorkOrder() {
   const [teams, setTeams] = useState<any[]>([]);
   const [teamId, setTeamId] = useState("");
   const [error, setError] = useState("");
+  const [step, setStep] = useState(0);
   const router = useRouter();
   useEffect(() => {
     fetch("/api/assets").then((r) => r.json()).then(setAssets);
@@ -47,56 +49,77 @@ export default function NewWorkOrder() {
     router.push("/work-orders");
   }
 
+  const steps: WizardStep[] = [
+    {
+      label: "What & Where",
+      validate: () => (!title.trim() || !description.trim() || !siteId ? "Title, description, and site are required." : null),
+      content: (
+        <>
+          <div className="field-pair">
+            <div className="field">
+              <label>Site</label>
+              <select value={siteId} onChange={(e) => { setSiteId(e.target.value); setAssetId(""); }} style={{ width: "100%" }}>
+                <option value="">Select</option>
+                {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+            </div>
+            <div className="field">
+              <label>Title</label>
+              <input value={title} onChange={(e) => setTitle(e.target.value)} style={{ width: "100%" }} placeholder="AHU-01 not reaching setpoint" />
+            </div>
+          </div>
+          <div className="field">
+            <label>Description</label>
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} style={{ width: "100%" }} placeholder="What's happening, and where" />
+          </div>
+        </>
+      ),
+    },
+    {
+      label: "Details",
+      content: (
+        <>
+          <div className="field-pair">
+            <div className="field">
+              <label>Priority</label>
+              <select value={priority} onChange={(e) => setPriority(e.target.value)} style={{ width: "100%" }}>
+                <option value="LOW">Low</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="HIGH">High</option>
+                <option value="URGENT">Urgent</option>
+              </select>
+            </div>
+            <div className="field">
+              <label>Asset (optional)</label>
+              <select value={assetId} onChange={(e) => setAssetId(e.target.value)} style={{ width: "100%" }} disabled={!siteId}>
+                <option value="">None</option>
+                {assetsForSite.map((a) => <option key={a.id} value={a.id}>{a.name} ({a.tag})</option>)}
+              </select>
+              {!siteId && <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>Choose a site first to see its assets.</p>}
+            </div>
+          </div>
+          <div className="field-pair">
+            <div className="field">
+              <label>Due date (optional)</label>
+              <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} style={{ width: "100%" }} />
+            </div>
+            <div className="field">
+              <label>Team (optional)</label>
+              <select value={teamId} onChange={(e) => setTeamId(e.target.value)} style={{ width: "100%" }}>
+                <option value="">No team</option>
+                {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+              </select>
+            </div>
+          </div>
+        </>
+      ),
+    },
+  ];
+
   return (
-    <div className="container" style={{ maxWidth: 560 }}>
+    <div className="container wizard-container">
       <h1>New work order</h1>
-      <form onSubmit={handleSubmit} className="card">
-        <div className="field">
-          <label>Site</label>
-          <select value={siteId} onChange={(e) => { setSiteId(e.target.value); setAssetId(""); }} style={{ width: "100%" }}>
-            <option value="">Select</option>
-            {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
-        </div>
-        <div className="field">
-          <label>Title</label>
-          <input value={title} onChange={(e) => setTitle(e.target.value)} style={{ width: "100%" }} placeholder="AHU-01 not reaching setpoint" />
-        </div>
-        <div className="field">
-          <label>Description</label>
-          <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} style={{ width: "100%" }} placeholder="What's happening, and where" />
-        </div>
-        <div className="field">
-          <label>Priority</label>
-          <select value={priority} onChange={(e) => setPriority(e.target.value)} style={{ width: "100%" }}>
-            <option value="LOW">Low</option>
-            <option value="MEDIUM">Medium</option>
-            <option value="HIGH">High</option>
-            <option value="URGENT">Urgent</option>
-          </select>
-        </div>
-        <div className="field">
-          <label>Asset (optional)</label>
-          <select value={assetId} onChange={(e) => setAssetId(e.target.value)} style={{ width: "100%" }} disabled={!siteId}>
-            <option value="">None</option>
-            {assetsForSite.map((a) => <option key={a.id} value={a.id}>{a.name} ({a.tag})</option>)}
-          </select>
-          {!siteId && <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>Choose a site first to see its assets.</p>}
-        </div>
-        <div className="field">
-          <label>Due date (optional)</label>
-          <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} style={{ width: "100%" }} />
-        </div>
-        <div className="field">
-          <label>Team (optional)</label>
-          <select value={teamId} onChange={(e) => setTeamId(e.target.value)} style={{ width: "100%" }}>
-            <option value="">No team</option>
-            {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-          </select>
-        </div>
-        {error && <p style={{ color: "var(--danger)", fontSize: 13 }}>{error}</p>}
-        <button className="primary" type="submit">Submit work order</button>
-      </form>
+      <Wizard steps={steps} step={step} setStep={setStep} onSubmit={handleSubmit} submitLabel="Submit work order" error={error} setError={setError} />
     </div>
   );
 }

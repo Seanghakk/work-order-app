@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Wizard, { WizardStep } from "@/components/Wizard";
 
 const CORPORATE_PARTNERS = ["SCE", "DBD", "PITTA", "CE&P", "ESD", "CAIC", "LGT", "ACT", "ET&S", "GGEAR", "LBL"];
 
@@ -16,6 +17,7 @@ export default function NewSaleOrder() {
   const [teams, setTeams] = useState<any[]>([]);
   const [teamId, setTeamId] = useState("");
   const [error, setError] = useState("");
+  const [step, setStep] = useState(0);
   const router = useRouter();
 
   useEffect(() => {
@@ -52,67 +54,86 @@ export default function NewSaleOrder() {
     router.push("/sale-orders");
   }
 
-  return (
-    <div className="container" style={{ maxWidth: 560 }}>
-      <h1>New sale order</h1>
-      <form onSubmit={handleSubmit} className="card">
-        <div className="field">
-          <label>Title</label>
-          <input value={title} onChange={(e) => setTitle(e.target.value)} style={{ width: "100%" }} placeholder="CCTV upgrade — ABC Tower" />
-        </div>
-        <div className="field">
-          <label>Customer type</label>
-          <div style={{ display: "flex", gap: 16 }}>
-            <label style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: "normal" }}>
-              <input type="radio" checked={customerType === "GENERAL"} onChange={() => handleCustomerTypeChange("GENERAL")} />
-              General customer
-            </label>
-            <label style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: "normal" }}>
-              <input type="radio" checked={customerType === "CORPORATE"} onChange={() => handleCustomerTypeChange("CORPORATE")} />
-              Corporate partner
-            </label>
+  const steps: WizardStep[] = [
+    {
+      label: "Customer & Opportunity",
+      validate: () => (!title.trim() || !customerName.trim() ? "Title and customer name are required." : null),
+      content: (
+        <>
+          <div className="field">
+            <label>Title</label>
+            <input value={title} onChange={(e) => setTitle(e.target.value)} style={{ width: "100%" }} placeholder="CCTV upgrade — ABC Tower" />
           </div>
-        </div>
-        <div className="field">
-          <label>Customer name</label>
-          {customerType === "CORPORATE" ? (
-            <select value={customerName} onChange={(e) => setCustomerName(e.target.value)} style={{ width: "100%" }}>
-              <option value="">Select partner</option>
-              {CORPORATE_PARTNERS.map((p) => <option key={p} value={p}>{p}</option>)}
-            </select>
-          ) : (
-            <input value={customerName} onChange={(e) => setCustomerName(e.target.value)} style={{ width: "100%" }} />
-          )}
-        </div>
-        <div className="field">
-          <label>Description (optional)</label>
-          <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} style={{ width: "100%" }} />
-        </div>
-        <div className="field">
-          <label>Estimated value (optional)</label>
-          <input type="number" value={value} onChange={(e) => setValue(e.target.value)} style={{ width: "100%" }} placeholder="0.00" />
-        </div>
-        <div className="field">
-          <label>Due date (optional)</label>
-          <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} style={{ width: "100%" }} />
-        </div>
-        <div className="field">
-          <label>Assign to (optional)</label>
-          <select value={assignedToId} onChange={(e) => setAssignedToId(e.target.value)} style={{ width: "100%" }}>
-            <option value="">Unassigned</option>
-            {people.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.role})</option>)}
-          </select>
-        </div>
-        <div className="field">
-          <label>Team (optional)</label>
-          <select value={teamId} onChange={(e) => setTeamId(e.target.value)} style={{ width: "100%" }}>
-            <option value="">No team</option>
-            {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-          </select>
-        </div>
-        {error && <p style={{ color: "var(--danger)", fontSize: 13 }}>{error}</p>}
-        <button className="primary" type="submit">Create sale order</button>
-      </form>
+          <div className="field">
+            <label>Customer type</label>
+            <div style={{ display: "flex", gap: 16 }}>
+              <label style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: "normal" }}>
+                <input type="radio" checked={customerType === "GENERAL"} onChange={() => handleCustomerTypeChange("GENERAL")} />
+                General customer
+              </label>
+              <label style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: "normal" }}>
+                <input type="radio" checked={customerType === "CORPORATE"} onChange={() => handleCustomerTypeChange("CORPORATE")} />
+                Corporate partner
+              </label>
+            </div>
+          </div>
+          <div className="field">
+            <label>Customer name</label>
+            {customerType === "CORPORATE" ? (
+              <select value={customerName} onChange={(e) => setCustomerName(e.target.value)} style={{ width: "100%" }}>
+                <option value="">Select partner</option>
+                {CORPORATE_PARTNERS.map((p) => <option key={p} value={p}>{p}</option>)}
+              </select>
+            ) : (
+              <input value={customerName} onChange={(e) => setCustomerName(e.target.value)} style={{ width: "100%" }} />
+            )}
+          </div>
+        </>
+      ),
+    },
+    {
+      label: "Details & Assignment",
+      content: (
+        <>
+          <div className="field">
+            <label>Description (optional)</label>
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} style={{ width: "100%" }} />
+          </div>
+          <div className="field-pair">
+            <div className="field">
+              <label>Estimated value (optional)</label>
+              <input type="number" value={value} onChange={(e) => setValue(e.target.value)} style={{ width: "100%" }} placeholder="0.00" />
+            </div>
+            <div className="field">
+              <label>Due date (optional)</label>
+              <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} style={{ width: "100%" }} />
+            </div>
+          </div>
+          <div className="field-pair">
+            <div className="field">
+              <label>Assign to (optional)</label>
+              <select value={assignedToId} onChange={(e) => setAssignedToId(e.target.value)} style={{ width: "100%" }}>
+                <option value="">Unassigned</option>
+                {people.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.role})</option>)}
+              </select>
+            </div>
+            <div className="field">
+              <label>Team (optional)</label>
+              <select value={teamId} onChange={(e) => setTeamId(e.target.value)} style={{ width: "100%" }}>
+                <option value="">No team</option>
+                {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+              </select>
+            </div>
+          </div>
+        </>
+      ),
+    },
+  ];
+
+  return (
+    <div className="container wizard-container">
+      <h1>New sale order</h1>
+      <Wizard steps={steps} step={step} setStep={setStep} onSubmit={handleSubmit} submitLabel="Create sale order" error={error} setError={setError} />
     </div>
   );
 }
