@@ -139,8 +139,10 @@ export default function AccountPage() {
         {signatureUrl && (
           <img src={signatureUrl} alt="Your signature" style={{ maxWidth: 220, maxHeight: 80, display: "block", marginBottom: 10, border: "1px solid var(--border)", borderRadius: 6, background: "white" }} />
         )}
-        <input type="file" accept="image/*" onChange={handleSignatureSelect} disabled={uploadingSignature} />
-        {uploadingSignature && <p style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 6 }}>Uploading…</p>}
+        <input type="file" id="signature-upload" accept="image/*" onChange={handleSignatureSelect} disabled={uploadingSignature} style={{ display: "none" }} />
+        <label htmlFor="signature-upload" className={`file-upload-label${uploadingSignature ? " disabled" : ""}`}>
+          {uploadingSignature ? "Uploading…" : "Choose file"}
+        </label>
         {!signatureUrl && <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 6 }}>No signature uploaded yet.</p>}
       </div>
 

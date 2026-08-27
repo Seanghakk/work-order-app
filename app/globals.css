@@ -118,6 +118,13 @@ button.primary:hover { background: var(--navy-deep); }
 button.danger { background: transparent; color: var(--danger); border-color: rgba(220, 38, 38, 0.35); }
 button.danger:hover { background: rgba(220, 38, 38, 0.08); }
 
+/* Native <input type="file"> controls ignore most sizing CSS and render with bulky
+   platform chrome (especially on mobile browsers) — this hides the raw input and
+   triggers it from a normally-sized label styled like every other button instead. */
+.file-upload-label { display: inline-block; cursor: pointer; border: 1px solid var(--border); border-radius: 6px; padding: 9px 11px; background: var(--surface-hover); color: var(--text); font: inherit; }
+.file-upload-label:hover { background: #e4e8ec; }
+.file-upload-label.disabled { opacity: 0.6; cursor: not-allowed; }
+
 /* Shared layout for a row of action buttons (e.g. a detail page's utility/workflow
    button rows) — wraps onto a new line instead of squeezing button labels into
    internal text-wrap, and gives short-label buttons a shared minimum width so they
@@ -184,6 +191,11 @@ body:has(.login-shell) { padding-top: 0; }
 .metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
 .chart-split { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 24px; align-items: stretch; }
 .chart-split > *:only-child { grid-column: 1 / -1; }
+/* Grid items default to min-width: auto (sized to content), which conflicts with
+   Recharts' ResponsiveContainer measuring "100% of parent" — it can end up observing
+   a width of 0 and never recovering. Flexbox doesn't have this failure mode, but
+   Grid does; this is the standard fix. */
+.chart-split > * { min-width: 0; }
 .chart-stack { display: flex; flex-direction: column; gap: 16px; }
 
 /* Status pill colors follow the same unified palette as the dashboard charts
@@ -236,7 +248,7 @@ body:has(.login-shell) { padding-top: 0; }
 }
 .notif-bell { position: relative; background: none; border: none; padding: 6px; }
 .notif-dot { position: absolute; top: 2px; right: 2px; background: var(--accent); color: white; font-size: 10px; font-weight: 700; border-radius: 999px; min-width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; padding: 0 3px; }
-.notif-panel { position: absolute; right: 0; top: 36px; width: 320px; max-height: 400px; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 12px 32px rgba(16, 40, 60, 0.18); z-index: 25; }
+.notif-panel { position: absolute; right: 0; top: 36px; width: 320px; max-height: 400px; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 12px 32px rgba(16, 40, 60, 0.18); z-index: 25; animation: nav-stack-in 0.16s ease-out; }
 .notif-item { display: block; width: 100%; text-align: left; padding: 12px 14px; border: none; border-bottom: 1px solid var(--border); background: none; font-size: 13px; }
 .notif-item:last-child { border-bottom: none; }
 .notif-item.unread { background: rgba(14, 92, 134, 0.06); }
@@ -244,10 +256,16 @@ body:has(.login-shell) { padding-top: 0; }
 
 .search-bar-wrap { position: relative; width: 220px; }
 .search-bar-wrap input { width: 100%; padding: 7px 10px; font-size: 13px; }
-.search-results-panel { position: absolute; left: 0; top: 36px; width: 340px; max-height: 460px; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 12px 32px rgba(16, 40, 60, 0.18); z-index: 25; }
+.search-results-panel { position: absolute; left: 0; top: 36px; width: 340px; max-height: 460px; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 12px 32px rgba(16, 40, 60, 0.18); z-index: 25; animation: nav-stack-in 0.16s ease-out; }
 .search-group-label { padding: 8px 14px 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: var(--text-muted); }
-.search-result-item { display: block; padding: 8px 14px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text); }
-.search-result-item:hover { background: var(--surface-hover); text-decoration: none; }
+/* Qualified with the panel ancestor (not just .search-result-item alone) because
+   this renders as a real <a> (Next.js Link) inside .nav, and the global `.nav a`
+   rule (font-size:17px, color:var(--text-muted), meant for the actual top-level
+   nav links) has higher specificity (class+element) than a bare single-class
+   selector — it was silently winning and blowing up the result text to nav-link
+   size/color. Two classes here beats it back. */
+.search-results-panel .search-result-item { display: block; padding: 8px 14px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text); }
+.search-results-panel .search-result-item:hover { background: var(--surface-hover); text-decoration: none; }
 .search-result-title { font-weight: 600; }
 .search-result-meta { color: var(--text-muted); font-size: 12px; margin-top: 2px; }
 .search-see-all { display: block; width: 100%; padding: 10px 14px; text-align: center; font-weight: 600; font-size: 13px; color: var(--navy); border: none; border-top: 1px solid var(--border); border-radius: 0; background: none; }
@@ -264,14 +282,46 @@ body:has(.login-shell) { padding-top: 0; }
   .chart-split { grid-template-columns: 1fr; }
 }
 
-@media (max-width: 720px) {
+/* Base defaults for the desktop/mobile nav-link swap below — MUST stay before the
+   @media block that overrides them. Equal-specificity CSS rules resolve by source
+   order regardless of which one is behind a media query, so if these unconditional
+   defaults were declared after the override, they'd always win and the swap would
+   never engage at any viewport width (this happened once already — see git history
+   on this file if it happens again). */
+.nav-desktop-links { display: contents; }
+.nav-mobile-links { display: none; }
+
+/* Nav collapses to the hamburger/stacked-menu treatment starting well into tablet
+   widths, not just phone widths — .nav-links has no wrap and no overflow handling,
+   so at any width narrower than the full desktop nav's total item width (search bar
+   + 4 nav links/dropdowns + notif bell + user name + sign out), items were
+   overflowing off the right edge, pushing Sign out out of view entirely with no way
+   to scroll it back into reach. 1400px (not 1024px) because real iPad landscape
+   viewport widths run roughly 1080-1366px depending on model — 1024px left every
+   landscape iPad still on the desktop nav layout, only ever catching portrait.
+   Merged in here from what used to be a separate .nav-desktop-links/.nav-mobile-links
+   swap block, since it's part of the same collapse mechanism. */
+@media (max-width: 1400px) {
   .nav-top { display: flex; }
   .nav-links { display: none; flex-direction: column; align-items: flex-start; gap: 12px; padding: 0 16px 16px; }
   .nav-links-open { display: flex; }
   .nav-logo-inline { display: none; }
   .nav-user { margin-left: 0; flex-direction: column; align-items: flex-start; gap: 6px; }
-  .container { padding: 16px; }
+  /* .notif-panel's default `right: 0` anchors it correctly when its trigger
+     (inside .nav-user) sits at the far right of a desktop row layout — but
+     .nav-user just went left-aligned above, so `right: 0` now measures from a
+     point near the left edge, sending the 320px-wide panel's left edge deep
+     into negative territory (off-screen). Anchor from the left instead, same
+     as .search-results-panel already does. */
+  .notif-panel { left: 0; right: auto; }
   body { padding-top: 56px; }
+  .nav-desktop-links { display: none; }
+  .nav-mobile-links { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; width: 100%; }
+  .nav-mobile-note { font-size: 12px; color: var(--text-muted); margin: 4px 0 0; }
+}
+
+@media (max-width: 720px) {
+  .container { padding: 16px; }
   .stat-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
   .metric-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
   .report-grid { grid-template-columns: 1fr; }
@@ -333,15 +383,6 @@ button, .card, .nav-dropdown-panel, .notif-panel {
 button:hover:not(:disabled) { transform: translateY(-1px); }
 .card:hover { box-shadow: 0 4px 16px rgba(16, 40, 60, 0.08); }
 a { transition: color 0.15s ease; }
-
-/* ===== Simplified mobile nav ===== */
-.nav-desktop-links { display: contents; }
-.nav-mobile-links { display: none; }
-@media (max-width: 720px) {
-  .nav-desktop-links { display: none; }
-  .nav-mobile-links { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; width: 100%; }
-  .nav-mobile-note { font-size: 12px; color: var(--text-muted); margin: 4px 0 0; }
-}
 
 
 

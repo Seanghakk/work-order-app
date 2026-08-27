@@ -72,11 +72,21 @@ export default function SearchBar() {
   }, [query]);
 
   useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
+    // touchstart alongside mousedown — see NavBar.tsx's identical fix for why:
+    // iOS Safari doesn't reliably synthesize mouse events from a tap on
+    // non-interactive page content, so mousedown-only outside-click detection
+    // silently didn't close this on touch devices.
+    function handleClickOutside(e: Event) {
       if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
     }
-    if (open) document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    if (open) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("touchstart", handleClickOutside, { passive: true });
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
   }, [open]);
 
   function goToFullResults() {

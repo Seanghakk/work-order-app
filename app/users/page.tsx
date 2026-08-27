@@ -153,13 +153,6 @@ export default function UsersPage() {
     load();
   }
 
-  async function removeUser(id: string) {
-    if (!confirm("Remove this user? This can't be undone.")) return;
-    const res = await fetch(`/api/users/${id}`, { method: "DELETE" });
-    if (!res.ok) { setError((await res.json()).error); return; }
-    load();
-  }
-
   return (
     <div className="container">
       <span className="eyebrow">Administration</span>
@@ -201,7 +194,7 @@ export default function UsersPage() {
 
       <div className="table-scroll">
       <table>
-        <thead><tr><th>Name</th><th>Email</th><th>Username</th><th>Role</th><th>Team</th><th>Sites</th><th>Status</th><th>Reset password</th><th></th><th></th></tr></thead>
+        <thead><tr><th>Name</th><th>Email</th><th>Username</th><th>Role</th><th>Team</th><th>Sites</th><th>Status</th><th>Reset password</th><th></th></tr></thead>
         <tbody>
           {filteredUsers.map((u) => (
             <tr key={u.id}>
@@ -289,7 +282,6 @@ export default function UsersPage() {
                   <button onClick={() => startEditInfo(u)}>Edit info</button>
                 )}
               </td>
-              <td><button className="danger" onClick={() => removeUser(u.id)}>Remove</button></td>
             </tr>
           ))}
         </tbody>
