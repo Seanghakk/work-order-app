@@ -11,20 +11,26 @@ const WO_STATUS_LABEL: Record<string, string> = {
   ASSIGNED: "Assigned", IN_PROGRESS: "In progress", PENDING_SIGNOFF: "Pending sign-off",
   COMPLETED: "Completed", ON_HOLD: "On hold", CANCELED: "Canceled",
 };
+// Unified status palette — reuses the app's existing theme colors (see :root in
+// globals.css) instead of one-off hexes, so a status means the same color
+// everywhere (dashboard charts, table badges): navy #0e5c86 = queued/info,
+// teal #0f9488 = active/moving, navy-deep #0a3f5c = underway, amber #d97706 =
+// needs action, slate #5b6b7a = neutral/paused/low, green #16a34a = done,
+// red #dc2626 = canceled/urgent (kept distinct from brand --accent #c62430).
 const WO_STATUS_COLOR: Record<string, string> = {
-  OPEN: "#0e5c86", PENDING_APPROVAL: "#eab308", APPROVED: "#0891b2",
-  ASSIGNED: "#0f9488", IN_PROGRESS: "#d97706", PENDING_SIGNOFF: "#ea580c",
-  ON_HOLD: "#5b6b7a", COMPLETED: "#16a34a", CANCELED: "#c62430",
+  OPEN: "#0e5c86", PENDING_APPROVAL: "#d97706", APPROVED: "#0f9488",
+  ASSIGNED: "#0f9488", IN_PROGRESS: "#0a3f5c", PENDING_SIGNOFF: "#d97706",
+  ON_HOLD: "#5b6b7a", COMPLETED: "#16a34a", CANCELED: "#dc2626",
 };
 const PRIORITY_LABEL: Record<string, string> = { LOW: "Low", MEDIUM: "Medium", HIGH: "High", URGENT: "Urgent" };
-const PRIORITY_COLOR: Record<string, string> = { LOW: "#5b6b7a", MEDIUM: "#0e5c86", HIGH: "#d97706", URGENT: "#c62430" };
+const PRIORITY_COLOR: Record<string, string> = { LOW: "#5b6b7a", MEDIUM: "#0e5c86", HIGH: "#d97706", URGENT: "#dc2626" };
 const SO_STATUS_LABEL: Record<string, string> = {
   INQUIRY: "Inquiry", DRAWING: "Drawing", BOQ: "BoQ", SUBMIT_TO_SALE: "Submit to Sale",
   CONFIRM_PO: "Confirm PO", CANCELLED: "Cancelled",
 };
 const SO_STATUS_COLOR: Record<string, string> = {
-  INQUIRY: "#5b6b7a", DRAWING: "#0e5c86", BOQ: "#0f9488",
-  SUBMIT_TO_SALE: "#d97706", CONFIRM_PO: "#16a34a", CANCELLED: "#c62430",
+  INQUIRY: "#0e5c86", DRAWING: "#0f9488", BOQ: "#0f9488",
+  SUBMIT_TO_SALE: "#0a3f5c", CONFIRM_PO: "#16a34a", CANCELLED: "#dc2626",
 };
 
 const SEVEN_DAYS_AGO = () => new Date(Date.now() - 7 * 86400000);
@@ -41,26 +47,30 @@ function StatCard({ label, value, style }: { label: string; value: number; style
 type ActionListRow = { id: string; title: string; site: string | null; person: string | null };
 
 function ActionQueueCard({ title, emptyLabel, count, rows, personLabel }: { title: string; emptyLabel: string; count: number; rows: ActionListRow[]; personLabel: string }) {
+  if (count === 0) {
+    return (
+      <div className="empty-row">
+        <span aria-hidden>✓</span>
+        <span><strong>{title}</strong> — {emptyLabel}</span>
+      </div>
+    );
+  }
   return (
     <div className="card">
       <h4 style={{ marginTop: 0 }}>{title} ({count})</h4>
-      {rows.length === 0 ? (
-        <p style={{ color: "var(--text-muted)", fontSize: 13 }}>{emptyLabel}</p>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {rows.map((r) => (
-            <Link key={r.id} href={`/work-orders/${r.id}`} style={{ display: "block" }}>
-              <div style={{ fontWeight: 600, fontSize: 14 }}>{r.title}</div>
-              <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
-                {personLabel}: {r.person || "—"} · {r.site || "—"}
-              </div>
-            </Link>
-          ))}
-          {count > rows.length && (
-            <span style={{ fontSize: 12, color: "var(--text-muted)" }}>+{count - rows.length} more</span>
-          )}
-        </div>
-      )}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {rows.map((r) => (
+          <Link key={r.id} href={`/work-orders/${r.id}`} style={{ display: "block" }}>
+            <div style={{ fontWeight: 600, fontSize: 14 }}>{r.title}</div>
+            <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
+              {personLabel}: {r.person || "—"} · {r.site || "—"}
+            </div>
+          </Link>
+        ))}
+        {count > rows.length && (
+          <span style={{ fontSize: 12, color: "var(--text-muted)" }}>+{count - rows.length} more</span>
+        )}
+      </div>
     </div>
   );
 }
@@ -106,7 +116,7 @@ export default async function Dashboard() {
 
       {canAccessWorkOrders(role) && (
         <>
-          <h3>Work Orders</h3>
+          <span className="section-label">Work Orders</span>
 
           {isRequester && <RequesterView userId={userId} siteFilter={siteFilter} />}
           {!isRequester && !isManagerOrAdmin && !isLeader && <PersonalWorkView userId={userId} siteFilter={siteFilter} />}
@@ -121,23 +131,21 @@ export default async function Dashboard() {
 
       {showSales && (
         <>
-          <h3 style={{ marginTop: 40 }}>Sale Orders</h3>
-          {/* Stat cards stack into a narrow left rail instead of stretching across a
-              third of the row each, freeing width for "By stage" beside them instead
-              of underneath in its own row. */}
-          <div style={{ display: "flex", gap: 16, marginBottom: 24, flexWrap: "wrap", alignItems: "stretch" }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: 16, flex: "1 1 220px" }}>
-              <StatCard label="Open pipeline" value={soPipeline} style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }} />
-              <StatCard label="Closed this month" value={soClosedThisMonth} style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }} />
-              <div className="card" style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                <div style={{ fontSize: 13, color: "var(--text-muted)" }}>Pipeline value</div>
-                <div style={{ fontSize: 28, fontWeight: 600 }}>${soPipelineValue.toLocaleString()}</div>
-              </div>
+          <span className="section-label">Sale Orders</span>
+          {/* 3 metric cards in an even grid, sitting above the "By stage" chart as its
+              own full-width card, instead of a narrow stat rail squeezed beside a
+              flex-grown chart card that stretched past what its content needed. */}
+          <div className="metric-grid">
+            <StatCard label="Open pipeline" value={soPipeline} />
+            <StatCard label="Closed this month" value={soClosedThisMonth} />
+            <div className="card">
+              <div style={{ fontSize: 13, color: "var(--text-muted)" }}>Pipeline value</div>
+              <div style={{ fontSize: 28, fontWeight: 600 }}>${soPipelineValue.toLocaleString()}</div>
             </div>
-            <div className="card" style={{ flex: "2 1 420px" }}>
-              <h4 style={{ marginTop: 0 }}>By stage</h4>
-              {soStageChart.length > 0 ? <DonutChart data={soStageChart} /> : <p style={{ color: "var(--text-muted)", fontSize: 13 }}>No sale orders yet.</p>}
-            </div>
+          </div>
+          <div className="card" style={{ marginBottom: 24 }}>
+            <h4 style={{ marginTop: 0 }}>By stage</h4>
+            {soStageChart.length > 0 ? <DonutChart data={soStageChart} /> : <p style={{ color: "var(--text-muted)", fontSize: 13 }}>No sale orders yet.</p>}
           </div>
           <Link href="/sale-orders"><button className="primary">View sale orders</button></Link>
         </>
@@ -207,7 +215,7 @@ async function LeaderView({ userId, leaderTeamIds, siteFilter }: { userId: strin
 
   return (
     <>
-      <h4>Needs your action</h4>
+      <span className="section-label">Needs your action</span>
       <div className="report-grid" style={{ marginBottom: 24 }}>
         <ActionQueueCard
           title="Pending your approval"
@@ -227,7 +235,7 @@ async function LeaderView({ userId, leaderTeamIds, siteFilter }: { userId: strin
 
       {myAssignedTotal > 0 && (
         <>
-          <h4>Your assigned work</h4>
+          <span className="section-label">Your assigned work</span>
           <PersonalWorkView userId={userId} siteFilter={siteFilter} />
         </>
       )}
@@ -280,7 +288,7 @@ async function ManagerView({ siteFilter, siteIds }: { siteFilter: Record<string,
 
   return (
     <>
-      <h4>Needs your action</h4>
+      <span className="section-label">Needs your action</span>
       <div className="report-grid" style={{ marginBottom: 24 }}>
         <ActionQueueCard
           title="Pending approval"
@@ -298,26 +306,27 @@ async function ManagerView({ siteFilter, siteIds }: { siteFilter: Record<string,
         />
       </div>
 
-      <h4>Overview</h4>
+      <span className="section-label">Overview</span>
       <div className="stat-grid">
         <StatCard label="Open" value={open} />
         <StatCard label="In progress" value={inProgress} />
         <StatCard label="Overdue" value={overdue} />
         <StatCard label="Completed this week" value={completedThisWeek} />
       </div>
-      {/* Trend chart shares a row with the two donuts instead of each getting its own
-          full-width row underneath — trend drops to ~2/3 width (still plenty for a
-          weekly line) and the freed width absorbs both donuts stacked beside it. If
-          there's no trend data yet, the donut column is the row's only flex item and
-          grows to fill it, so the empty state still reads full-width. */}
-      <div style={{ display: "flex", gap: 16, marginBottom: 24, flexWrap: "wrap", alignItems: "stretch" }}>
+      {/* Trend chart takes the wider 2fr column, the two donuts stack in the
+          narrower 1fr column beside it — a deterministic grid instead of flex-grow
+          on pixel flex-basis hints, which let both columns stretch past what their
+          content needed on wide viewports. If there's no trend data yet, the donut
+          column is the grid's only item and .chart-split falls back to its single
+          remaining track, so the empty state still reads full-width. */}
+      <div className="chart-split">
         {trendChartData.length > 0 && (
-          <div className="card" style={{ flex: "2 1 420px" }}>
+          <div className="card">
             <h4 style={{ marginTop: 0 }}>Created - last 8 weeks</h4>
             <TrendChart data={trendChartData} />
           </div>
         )}
-        <div style={{ display: "flex", flexDirection: "column", gap: 16, flex: "1 1 260px" }}>
+        <div className="chart-stack">
           <div className="card" style={{ flex: 1 }}>
             <h4 style={{ marginTop: 0 }}>By status</h4>
             {woStatusChart.length > 0 ? <DonutChart data={woStatusChart} /> : <p style={{ color: "var(--text-muted)", fontSize: 13 }}>No work orders yet.</p>}

@@ -45,6 +45,27 @@ h1 { font-size: 32px; font-weight: 700; letter-spacing: -0.3px; }
 }
 h2 { font-size: 24px; }
 h3 { font-size: 18px; }
+
+/* Page-section label: a small, uppercase, muted marker (e.g. "Work Orders",
+   "Overview", "Needs your action") that sits below a page's <h1> without
+   competing with it for visual weight — distinct from a card's own <h4> title. */
+.section-label {
+  display: block;
+  font-family: 'Poppins', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 32px 0 12px;
+}
+h1 + .section-label { margin-top: 12px; }
+
+/* Compact collapsed-row treatment for a zero-item section (e.g. an action
+   queue with nothing pending) — replaces a full-size .card that would
+   otherwise just be padding and shadow around one muted sentence. */
+.empty-row { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 8px; background: var(--surface-hover); border: 1px solid var(--border); font-size: 13px; color: var(--text-muted); align-self: start; }
+.empty-row strong { color: var(--text); font-weight: 600; }
 a { color: var(--navy); text-decoration: none; }
 a:hover { text-decoration: underline; }
 input, select, textarea, button {
@@ -82,7 +103,11 @@ button.danger:hover { background: rgba(220, 38, 38, 0.08); }
 table { width: 100%; border-collapse: collapse; background: var(--surface); }
 th, td { text-align: left; padding: 11px 12px; border-bottom: 1px solid var(--border); font-size: 14px; }
 th { color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; position: sticky; top: 0; background: var(--surface); z-index: 5; }
-tr:hover td { background: var(--surface-hover); }
+/* Subtle alternate-row tint for scan-line readability on longer tables. Scoped
+   to tbody (not the sticky thead) and given the same specificity as the hover
+   rule below, declared first, so hovering a striped row still reliably wins. */
+tbody tr:nth-child(even) td { background: rgba(16, 40, 60, 0.025); }
+tbody tr:hover td { background: var(--surface-hover); }
 
 .card {
     background: var(--surface);
@@ -103,20 +128,42 @@ body:has(.login-shell) { padding-top: 0; }
 .nav-user { margin-left: auto; font-size: 13px; color: var(--text-muted); display: flex; align-items: center; gap: 12px; white-space: nowrap; }
 .container { max-width: 1400px; margin: 0 auto; padding: 24px; }
 .table-scroll { overflow-x: auto; overflow-y: auto; max-height: 65vh; border-radius: 10px; border: 1px solid var(--border); }
+/* Only re-centers on genuinely wide monitors (well past .container's 1400px cap
+   plus padding) — ordinary 1280-1440px laptop widths are untouched, so the
+   widest existing table (Work Orders, 9 columns) never loses width it needs. */
+@media (min-width: 1600px) {
+  .table-scroll { max-width: 1300px; margin: 0 auto; }
+}
 .table-scroll table { border: none; }
 .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
 .report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 
+/* Metric card row (3 equal columns) sitting above a split chart view (a wider
+   primary chart beside a narrower stacked column) — used where a section has a
+   chart pairing instead of stretching everything across one flex row with
+   pixel flex-basis hints, which let cards balloon past their content's needs
+   on wide viewports. */
+.metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+.chart-split { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 24px; align-items: stretch; }
+.chart-split > *:only-child { grid-column: 1 / -1; }
+.chart-stack { display: flex; flex-direction: column; gap: 16px; }
+
+/* Status pill colors follow the same unified palette as the dashboard charts
+   (see WO_STATUS_COLOR in app/dashboard/page.tsx) — a status resolves to the
+   same color everywhere in the app. Color is always paired with the pill's
+   text label, so reused colors across related statuses (e.g. amber for both
+   pending_approval and pending_signoff) stay distinguishable without relying
+   on color alone. */
 .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; border: 1px solid transparent; }
 .badge-open { background: rgba(14, 92, 134, 0.10); color: var(--navy); border-color: rgba(14, 92, 134, 0.25); }
-.badge-assigned { background: rgba(217, 119, 6, 0.10); color: var(--warning); border-color: rgba(217, 119, 6, 0.25); }
-.badge-in_progress { background: rgba(124, 58, 237, 0.10); color: #7c3aed; border-color: rgba(124, 58, 237, 0.25); }
+.badge-assigned { background: rgba(15, 148, 136, 0.10); color: var(--teal); border-color: rgba(15, 148, 136, 0.25); }
+.badge-in_progress { background: rgba(10, 63, 92, 0.10); color: var(--navy-deep); border-color: rgba(10, 63, 92, 0.25); }
 .badge-on_hold { background: rgba(91, 107, 122, 0.10); color: var(--text-muted); border-color: var(--border); }
 .badge-completed { background: rgba(22, 163, 74, 0.10); color: var(--success); border-color: rgba(22, 163, 74, 0.25); }
 .badge-canceled { background: rgba(220, 38, 38, 0.10); color: var(--danger); border-color: rgba(220, 38, 38, 0.25); }
 .badge-pending_approval { background: rgba(217, 119, 6, 0.10); color: var(--warning); border-color: rgba(217, 119, 6, 0.25); }
-.badge-approved { background: rgba(8, 145, 178, 0.10); color: #0891b2; border-color: rgba(8, 145, 178, 0.25); }
-.badge-pending_signoff { background: rgba(234, 88, 12, 0.10); color: #ea580c; border-color: rgba(234, 88, 12, 0.25); }
+.badge-approved { background: rgba(15, 148, 136, 0.10); color: var(--teal); border-color: rgba(15, 148, 136, 0.25); }
+.badge-pending_signoff { background: rgba(217, 119, 6, 0.10); color: var(--warning); border-color: rgba(217, 119, 6, 0.25); }
 .badge-urgent { background: rgba(220, 38, 38, 0.10); color: var(--danger); border-color: rgba(220, 38, 38, 0.25); }
 .badge-high { background: rgba(217, 119, 6, 0.10); color: var(--warning); border-color: rgba(217, 119, 6, 0.25); }
 .badge-medium { background: rgba(14, 92, 134, 0.10); color: var(--navy); border-color: rgba(14, 92, 134, 0.25); }
@@ -131,7 +178,7 @@ body:has(.login-shell) { padding-top: 0; }
 /* Stack panel: replaces the old single flat bordered box with a vertical stack of
    individually-cased cards that slides/fades in under its trigger, one gap-separated
    card per link instead of plain rows inside one plane. */
-.nav-dropdown-panel { position: absolute; top: 32px; left: 0; display: flex; flex-direction: column; gap: 6px; min-width: 200px; z-index: 20; animation: nav-stack-in 0.16s ease-out; }
+.nav-dropdown-panel { position: absolute; top: 32px; left: 0; display: flex; flex-direction: column; gap: 6px; min-width: 200px; z-index: 25; animation: nav-stack-in 0.16s ease-out; }
 .nav-dropdown-panel a {
   display: block;
   background: var(--surface);
@@ -141,17 +188,17 @@ body:has(.login-shell) { padding-top: 0; }
   font-size: 14px;
   font-weight: 500;
   color: var(--text);
-  box-shadow: 0 2px 8px rgba(16, 40, 60, 0.08);
+  box-shadow: 0 8px 20px rgba(16, 40, 60, 0.16);
   transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
 }
-.nav-dropdown-panel a:hover { border-color: var(--navy); box-shadow: 0 6px 16px rgba(16, 40, 60, 0.14); transform: translateX(3px); text-decoration: none; }
+.nav-dropdown-panel a:hover { border-color: var(--navy); box-shadow: 0 10px 24px rgba(16, 40, 60, 0.22); transform: translateX(3px); text-decoration: none; }
 @keyframes nav-stack-in {
   from { opacity: 0; transform: translateY(-6px); }
   to { opacity: 1; transform: translateY(0); }
 }
 .notif-bell { position: relative; background: none; border: none; padding: 6px; }
 .notif-dot { position: absolute; top: 2px; right: 2px; background: var(--accent); color: white; font-size: 10px; font-weight: 700; border-radius: 999px; min-width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; padding: 0 3px; }
-.notif-panel { position: absolute; right: 0; top: 36px; width: 320px; max-height: 400px; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 12px 32px rgba(16, 40, 60, 0.18); z-index: 20; }
+.notif-panel { position: absolute; right: 0; top: 36px; width: 320px; max-height: 400px; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 12px 32px rgba(16, 40, 60, 0.18); z-index: 25; }
 .notif-item { display: block; width: 100%; text-align: left; padding: 12px 14px; border: none; border-bottom: 1px solid var(--border); background: none; font-size: 13px; }
 .notif-item:last-child { border-bottom: none; }
 .notif-item.unread { background: rgba(14, 92, 134, 0.06); }
@@ -159,7 +206,7 @@ body:has(.login-shell) { padding-top: 0; }
 
 .search-bar-wrap { position: relative; width: 220px; }
 .search-bar-wrap input { width: 100%; padding: 7px 10px; font-size: 13px; }
-.search-results-panel { position: absolute; left: 0; top: 36px; width: 340px; max-height: 460px; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 12px 32px rgba(16, 40, 60, 0.18); z-index: 20; }
+.search-results-panel { position: absolute; left: 0; top: 36px; width: 340px; max-height: 460px; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 12px 32px rgba(16, 40, 60, 0.18); z-index: 25; }
 .search-group-label { padding: 8px 14px 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: var(--text-muted); }
 .search-result-item { display: block; padding: 8px 14px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text); }
 .search-result-item:hover { background: var(--surface-hover); text-decoration: none; }
@@ -172,6 +219,13 @@ body:has(.login-shell) { padding-top: 0; }
   .search-bar-wrap { width: 160px; }
 }
 
+/* Chart-split's 2fr/1fr side-by-side stops making sense once the primary chart
+   column gets too narrow to read — collapse to a single stacked column through
+   the tablet range instead of squeezing it. */
+@media (max-width: 1024px) {
+  .chart-split { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 720px) {
   .nav-top { display: flex; }
   .nav-links { display: none; flex-direction: column; align-items: flex-start; gap: 12px; padding: 0 16px 16px; }
@@ -181,6 +235,7 @@ body:has(.login-shell) { padding-top: 0; }
   .container { padding: 16px; }
   body { padding-top: 56px; }
   .stat-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .metric-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
   .report-grid { grid-template-columns: 1fr; }
   table { min-width: 640px; }
   .card form { flex-direction: column; align-items: stretch !important; }
