@@ -11,6 +11,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   const body = await req.json();
   const data: any = {};
   if (body.teamLeaderId !== undefined) data.teamLeaderId = body.teamLeaderId || null;
+  if (body.backupApproverId !== undefined) data.backupApproverId = body.backupApproverId || null;
   if (body.colorHex) data.colorHex = body.colorHex;
   const team = await prisma.team.update({ where: { id: params.id }, data });
   return NextResponse.json(team);

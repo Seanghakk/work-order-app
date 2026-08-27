@@ -28,6 +28,17 @@ export default function TeamsPage() {
     load();
   }
 
+  async function setBackupApprover(teamId: string, backupApproverId: string) {
+    const res = await fetch(`/api/teams/${teamId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ backupApproverId: backupApproverId || null }),
+    });
+    if (!res.ok) { setError((await res.json()).error); return; }
+    setError("");
+    load();
+  }
+
   const grouped = ["MAINTENANCE", "PROJECT", "SALES"].map((cat) => ({
     category: cat,
     teams: teams.filter((t) => t.category === cat),
@@ -59,6 +70,15 @@ export default function TeamsPage() {
                   </select>
                 ) : (
                   <p style={{ margin: "4px 0" }}>{t.teamLeader?.name || "None assigned"}</p>
+                )}
+                <label style={{ marginTop: 10, display: "block" }}>Backup approver</label>
+                {isAdmin ? (
+                  <select value={t.backupApproverId || ""} onChange={(e) => setBackupApprover(t.id, e.target.value)} style={{ width: "100%", fontSize: 14 }}>
+                    <option value="">None assigned</option>
+                    {people.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.role})</option>)}
+                  </select>
+                ) : (
+                  <p style={{ margin: "4px 0" }}>{t.backupApprover?.name || "None assigned"}</p>
                 )}
                 <p style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 10, marginBottom: 0 }}>
                   {t.members.length} member{t.members.length !== 1 ? "s" : ""}: {t.members.map((m: any) => m.name).join(", ") || "none yet"}

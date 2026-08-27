@@ -46,6 +46,7 @@ export async function POST(req: Request) {
       // Every new work order now starts in the approval workflow rather than the legacy
       // OPEN default — OPEN stays the schema default only for the pre-approval-era rows.
       status: "PENDING_APPROVAL",
+      pendingApprovalSince: new Date(),
       assetId: body.assetId || null,
       requestedById: session.user.id,
       dueDate: body.dueDate ? new Date(body.dueDate) : null,
