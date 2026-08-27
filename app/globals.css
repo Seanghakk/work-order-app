@@ -230,8 +230,14 @@ body:has(.login-shell) { padding-top: 0; }
 .search-bar-wrap input { width: 100%; padding: 7px 10px; font-size: 13px; }
 .search-results-panel { position: absolute; left: 0; top: 36px; width: 340px; max-height: 460px; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 12px 32px rgba(16, 40, 60, 0.18); z-index: 25; animation: nav-stack-in 0.16s ease-out; }
 .search-group-label { padding: 8px 14px 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: var(--text-muted); }
-.search-result-item { display: block; padding: 8px 14px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text); }
-.search-result-item:hover { background: var(--surface-hover); text-decoration: none; }
+/* Qualified with the panel ancestor (not just .search-result-item alone) because
+   this renders as a real <a> (Next.js Link) inside .nav, and the global `.nav a`
+   rule (font-size:17px, color:var(--text-muted), meant for the actual top-level
+   nav links) has higher specificity (class+element) than a bare single-class
+   selector — it was silently winning and blowing up the result text to nav-link
+   size/color. Two classes here beats it back. */
+.search-results-panel .search-result-item { display: block; padding: 8px 14px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text); }
+.search-results-panel .search-result-item:hover { background: var(--surface-hover); text-decoration: none; }
 .search-result-title { font-weight: 600; }
 .search-result-meta { color: var(--text-muted); font-size: 12px; margin-top: 2px; }
 .search-see-all { display: block; width: 100%; padding: 10px 14px; text-align: center; font-weight: 600; font-size: 13px; color: var(--navy); border: none; border-top: 1px solid var(--border); border-radius: 0; background: none; }
@@ -273,6 +279,13 @@ body:has(.login-shell) { padding-top: 0; }
   .nav-links-open { display: flex; }
   .nav-logo-inline { display: none; }
   .nav-user { margin-left: 0; flex-direction: column; align-items: flex-start; gap: 6px; }
+  /* .notif-panel's default `right: 0` anchors it correctly when its trigger
+     (inside .nav-user) sits at the far right of a desktop row layout — but
+     .nav-user just went left-aligned above, so `right: 0` now measures from a
+     point near the left edge, sending the 320px-wide panel's left edge deep
+     into negative territory (off-screen). Anchor from the left instead, same
+     as .search-results-panel already does. */
+  .notif-panel { left: 0; right: auto; }
   body { padding-top: 56px; }
   .nav-desktop-links { display: none; }
   .nav-mobile-links { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; width: 100%; }

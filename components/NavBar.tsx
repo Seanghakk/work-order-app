@@ -42,13 +42,23 @@ export default function NavBar() {
     if (session) loadNotifications();
   }, [session]);
   useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
+    // Listening for touchstart too, not just mousedown — iOS Safari doesn't
+    // reliably synthesize mouse events from a tap on non-interactive elements
+    // (e.g. plain page content), which made outside-tap-to-close silently no-op
+    // on touch devices even though the same logic worked fine with a mouse.
+    function handleClickOutside(e: Event) {
       if (navRef.current && !navRef.current.contains(e.target as Node)) {
         closeAllPanels();
       }
     }
-    if (panelOpen || maintenanceOpen || salesOpen || projectOpen) document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    if (panelOpen || maintenanceOpen || salesOpen || projectOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("touchstart", handleClickOutside, { passive: true });
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
   }, [panelOpen, maintenanceOpen, salesOpen, projectOpen]);
   async function handleBellClick() {
     const next = !panelOpen;
