@@ -5,25 +5,52 @@ import { prisma } from "@/lib/prisma";
 import { sendEmail, sendEmailWithAttachment, workOrderAssignedEmail, statusChangedEmail, newCommentEmail } from "@/lib/email";
 import { notifyUser } from "@/lib/notifications";
 import { sendTelegramMessage } from "@/lib/telegram";
-import { canAccessWorkOrders, canApproveOrSignOff, canEditWorkflowFields, checkSiteAccess } from "@/lib/permissions";
+import { canAccessWorkOrders, canApproveOrSignOff, canEditWorkflowFields, canStartOrSubmitWork, checkSiteAccess } from "@/lib/permissions";
 import { generateWorkOrderReportPdf } from "@/lib/workOrderReportPdf";
 import { isValidHttpUrl } from "@/lib/url";
 
-// The five gated transitions in the approval workflow. All five require the same
+// The gated transitions in the approval workflow. The first five require the
 // canApproveOrSignOff gate (team leader or MANAGER/ADMIN — deliberately excludes the
-// record's own requester/assignee, including for resubmit).
-const ACTION_TRANSITIONS: Record<string, { from: string; to: string; requiresReason?: boolean; label?: string }> = {
+// record's own requester/assignee, including for resubmit). startwork/readyforsignoff
+// use a deliberately different, narrower gate (canStartOrSubmitWork) — here we WANT the
+// assignee doing the actual work to trigger these themselves, so `gate: "assignee"`
+// switches the check below instead of reusing canApproveOrSignOff. Both also always log
+// an automatic comment (autoComment) even with no reason field in the UI, matching the
+// audit trail every other transition here gets.
+const ACTION_TRANSITIONS: Record<string, {
+  from: string; to: string; requiresReason?: boolean; label?: string;
+  gate?: "assignee"; autoComment?: (actorName: string) => string;
+}> = {
   approve:  { from: "PENDING_APPROVAL", to: "APPROVED" },
   reject:   { from: "PENDING_APPROVAL", to: "OPEN", requiresReason: true, label: "Rejected" },
   signoff:  { from: "PENDING_SIGNOFF",  to: "COMPLETED" },
   sendback: { from: "PENDING_SIGNOFF",  to: "IN_PROGRESS", label: "Sent back to In Progress" },
   resubmit: { from: "OPEN",             to: "PENDING_APPROVAL" },
+  startwork: {
+    from: "APPROVED", to: "IN_PROGRESS", gate: "assignee",
+    autoComment: (name) => `${name} started work on this order.`,
+  },
+  readyforsignoff: {
+    from: "IN_PROGRESS", to: "PENDING_SIGNOFF", gate: "assignee",
+    autoComment: (name) => `${name} marked this order ready for sign-off.`,
+  },
 };
 
-// Statuses that can ONLY be reached through the named actions above — rejecting a
-// direct PATCH { status: ... } attempt at any of these closes the loophole where
-// someone with canEdit could bypass the approve/reject/sign-off/resubmit gate entirely.
-const ACTION_ONLY_STATUSES = ["PENDING_APPROVAL", "APPROVED", "COMPLETED", "OPEN"];
+// Statuses that can ONLY be reached through a named action, regardless of the current
+// status — rejecting a direct PATCH { status: ... } attempt at any of these closes the
+// loophole where someone with canEdit could bypass the gate entirely. PENDING_SIGNOFF
+// joins this flat list because IN_PROGRESS is its only legitimate source today (per the
+// detail page's DROPDOWN_OPTIONS) — no other status ever offers it.
+const ACTION_ONLY_STATUSES = ["PENDING_APPROVAL", "APPROVED", "COMPLETED", "OPEN", "PENDING_SIGNOFF"];
+
+// (from, to) pairs that must go through a named action instead of the generic field.
+// Unlike the flat list above, IN_PROGRESS can't be blocked as a blanket target: it's
+// also a legitimate generic destination from ASSIGNED (a legacy status no named action
+// covers) and from ON_HOLD/CANCELED (explicitly meant to stay reachable from anywhere).
+// So only the specific pair "startwork" now owns gets closed off.
+const ACTION_ONLY_TRANSITIONS: [string, string][] = [
+  ["APPROVED", "IN_PROGRESS"],
+];
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
@@ -92,8 +119,15 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     if (before.status !== transition.from) {
       return NextResponse.json({ error: `This work order isn't in a state where "${body.action}" applies.` }, { status: 409 });
     }
-    if (!(await canApproveOrSignOff(session.user.id, session.user.role, before.teamId))) {
-      return NextResponse.json({ error: "Only the team leader or a manager can do this." }, { status: 403 });
+    const allowed = transition.gate === "assignee"
+      ? await canStartOrSubmitWork(session.user.id, session.user.role, { assignedToId: before.assignedToId, teamId: before.teamId })
+      : await canApproveOrSignOff(session.user.id, session.user.role, before.teamId);
+    if (!allowed) {
+      return NextResponse.json({
+        error: transition.gate === "assignee"
+          ? "Only the assignee, team leader, or a manager can do this."
+          : "Only the team leader or a manager can do this.",
+      }, { status: 403 });
     }
     if (transition.requiresReason && !body.reason?.trim()) {
       return NextResponse.json({ error: "A reason is required." }, { status: 400 });
@@ -104,11 +138,18 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     if (body.action === "signoff") data.completedById = session.user.id;
     if (transition.label && body.reason?.trim()) {
       commentBody = `${transition.label}: ${body.reason.trim()}`;
+    } else if (transition.autoComment) {
+      commentBody = transition.autoComment(session.user.name);
     }
   } else {
     // === Existing generic field-update path ===
-    if (body.status && ACTION_ONLY_STATUSES.includes(body.status)) {
-      return NextResponse.json({ error: `"${body.status}" can only be reached through the approve/reject/sign-off/resubmit actions, not set directly.` }, { status: 400 });
+    if (body.status) {
+      if (ACTION_ONLY_STATUSES.includes(body.status)) {
+        return NextResponse.json({ error: `"${body.status}" can only be reached through a named workflow action, not set directly.` }, { status: 400 });
+      }
+      if (ACTION_ONLY_TRANSITIONS.some(([from, to]) => before.status === from && body.status === to)) {
+        return NextResponse.json({ error: `Moving from "${before.status}" to "${body.status}" must go through the "Start work" action, not set directly.` }, { status: 400 });
+      }
     }
     // Workflow fields (status/assignedToId/teamId/dueDate) are locked to the creator,
     // current assignee, the record's team leader, or MANAGER/ADMIN — replacing the old

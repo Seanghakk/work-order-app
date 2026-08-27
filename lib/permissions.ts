@@ -162,3 +162,25 @@ export async function canApproveOrSignOff(userId: string, role: string, teamId: 
   const leaderTeamIds = await getLeaderTeamIds(userId);
   return leaderTeamIds.includes(teamId);
 }
+
+// Narrower than canEditWorkflowFields, and the mirror-opposite of canApproveOrSignOff:
+// used for the Work Order actions the assignee performs on their own work (starting it,
+// marking it ready for sign-off) — here we WANT the assignee to trigger these
+// themselves, unlike canApproveOrSignOff which deliberately excludes the record's own
+// creator/assignee. Allowed: the current assignee, a leader of the record's team (via
+// getLeaderTeamIds, so a user leading more than one team is correctly authorized for
+// all of them), or MANAGER/ADMIN. The record's creator gets no special carve-out here
+// unless they're also the assignee or a leader.
+export async function canStartOrSubmitWork(
+  userId: string,
+  role: string,
+  workOrder: { assignedToId: string | null; teamId: string | null }
+): Promise<boolean> {
+  if (role === "MANAGER" || role === "ADMIN") return true;
+  if (workOrder.assignedToId && workOrder.assignedToId === userId) return true;
+  if (workOrder.teamId) {
+    const leaderTeamIds = await getLeaderTeamIds(userId);
+    if (leaderTeamIds.includes(workOrder.teamId)) return true;
+  }
+  return false;
+}
