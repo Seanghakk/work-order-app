@@ -2,6 +2,7 @@
   "regions": ["syd1"],
   "crons": [
     { "path": "/api/pm-schedules/generate", "schedule": "0 6 * * *" },
-    { "path": "/api/maintenance-contracts/check-alerts", "schedule": "0 7 * * *" }
+    { "path": "/api/maintenance-contracts/check-alerts", "schedule": "0 7 * * *" },
+    { "path": "/api/work-orders/escalate-approvals", "schedule": "0 * * * *" }
   ]
 }

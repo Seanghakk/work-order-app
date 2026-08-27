@@ -89,6 +89,7 @@ model User {
   teamId       String?
   team         Team?    @relation("TeamMembers", fields: [teamId], references: [id])
   leadingTeams Team[]   @relation("TeamLeader")
+  backupApproverForTeams Team[] @relation("TeamBackupApprover")
   createdAt     DateTime     @default(now())
   requested     WorkOrder[]  @relation("requestedBy")
   assigned      WorkOrder[]  @relation("assignedTo")
@@ -177,6 +178,8 @@ model WorkOrder {
   category      TeamCategory?
   teamId        String?
   team          Team?           @relation(fields: [teamId], references: [id])
+  pendingApprovalSince DateTime?
+  lastEscalatedAt      DateTime?
   partsNeeded   String?
   warrantyClaim Boolean         @default(false)
   serviceType   String?
@@ -405,6 +408,8 @@ model Team {
   colorHex        String            @default("#0e5c86")
   teamLeaderId    String?
   teamLeader      User?             @relation("TeamLeader", fields: [teamLeaderId], references: [id])
+  backupApproverId String?
+  backupApprover   User?            @relation("TeamBackupApprover", fields: [backupApproverId], references: [id])
   members         User[]            @relation("TeamMembers")
   workOrders      WorkOrder[]
   saleOrders      SaleOrder[]

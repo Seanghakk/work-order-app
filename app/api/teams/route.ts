@@ -7,7 +7,7 @@ export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const teams = await prisma.team.findMany({
-    include: { teamLeader: true, members: true },
+    include: { teamLeader: true, backupApprover: true, members: true },
     orderBy: { name: "asc" },
   });
   return NextResponse.json(teams);

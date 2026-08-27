@@ -61,6 +61,13 @@ export function statusChangedEmail(title: string, status: string, workOrderId: s
 }
 
 
+export function workOrderEscalatedEmail(title: string, priority: string, hoursElapsed: number, workOrderId: string) {
+  return {
+    subject: `Escalation: pending approval for ${hoursElapsed}h — ${title}`,
+    html: `<p>A <strong>${priority}</strong>-priority work order has been pending approval for <strong>${hoursElapsed} hours</strong> and needs review:</p><p><strong>${title}</strong></p><p><a href="${APP_URL}/work-orders/${workOrderId}">View work order</a></p>`,
+  };
+}
+
 export function newCommentEmail(title: string, author: string, body: string, workOrderId: string) {
   return {
     subject: `New update on: ${title}`,

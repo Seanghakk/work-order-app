@@ -136,6 +136,11 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     if (transition.to === "COMPLETED") data.completedAt = new Date();
     if (body.action === "approve") data.approvedById = session.user.id;
     if (body.action === "signoff") data.completedById = session.user.id;
+    // Resubmit re-enters PENDING_APPROVAL, so the escalation clock resets: a fresh
+    // pendingApprovalSince, and lastEscalatedAt cleared so this new approval cycle's
+    // repeat-notification cadence isn't gated by a leftover timestamp from a previous
+    // (rejected) cycle.
+    if (body.action === "resubmit") { data.pendingApprovalSince = new Date(); data.lastEscalatedAt = null; }
     if (transition.label && body.reason?.trim()) {
       commentBody = `${transition.label}: ${body.reason.trim()}`;
     } else if (transition.autoComment) {
