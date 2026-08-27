@@ -257,15 +257,17 @@ body:has(.login-shell) { padding-top: 0; }
 .nav-desktop-links { display: contents; }
 .nav-mobile-links { display: none; }
 
-/* Nav collapses to the hamburger/stacked-menu treatment starting at tablet widths,
-   not just phone widths — .nav-links has no wrap and no overflow handling, so at
-   any width narrower than the full desktop nav's total item width (search bar + 4
-   nav links/dropdowns + notif bell + user name + sign out), items were overflowing
-   off the right edge on iPad-class screens (768-1024px), pushing Sign out out of
-   view entirely with no way to scroll it back into reach. Merged in here from what
-   used to be a separate .nav-desktop-links/.nav-mobile-links swap block, since it's
-   part of the same collapse mechanism. */
-@media (max-width: 1024px) {
+/* Nav collapses to the hamburger/stacked-menu treatment starting well into tablet
+   widths, not just phone widths — .nav-links has no wrap and no overflow handling,
+   so at any width narrower than the full desktop nav's total item width (search bar
+   + 4 nav links/dropdowns + notif bell + user name + sign out), items were
+   overflowing off the right edge, pushing Sign out out of view entirely with no way
+   to scroll it back into reach. 1400px (not 1024px) because real iPad landscape
+   viewport widths run roughly 1080-1366px depending on model — 1024px left every
+   landscape iPad still on the desktop nav layout, only ever catching portrait.
+   Merged in here from what used to be a separate .nav-desktop-links/.nav-mobile-links
+   swap block, since it's part of the same collapse mechanism. */
+@media (max-width: 1400px) {
   .nav-top { display: flex; }
   .nav-links { display: none; flex-direction: column; align-items: flex-start; gap: 12px; padding: 0 16px 16px; }
   .nav-links-open { display: flex; }
