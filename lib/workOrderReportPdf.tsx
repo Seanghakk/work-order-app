@@ -1,6 +1,7 @@
 import React from "react";
 import { Document, Page, View, Text, Image, StyleSheet, renderToBuffer } from "@react-pdf/renderer";
 import { isRequestPhase } from "@/lib/workOrderLabels";
+import { WO_STATUS_COLOR, PRIORITY_COLOR } from "@/lib/workOrderColors";
 
 const NAVY = "#0e5c86";
 const NAVY_DEEP = "#0a3f5c";
@@ -56,14 +57,10 @@ const styles = StyleSheet.create({
 });
 
 function statusColor(status: string) {
-  if (status === "COMPLETED") return "#16a34a";
-  if (status === "CANCELED") return "#dc2626";
-  if (status === "IN_PROGRESS") return "#7c3aed";
-  return NAVY;
+  return WO_STATUS_COLOR[status] || NAVY;
 }
 function priorityColor(priority: string) {
-  if (priority === "URGENT" || priority === "HIGH") return "#d97706";
-  return NAVY;
+  return PRIORITY_COLOR[priority] || NAVY;
 }
 function fmtDateTime(d: any) {
   return d ? new Date(d).toLocaleString() : "—";

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { canAccessSaleOrders, canAccessWorkOrders, getUserSiteIds, siteWhere, getLeaderTeamIds } from "@/lib/permissions";
 import { isRequestPhase, workOrderTypeLabel } from "@/lib/workOrderLabels";
+import { WO_STATUS_COLOR, PRIORITY_COLOR } from "@/lib/workOrderColors";
 import { DonutChart, TrendChart } from "@/components/DashboardCharts";
 import Link from "next/link";
 
@@ -12,19 +13,7 @@ const WO_STATUS_LABEL: Record<string, string> = {
   ASSIGNED: "Assigned", IN_PROGRESS: "In progress", PENDING_SIGNOFF: "Pending sign-off",
   COMPLETED: "Completed", ON_HOLD: "On hold", CANCELED: "Canceled",
 };
-// Unified status palette — reuses the app's existing theme colors (see :root in
-// globals.css) instead of one-off hexes, so a status means the same color
-// everywhere (dashboard charts, table badges): navy #0e5c86 = queued/info,
-// teal #0f9488 = active/moving, navy-deep #0a3f5c = underway, amber #d97706 =
-// needs action, slate #5b6b7a = neutral/paused/low, green #16a34a = done,
-// red #dc2626 = canceled/urgent (kept distinct from brand --accent #c62430).
-const WO_STATUS_COLOR: Record<string, string> = {
-  OPEN: "#0e5c86", PENDING_APPROVAL: "#d97706", APPROVED: "#0f9488",
-  ASSIGNED: "#0f9488", IN_PROGRESS: "#0a3f5c", PENDING_SIGNOFF: "#d97706",
-  ON_HOLD: "#5b6b7a", COMPLETED: "#16a34a", CANCELED: "#dc2626",
-};
 const PRIORITY_LABEL: Record<string, string> = { LOW: "Low", MEDIUM: "Medium", HIGH: "High", URGENT: "Urgent" };
-const PRIORITY_COLOR: Record<string, string> = { LOW: "#5b6b7a", MEDIUM: "#0e5c86", HIGH: "#d97706", URGENT: "#dc2626" };
 const SO_STATUS_LABEL: Record<string, string> = {
   INQUIRY: "Inquiry", DRAWING: "Drawing", BOQ: "BoQ", SUBMIT_TO_SALE: "Submit to Sale",
   CONFIRM_PO: "Confirm PO", CANCELLED: "Cancelled",
