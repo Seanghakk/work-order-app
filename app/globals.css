@@ -281,11 +281,6 @@ body:has(.login-shell) { padding-top: 0; }
 
 @media (max-width: 720px) {
   .container { padding: 16px; }
-  /* Defensive safety net: some page's content is occasionally wider than the
-     viewport at phone widths (not yet pinned to one specific element), which
-     otherwise drags the whole page into a confusing sideways scroll while the
-     fixed nav stays put. This clips the overflow instead. */
-  body { overflow-x: hidden; }
   .stat-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
   .metric-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
   .report-grid { grid-template-columns: 1fr; }
