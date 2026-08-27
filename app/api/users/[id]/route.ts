@@ -33,7 +33,24 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     data.username = trimmed;
   }
   if (body.role) data.role = body.role;
-  if (typeof body.active === "boolean") data.active = body.active;
+  if (typeof body.active === "boolean") {
+    // Deactivation is now the sole "remove this user" mechanism — this app used to
+    // also expose a hard DELETE here, but a genuine delete can silently succeed for
+    // a user with zero history and permanently destroy the row, while orphaning
+    // audit trail integrity for anyone with real history. Removed in favor of this
+    // path alone, which carries the same two guards the old DELETE route had: can't
+    // act on your own account, and the protected system account can't be touched.
+    if (body.active === false) {
+      if (session!.user.id === params.id) {
+        return NextResponse.json({ error: "You can't deactivate your own account." }, { status: 400 });
+      }
+      const target = await prisma.user.findUnique({ where: { id: params.id } });
+      if (target?.email === "adtechbms@gmail.com") {
+        return NextResponse.json({ error: "This account is protected and can't be deactivated." }, { status: 403 });
+      }
+    }
+    data.active = body.active;
+  }
   if (body.teamId !== undefined) data.teamId = body.teamId || null;
   if (body.password) {
     if (body.password.length < 8) {
@@ -48,29 +65,4 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     select: { id: true, name: true, email: true, role: true, active: true, createdAt: true },
   });
   return NextResponse.json(user);
-}
-
-export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
-  const session = await getServerSession(authOptions);
-  if (!requireManager(session)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (session.user.id === params.id) {
-    return NextResponse.json({ error: "You can't delete your own account." }, { status: 400 });
-  }
-  const target = await prisma.user.findUnique({ where: { id: params.id } });
-  if (target?.email === "adtechbms@gmail.com") {
-    return NextResponse.json({ error: "This account is protected and can't be deleted." }, { status: 403 });
-  }
-  try {
-    await prisma.user.delete({ where: { id: params.id } });
-    return NextResponse.json({ ok: true });
-  } catch (err: any) {
-    if (err.code === "P2003") {
-      return NextResponse.json(
-        { error: "This user has existing work orders or comments and can't be deleted. Change their role instead, or reassign their work orders first." },
-        { status: 409 }
-      );
-    }
-    return NextResponse.json({ error: "Something went wrong removing this user." }, { status: 500 });
-  }
 }
