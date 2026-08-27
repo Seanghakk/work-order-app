@@ -23,16 +23,18 @@ const STATUS_LABEL: Record<string, string> = {
 
 // The status dropdown only ever offers the "still open" transitions — the approval-
 // workflow's gated moves (Requested→Pending approval, Pending approval→Approved/
-// Rejected, Pending sign-off→Completed/In progress) go through the dedicated
-// Approve/Reject/Sign-off/Send-back/Resubmit buttons below instead. ON_HOLD/CANCELED
-// stay reachable from (and back out to OPEN/IN_PROGRESS from) anywhere, unchanged from
-// today's behavior — they're explicitly out of scope for this workflow.
+// Rejected, Approved→In progress, In progress→Pending sign-off, Pending sign-off→
+// Completed/In progress) go through the dedicated Start work/Ready for sign-off/
+// Approve/Reject/Sign-off/Send-back/Resubmit buttons below instead. ASSIGNED (a legacy
+// status no named action covers) and ON_HOLD/CANCELED stay reachable from (and back out
+// to OPEN/IN_PROGRESS from) anywhere, unchanged from today's behavior — they're
+// explicitly out of scope for this workflow.
 const DROPDOWN_OPTIONS: Record<string, string[]> = {
   OPEN: ["ON_HOLD", "CANCELED"],
   PENDING_APPROVAL: ["ON_HOLD", "CANCELED"],
-  APPROVED: ["IN_PROGRESS", "ON_HOLD", "CANCELED"],
+  APPROVED: ["ON_HOLD", "CANCELED"],
   ASSIGNED: ["IN_PROGRESS", "ON_HOLD", "CANCELED"],
-  IN_PROGRESS: ["PENDING_SIGNOFF", "ON_HOLD", "CANCELED"],
+  IN_PROGRESS: ["ON_HOLD", "CANCELED"],
   PENDING_SIGNOFF: ["ON_HOLD", "CANCELED"],
   COMPLETED: ["ON_HOLD", "CANCELED"],
   ON_HOLD: ["OPEN", "IN_PROGRESS", "CANCELED"],
@@ -92,6 +94,13 @@ export default function WorkOrderDetail() {
   const isApprover =
     role === "MANAGER" || role === "ADMIN" ||
     (!!wo?.teamId && teams.find((t) => t.id === wo.teamId)?.teamLeader?.id === session?.user?.id);
+  // Client-side mirror of canStartOrSubmitWork — assignee, team leader, or manager/admin.
+  // Deliberately excludes the plain creator (unlike canEditWorkflow's mirror below),
+  // matching the backend gate — the backend re-checks this independently either way.
+  const canStartOrSubmit =
+    role === "MANAGER" || role === "ADMIN" ||
+    wo?.assignedToId === session?.user?.id ||
+    (!!wo?.teamId && teams.find((t) => t.id === wo.teamId)?.teamLeader?.id === session?.user?.id);
   // Client-side mirror of canEditWorkflowFields (creator/assignee/leader/manager),
   // purely to show/hide the Edit details button — the backend re-checks independently.
   const canEditContent =
@@ -141,6 +150,12 @@ export default function WorkOrderDetail() {
   }
   async function handleResubmit() {
     await doAction("resubmit");
+  }
+  async function handleStartWork() {
+    await doAction("startwork");
+  }
+  async function handleReadyForSignoff() {
+    await doAction("readyforsignoff");
   }
 
   async function toggleArchived() {
@@ -484,6 +499,13 @@ export default function WorkOrderDetail() {
           {wo.status === "OPEN" && (
             <button className="primary" onClick={handleResubmit}>Resubmit for approval</button>
           )}
+        </div>
+      )}
+
+      {canStartOrSubmit && (wo.status === "APPROVED" || wo.status === "IN_PROGRESS") && (
+        <div className="action-row" style={{ marginBottom: 16 }}>
+          {wo.status === "APPROVED" && <button className="primary" onClick={handleStartWork}>Start work</button>}
+          {wo.status === "IN_PROGRESS" && <button className="primary" onClick={handleReadyForSignoff}>Ready for sign-off</button>}
         </div>
       )}
 
