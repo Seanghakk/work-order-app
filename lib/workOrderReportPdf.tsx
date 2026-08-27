@@ -79,7 +79,7 @@ export function WorkOrderReportDocument({ wo }: { wo: any }) {
           <Text style={styles.companyLine}>Hotline: +855 99 415 189 · Tel: (855) 23 990 001 · Fax: (855) 23 990 136</Text>
         </View>
 
-        <Text style={[styles.reportBanner, isRequestPhase(wo) && { backgroundColor: WARNING }]}>
+        <Text style={isRequestPhase(wo) ? [styles.reportBanner, { backgroundColor: WARNING }] : styles.reportBanner}>
           {isRequestPhase(wo) ? "WORK ORDER REQUEST" : "SERVICE REPORT"}
         </Text>
 
