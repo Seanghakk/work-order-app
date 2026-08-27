@@ -1,7 +1,9 @@
 "use client";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid } from "recharts";
 
-const DEFAULT_COLORS = ["#0e5c86", "#0f9488", "#c62430", "#d97706", "#16a34a", "#5b6b7a"];
+// Unified status palette (see WO_STATUS_COLOR in app/dashboard/page.tsx) — used
+// only as a fallback when a caller doesn't pass an explicit per-slice color.
+const DEFAULT_COLORS = ["#0e5c86", "#0f9488", "#0a3f5c", "#d97706", "#16a34a", "#5b6b7a", "#dc2626"];
 
 type DataPoint = { label: string; value: number; color?: string };
 
